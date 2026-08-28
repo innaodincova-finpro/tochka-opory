@@ -194,14 +194,19 @@ textarea{min-height:70px;resize:vertical}
 
 /* ── Модальное ── */
 .modal{position:fixed;inset:0;background:rgba(16,26,36,.55);display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;z-index:100}
-/* Диктовка нужна прежде всего внутри окон, поэтому кнопка плавающая и лежит выше окна. */
-#mic{position:fixed;right:18px;bottom:18px;z-index:200;background:var(--panel);color:#EAF1F7;
-  border:1px solid rgba(255,255,255,.2);border-radius:22px;padding:10px 16px;font-size:13.5px;
-  font-family:'Golos Text',system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(16,26,36,.28)}
-#mic:hover{border-color:var(--ochre)}
-#mic.on{background:var(--ochre);color:#20140A;border-color:transparent}
-@media(max-width:640px){#mic{right:12px;bottom:12px;padding:9px 13px;font-size:13px}}
-@media print{#mic{display:none}}
+/* Значок микрофона у каждого поля: одна кнопка на весь кабинет заставляла помнить,
+   что сначала надо выбрать поле, а потом нажать. Здесь нажатие само выбирает поле. */
+.micwrap{position:relative;display:block}
+.micdot{position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card);color:var(--ink3);border:1px solid var(--line);border-radius:7px;
+  font-size:13px;line-height:1;cursor:pointer}
+.micdot:hover{color:var(--accent);border-color:var(--accent)}
+.micdot.on{background:var(--ochre);color:#20140A;border-color:transparent}
+.micdot:disabled{opacity:.45;cursor:default}
+.micwrap input,.micwrap textarea{padding-right:38px}
+.micnow{outline:2px solid var(--ochre);outline-offset:1px}
+@media print{.micdot{display:none}}
 .modal[hidden]{display:none}
 .sheet{background:var(--ground);border-radius:16px;max-width:820px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35);margin:auto}
 .sheet .sh{background:var(--panel);color:#fff;padding:14px 20px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -284,7 +289,6 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 </div>
 </div>
 <div class="modal" id="modal" hidden></div>
-<button id="mic" type="button" title="Наговорить текст в поле, где стоит курсор">🎙 Диктовать в поле</button>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -1707,6 +1711,7 @@ function vHelp(){
     Кабинет открывает выбранное приложение с подготовленным текстом, отправку подтверждает специалист; самостоятельно кабинет сообщения не отправляет. После использования любого способа в карточке встречи остаётся отметка «ссылка отправлена» с датой и временем — она видна и в линии дня. Если у онлайн-встречи ссылка не отправлена, а до начала осталось менее суток, строка об этом появляется в перечне «Нужно отметить» на вкладке «Сегодня».</p>
 
     <h3>Помощник на основе искусственного интеллекта</h3>
+    <p class="lead"><b>Голосовой ввод.</b> У каждого текстового поля в правом верхнем углу есть значок микрофона. Нажатие включает распознавание именно для этого поля: значок загорается, поле обводится, сказанное дописывается в конец. Повторное нажатие останавливает. Распознавание встроено в браузер, идёт по-русски и работает в Chrome и Edge по адресу в сети; если кабинет открыт файлом с диска, значки неактивны и подсказывают причину. Второй способ, работающий всегда, — системная диктовка: курсор в поле, затем Win+H на компьютере или значок микрофона на клавиатуре телефона. Диктовка набирает на языке раскладки, поэтому перед началом переключитесь на русскую.</p>
     <p class="lead">Кабинет не обращается к внешним сервисам. Он собирает текст запроса, который вы переносите в выбранный сервис самостоятельно. Обезличивание включено принудительно и не отключается: имена клиентов и законных представителей заменяются кодами во всех падежах, телефоны в любом написании и адреса электронной почты вырезаются. Проверка повторяется в момент копирования, поэтому она применяется и к тексту, который вписан в поле запроса вручную. Распознаются имена, телефоны и почта; место работы, редкие обстоятельства и прозвища кабинет распознать не может — их убирает из описания специалист. В запрос никогда не попадают тексты записей о встречах, заметки специалиста для себя, баллы опросников и отметки о риске.</p>
     <div class="list">
       <div class="item"><div><b>Домашнее задание.</b> Формулируется по теме, которую вы вписываете вручную, и по согласованным целям работы.</div>
@@ -1819,7 +1824,7 @@ function sessModal(id){
       ${prev?`<button class="btn mini ghost" data-act="prevNote" data-id="${prev.id}">Открыть прошлую запись</button>`:''}
       <button class="btn mini ghost" data-act="aiHome" data-id="${v.id}">Сформулировать домашнее задание</button></div>
     <div class="note" style="margin-bottom:12px">
-      <b>Запись голосом.</b> Наговоренное всегда попадает в поле «Свободный рассказ» ниже — из него потом собирается запись по частям шаблона. Нажмите «Разложить по полям», когда закончите. Оценка состояния при разборе не производится: текст только раскладывается по местам.
+      <b>Запись голосом.</b> Наговоренное всегда попадает в поле «Свободный рассказ» ниже — из него потом собирается запись по частям шаблона. Любое отдельное поле заполняется значком микрофона в его правом верхнем углу. Нажмите «Разложить по полям», когда закончите. Оценка состояния при разборе не производится: текст только раскладывается по местам.
       <div class="row" style="margin-top:8px;gap:6px">
         <button class="btn mini ghost" data-act="voiceStart" id="voice-btn"${voiceReady()?'':' disabled title="'+esc(voiceWhy())+'"'}>Записать голосом</button>
         <button class="btn mini ghost" data-act="voiceStop" id="voice-stop" disabled>Остановить</button>
@@ -2585,52 +2590,76 @@ document.getElementById('back').addEventListener('click',goBack);
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('redo').addEventListener('click',doRedo);
 
-/* ── Диктовка в любое поле ──
-   Кнопка в карточке встречи пишет только в «Свободный рассказ»: она нужна для разбора
-   рассказа по частям шаблона. Для остальных полей голосового ввода не было вовсе,
-   и приходилось помнить про системную диктовку. Эта кнопка наговаривает в то поле,
-   где стоит курсор, — в любом окне и на любой вкладке. */
-let FIELD=null,MIC=null;
-document.addEventListener('focusin',e=>{
-  const t=e.target,n=(t.tagName||'').toLowerCase();
-  if((n==='input'&&['text','search','tel','email','url',''].includes(t.type))||n==='textarea')FIELD=t;
-});
-function micBtn(on){const b=document.getElementById('mic');if(!b)return;
-  b.textContent=on?'⏹ Остановить диктовку':'🎙 Диктовать в поле';
-  b.classList.toggle('on',!!on)}
-function micStop(){try{if(MIC)MIC.stop()}catch(e){}MIC=null;micBtn(false)}
-function micStart(){
-  if(!voiceReady()){toast(voiceWhy()+' Пользуйтесь системной диктовкой: курсор в поле, затем Win+H или микрофон на клавиатуре');return}
-  const f=FIELD&&document.body.contains(FIELD)?FIELD:null;
-  if(!f){toast('Сначала щёлкните в поле, которое нужно заполнить, потом нажмите «Диктовать в поле»');return}
+/* ── Диктовка: значок микрофона у каждого текстового поля ──
+   Значок ставится сам, при каждой отрисовке, — и на вкладках, и внутри окон.
+   Нажатие выбирает поле и включает распознавание; повторное нажатие останавливает. */
+let MIC=null,MICF=null;
+const micOK=t=>{const n=(t.tagName||'').toLowerCase();
+  if(n==='textarea')return true;
+  if(n!=='input')return false;
+  return ['text','search','tel','email','url',''].includes((t.type||'').toLowerCase())};
+function micLabel(f){const l=f.closest('label'),sp=l&&l.querySelector('span');
+  return sp?sp.textContent.replace(/\s+/g,' ').trim():''}
+function micPaint(){
+  document.querySelectorAll('.micdot').forEach(b=>{
+    const on=MIC&&b.__f===MICF;
+    b.classList.toggle('on',!!on);
+    b.innerHTML=on
+      ? '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/></svg>'
+      : '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="6" y="1.6" width="4" height="7.2" rx="2"/><path d="M3.6 7.2a4.4 4.4 0 0 0 8.8 0"/><path d="M8 11.6V14"/></svg>';
+    b.title=on?'Остановить диктовку':(voiceReady()?'Наговорить текст в это поле':voiceWhy());
+    b.setAttribute('aria-label',on?'Остановить диктовку':'Наговорить текст в поле'+(micLabel(b.__f)?' «'+micLabel(b.__f)+'»':''));
+    b.disabled=!voiceReady();
+    if(b.__f)b.__f.classList.toggle('micnow',!!on);
+  });
+}
+function micStop(){try{if(MIC)MIC.stop()}catch(e){}MIC=null;MICF=null;micPaint()}
+function micStart(f){
+  if(!voiceReady()){toast(voiceWhy()+' Наговорите текст системной диктовкой: щёлкните в поле и нажмите Win+H, на телефоне — значок микрофона на клавиатуре');return}
+  micStop();
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  MIC=new SR();MIC.lang='ru-RU';MIC.continuous=true;MIC.interimResults=false;
+  MIC=new SR();MIC.lang='ru-RU';MIC.continuous=true;MIC.interimResults=false;MICF=f;
   let heard=0;
   MIC.onresult=ev=>{let add='';
     for(let i=ev.resultIndex;i<ev.results.length;i++){if(ev.results[i].isFinal)add+=ev.results[i][0].transcript+' '}
-    if(!add)return;heard++;
-    add=add.trim();
-    /* Продолжаем с того места, где остановились, и не склеиваем слова. */
+    if(!add)return;heard++;add=add.trim();
     f.value=(f.value&&!/\s$/.test(f.value)?f.value+' ':f.value)+add;
     f.dispatchEvent(new Event('input',{bubbles:true}));
-  };
+    try{f.scrollTop=f.scrollHeight}catch(e){}};
   MIC.onerror=ev=>{const c=ev&&ev.error;
     toast(c==='not-allowed'||c==='service-not-allowed'
-        ? 'Браузер не дал доступ к микрофону. Разрешите его в адресной строке и начните заново'
+        ? 'Браузер не дал доступ к микрофону. Разрешите его в адресной строке и нажмите значок снова'
       :c==='network'?'Распознавание не отвечает: нет подключения к интернету'
       :c==='no-speech'?'Речь не распознана — проверьте, тот ли микрофон выбран в системе'
-      :'Диктовка прервалась. Наберите текст системной диктовкой: Win+H или микрофон на клавиатуре');
-    MIC=null;micBtn(false)};
-  MIC.onend=()=>{const was=MIC;MIC=null;micBtn(false);
-    if(was&&!heard)toast('Ничего не распознано. Проверьте микрофон или наберите текст системной диктовкой')};
-  try{MIC.start()}catch(e){MIC=null;micBtn(false);toast('Диктовка не началась. Пользуйтесь системной диктовкой: Win+H');return}
-  micBtn(true);
-  try{f.focus({preventScroll:true})}catch(e){}
-  const lab=f.closest('label');const nm=lab&&lab.querySelector('span')?lab.querySelector('span').textContent.trim():'';
-  toast('Диктую'+(nm?' в поле «'+nm+'»':' в выбранное поле')+'. Нажмите «Остановить диктовку», когда закончите');
+      :'Диктовка прервалась. Наговорите текст системной диктовкой: Win+H');
+    MIC=null;MICF=null;micPaint()};
+  MIC.onend=()=>{const was=MIC;MIC=null;MICF=null;micPaint();
+    if(was&&!heard)toast('Ничего не распознано. Проверьте, тот ли микрофон выбран, и говорите целой фразой')};
+  try{MIC.start()}catch(e){MIC=null;MICF=null;micPaint();
+    toast('Диктовка не началась. Наговорите текст системной диктовкой: Win+H');return}
+  micPaint();
+  const nm=micLabel(f);
+  toast('Говорите'+(nm?' — текст пойдёт в поле «'+nm+'»':'')+'. Значок нажать ещё раз, чтобы остановить');
 }
-document.getElementById('mic').addEventListener('mousedown',e=>e.preventDefault()); /* не терять фокус поля */
-document.getElementById('mic').addEventListener('click',()=>{MIC?micStop():micStart()});
+/* Значки навешиваются на всё, что появилось на экране; повторно на то же поле — не навешиваются. */
+function mountMics(){
+  document.querySelectorAll('input,textarea').forEach(f=>{
+    if(f.__mic||!micOK(f)||f.disabled||f.readOnly)return;
+    if(f.closest('.micwrap'))return;
+    f.__mic=true;
+    const w=document.createElement('span');w.className='micwrap';
+    f.parentNode.insertBefore(w,f);w.appendChild(f);
+    const b=document.createElement('button');b.type='button';b.className='micdot';b.__f=f;
+    b.addEventListener('mousedown',e=>e.preventDefault()); /* не сбивать курсор в поле */
+    b.addEventListener('click',()=>{(MIC&&MICF===f)?micStop():micStart(f)});
+    w.appendChild(b);
+  });
+  micPaint();
+}
+/* Значки навешиваются после каждой отрисовки страницы и после открытия окна. */
+const _render=render;render=function(){_render.apply(this,arguments);mountMics()};
+const _modal=modal;modal=function(){const r=_modal.apply(this,arguments);mountMics();return r};
+mountMics();
 document.getElementById('theme').addEventListener('click',()=>{
   const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',cur);try{localStorage.setItem(KEY+'-theme',cur)}catch(e){}});
