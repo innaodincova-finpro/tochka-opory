@@ -62,13 +62,35 @@ html[data-theme="dark"] nav.tabs button.on{color:#0B131B}
 .save.fail{opacity:1;font-weight:600}
 @media(max-width:900px){
   .shell{grid-template-columns:1fr}
-  header.app{height:auto;position:static;flex-direction:row;align-items:center;gap:10px;overflow:visible;padding:9px 12px;flex-wrap:wrap;min-width:0}
+  header.app{height:auto;position:sticky;top:0;z-index:50;flex-direction:row;align-items:center;gap:10px;overflow:visible;padding:7px 12px;flex-wrap:wrap;min-width:0}
   .brand span{display:none}
   .rolebox{display:flex;flex-wrap:wrap;border-bottom:0;padding-bottom:0;gap:6px}
-  nav.tabs{flex-direction:row;overflow-x:auto;gap:3px;order:3;width:100%;min-width:0;flex-basis:100%}
+  /* Лента вкладок шире экрана: у правого края притенение — видно, что она листается. */
+  .tabwrap{position:relative;order:3;width:100%;flex-basis:100%;min-width:0}
+  .tabwrap::after{content:'';position:absolute;right:0;top:0;bottom:0;width:26px;pointer-events:none;
+    background:linear-gradient(to right,rgba(40,66,92,0),var(--panel))}
+  nav.tabs{flex-direction:row;overflow-x:auto;gap:3px;width:100%;min-width:0;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
   nav.tabs button{width:auto;white-space:nowrap}
   .railfoot{display:flex;flex-wrap:wrap;justify-content:flex-end;border-top:0;padding-top:0;margin-left:auto}
   .save{display:flex;order:4;font-size:11px;white-space:nowrap}
+}
+/* Телефон: шапка ужимается, поля карточки идут по два в ряд. */
+@media(max-width:640px){
+  header.app{padding:6px 10px;gap:7px}
+  .rolebox .who span{display:none}
+  .hbtn{padding:5px 8px;font-size:12px}
+  nav.tabs button{padding:7px 10px;font-size:13.5px}
+  .sb{padding:13px}
+  .sb .grid{gap:9px}
+  /* Поля идут по два в ряд: иначе карточка встречи разворачивается в длинный столбец. */
+  .sb .g3,.sb .g4{grid-template-columns:1fr 1fr}
+  .sb .g2{grid-template-columns:1fr}
+  .f > span{font-size:11.5px}
+  .f{margin-bottom:8px}
+  /* Кнопки окна остаются на виду при прокрутке длинной формы. */
+  .sf{position:sticky;bottom:0;background:var(--ground);border-radius:0 0 16px 16px}
 }
 
 main{max-width:1180px;margin:0 auto;padding:20px 20px 80px;width:100%}
@@ -136,6 +158,11 @@ input,select,textarea{width:100%;background:var(--card);border:1px solid var(--l
 input:focus,select:focus,textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea{min-height:70px;resize:vertical}
 .fgrid{display:grid;gap:0 12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+/* Телефон: поля идут по два в ряд, длинным отводится вся строка. */
+@media(max-width:640px){
+  .fgrid{grid-template-columns:1fr 1fr;gap:0 9px}
+  .fgrid > label:has(textarea),.fgrid > label.wide{grid-column:1 / -1}
+}
 
 /* ── Расписание ── */
 .day{display:grid;gap:6px}
@@ -194,6 +221,28 @@ textarea{min-height:70px;resize:vertical}
 
 /* ── Модальное ── */
 .modal{position:fixed;inset:0;background:rgba(16,26,36,.55);display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;z-index:100}
+/* Экран блокировки закрывает кабинет целиком: записи о встречах не должны быть видны тому,
+   кто взял устройство в руки. */
+#lockscr{position:fixed;inset:0;z-index:500;background:var(--panel);color:#EAF1F7;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+/* Правило display:flex перебивает встроенное скрытие, и невидимый экран продолжал
+   перехватывать нажатия по всему кабинету. */
+#lockscr[hidden]{display:none}
+.lockbox{width:100%;max-width:320px;text-align:left}
+.lockbrand b{font-family:'Spectral',Georgia,serif;font-size:21px;display:block}
+.lockbrand span{font-size:12.5px;color:#A9BDD0}
+.locksub{margin-top:34px;font-size:13px;color:#A9BDD0}
+#lock-title{font-family:'Spectral',Georgia,serif;font-weight:600;font-size:24px;margin:6px 0 16px}
+.lockdots{display:flex;gap:12px;margin-bottom:26px}
+.lockdots i{width:15px;height:15px;border:1.5px solid rgba(255,255,255,.45);border-radius:4px}
+.lockdots i.on{background:var(--ochre);border-color:transparent}
+.lockpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lockpad button{background:transparent;border:1px solid rgba(255,255,255,.22);color:#EAF1F7;
+  border-radius:10px;padding:15px 0;font-size:19px;font-family:inherit;cursor:pointer}
+.lockpad button:hover:not(:disabled){border-color:var(--ochre);color:var(--ochre)}
+.lockpad button.blank{border:0;cursor:default}
+.locknote{margin-top:22px;font-size:12px;color:#93A9BE;line-height:1.45}
+.locknote.bad{color:#E8A79C}
 /* Значок микрофона у каждого поля: одна кнопка на весь кабинет заставляла помнить,
    что сначала надо выбрать поле, а потом нажать. Здесь нажатие само выбирает поле. */
 .micwrap{position:relative;display:block}
@@ -272,10 +321,10 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 28.08.2026 · в5</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 28.08.2026 · в10</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
-  <nav class="tabs" id="tabs"></nav>
+  <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
   <div class="railfoot">
     <button class="hbtn" id="back" disabled>← Назад</button>
     <button class="hbtn" id="undo" disabled>↶ Отменить</button>
@@ -290,6 +339,16 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 </div>
 </div>
 <div class="modal" id="modal" hidden></div>
+<div id="lockscr" hidden>
+  <div class="lockbox">
+    <div class="lockbrand"><b>Точка опоры</b><span>кабинет специалиста</span></div>
+    <div class="locksub" id="lock-who"></div>
+    <h2 id="lock-title">Введите код</h2>
+    <div class="lockdots" id="lock-dots"></div>
+    <div class="lockpad" id="lock-pad"></div>
+    <div class="locknote" id="lock-note">Код известен только вам. Забытый код восстановить нельзя — записи останутся закрытыми.</div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -626,7 +685,7 @@ function seed(){
   return {
     v:1,
     settings:{name:'Точка опоры',cancelH:24,cancelRule:'списать с пакета',dur:50,price:4500,
-      retest:28,lock:15,start:'09:00',end:'21:00',lastBackup:D(-11),openH:24,
+      retest:28,lock:15,start:'09:00',end:'21:00',lastBackup:D(-11),openH:24,appr:'kpt',
       spec:{name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'},
       room:'k'+Math.random().toString(36).slice(2,8),meetBase:'https://meet.jit.si/',defFmt:'онлайн'},
     clients:C,sessions:V,scales:M,tpl:TPL,docs:DOC,
@@ -673,6 +732,7 @@ function seed(){
 let S;
 try{const raw=localStorage.getItem(KEY);S=raw?JSON.parse(raw):seed()}catch(e){S=seed()}
 if(!S||!S.clients||!S.sessions)S=seed();
+if(!S.settings.appr)S.settings.appr='kpt';
 if(!S.settings.room)S.settings.room='k'+Math.random().toString(36).slice(2,8);
 if(!S.settings.meetBase)S.settings.meetBase='https://meet.jit.si/';
 if(!S.settings.defFmt)S.settings.defFmt='онлайн';
@@ -762,7 +822,7 @@ function startMeet(v,force){
 function finishMeet(v,mins){
   if(!v)return;
   v.fact=mins;v.status='состоялась';v.by=v.by||SPEC().name;
-  if(!v.note)v.note={tpl:'DAP'};
+  if(!v.note)v.note={tpl:defTpl()};
   if(S.ui.meet&&S.ui.meet.id===v.id){S.ui.meet=null;MEET_HIDDEN=false}
   save();
 }
@@ -859,6 +919,7 @@ function flagUnfilled(){
 }
 function flagRetest(){
   const out=[];
+  if(!useScales())return out;
   S.clients.filter(c=>c.status==='в работе').forEach(c=>{
     ['PHQ-9','GAD-7'].forEach(k=>{
       const m=lastScale(c.id,k);
@@ -881,6 +942,7 @@ function flagNoHealth(){
   return S.clients.filter(c=>c.status!=='завершён'&&!hasDoc(c.id,'t4'));
 }
 function flagNoChange(){
+  if(!useScales())return [];
   const out=[];
   S.clients.filter(c=>c.status==='в работе').forEach(c=>{
     const n=doneSess(c.id).length;if(n<10)return;
@@ -1072,9 +1134,25 @@ setInterval(()=>{if(S.ui.meet&&!MEET_HIDDEN)renderMeetBar()},6e4);
 /* ═══════════════ Каркас ═══════════════ */
 const TABS=[['today','Сегодня'],['sched','Расписание'],['clients','Клиенты'],['scales','Шкалы'],
   ['docs','Документы'],['pay','Оплаты'],['superv','Супервизия'],['rep','Отчёты'],['help','Помощь']];
+const tabsNow=()=>TABS.filter(([k])=>k!=='scales'||useScales());
+/* На телефоне в строку помещаются четыре вкладки. Остальные — под кнопкой «Ещё»:
+   оплаты, документы, супервизия и отчёты на телефоне читают, а не ведут. */
+const MAIN=['today','sched','clients','scales'];
+const isPhone=()=>window.matchMedia('(max-width:640px)').matches;
+function moreModal(){
+  const rest=tabsNow().filter(([k])=>!MAIN.includes(k)||(k==='scales'&&!useScales()));
+  modal('Ещё',`<div class="list">${rest.map(([k,n])=>
+    `<div class="item"><div><b>${esc(n)}</b></div>
+     <button class="btn mini" data-act="goTab" data-k="${k}">Открыть</button></div>`).join('')}</div>`,
+    '<button class="btn ghost" data-act="closeModal">Закрыть</button>');
+}
 function renderHead(){
-  document.getElementById('tabs').innerHTML=TABS.map(([k,n])=>
-    `<button data-tab="${k}" class="${S.ui.tab===k?'on':''}">${n}</button>`).join('');
+  if(S.ui.tab==='scales'&&!useScales())S.ui.tab='today';
+  const vis=isPhone()
+    ? tabsNow().filter(([k])=>MAIN.includes(k)).concat([['__more','Ещё ⋯']])
+    : tabsNow();
+  document.getElementById('tabs').innerHTML=vis.map(([k,n])=>
+    `<button data-tab="${k}" class="${k==='__more'?(MAIN.includes(S.ui.tab)?'':'on'):(S.ui.tab===k?'on':'')}">${n}</button>`).join('');
   document.getElementById('rolebox').innerHTML=`
     <div class="who"><b>${esc(SPEC().name)}</b><span>${esc(SPEC().title)}</span></div>
     <button class="hbtn ${S.ui.anon?'on':''}" data-act="anon">${S.ui.anon?'Имена скрыты':'Скрыть имена'}</button>`;
@@ -1386,8 +1464,7 @@ function clientCard(id){
       return `<div class="item"><div><span class="chip b">${esc(l.k)}</span> ${esc(l.k==='пара'?nm(t):(t?t.name:'—'))}
         ${l.k==='группа'&&t?'<div class="sub">'+t.members.length+' участника · '+esc(t.slot)+'</div>':''}</div>
         ${l.k==='пара'?`<button class="btn mini ghost" data-act="client" data-id="${l.id}">Открыть</button>`:''}</div>`}).join('')}</div>`:''}
-    <h3>Шкалы</h3>
-    ${scaleBlock(id)}
+    ${useScales()?`<h3>Шкалы</h3>${scaleBlock(id)}`:''}
   </div>`;
 }
 function scaleBlock(id){
@@ -1668,12 +1745,20 @@ function vRep(){
 function vHelp(){
   return `<div class="card">
     <h2>Настройки кабинета</h2>
+    <p class="lead"><b>Вход по коду.</b> Кабинет закрывается кодом из четырёх цифр: при каждом открытии, при переключении на другое приложение и после перерыва в работе — срок задаётся ниже, по умолчанию 15 минут. Код задаётся в разделе «Вход по коду». Он закрывает вход, но не шифрует записи: тот, кто умеет читать хранилище браузера, доберётся до них и без кода. Забытый код восстановить нельзя — записи останутся закрытыми, поэтому держите свежую копию базы.</p>
+
+    <p class="lead"><b>На телефоне.</b> В строку помещаются четыре раздела: «Сегодня», «Расписание», «Клиенты» и «Шкалы». Остальные — под кнопкой «Ещё»: на телефоне их читают, а не ведут. На компьютере все разделы видны сразу.</p>
+
+    <p class="lead"><b>Подход.</b> Кабинет спрашивает о нём при первом открытии и настраивается под ответ. Когнитивно-поведенческий и схема-терапия: записи по SOAP, DAP и консультативной структуре, раздел «Шкалы» с динамикой по опросникам. Гештальт: запись через фигуру встречи, контакт, прерывания и эксперимент; шкалы не ведутся. Психодинамический подход и психоанализ: материал встречи, перенос, контрперенос, повторяющиеся темы; шкалы не ведутся. «Другой подход» открывает все шаблоны сразу. Выбор меняется в разделе «Специалист» ниже и на прежние записи не влияет: у каждой сохраняется тот шаблон, в котором её вели.</p>
+
     <p class="lead">Кабинет рассчитан на частную практику одного специалиста. Психологическая помощь вне медицинской организации не является медицинской услугой: диагнозы здесь не ставятся, назначения не делаются, карта пациента не ведётся. Информированное согласие оформляется как согласие на психологическую помощь.</p>
 
     <h3>Специалист</h3>
     <div class="fgrid">
       <label class="f"><span>Имя специалиста</span><input data-setspec="name" value="${esc(SPEC().name)}"></label>
-      <label class="f"><span>Подход, указывается в документах</span><input data-setspec="title" value="${esc(SPEC().title)}"></label>
+      <label class="f wide"><span>Как вы работаете — от этого зависят шаблоны записи и раздел «Шкалы»</span>
+        <select data-set="appr">${Object.keys(APPR).map(k=>`<option value="${k}" ${((S.settings.appr||'kpt')===k)?'selected':''}>${esc(APPR[k].name)}</option>`).join('')}</select></label>
+      <label class="f wide"><span>Подход, как он указывается в документах</span><input data-setspec="title" value="${esc(SPEC().title)}"></label>
       <label class="f"><span>Открытых часов приёма в месяц</span><input data-set="openH" type="number" value="${S.settings.openH}"></label>
     </div>
 
@@ -1684,8 +1769,19 @@ function vHelp(){
         ${['списать с пакета','выставить к оплате','ничего не предлагать'].map(x=>`<option ${S.settings.cancelRule===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Длительность встречи, мин</span><input data-set="dur" type="number" value="${S.settings.dur}"></label>
       <label class="f"><span>Стоимость встречи, ₽</span><input data-set="price" type="number" value="${S.settings.price}"></label>
-      <label class="f"><span>Срок повторного замера по шкалам, дней</span><input data-set="retest" type="number" value="${S.settings.retest}"></label>
+      ${useScales()?`<label class="f"><span>Срок повторного замера по шкалам, дней</span><input data-set="retest" type="number" value="${S.settings.retest}"></label>`:''}
       <label class="f"><span>Блокировка кабинета при бездействии, мин</span><input data-set="lock" type="number" value="${S.settings.lock}"></label>
+    </div>
+    <h3>Вход по коду</h3>
+    <div class="note">${pinOn()
+      ? 'Код задан. Кабинет закрывается при бездействии через '+S.settings.lock+' мин и при каждом открытии.'
+      : '<b>Код не задан.</b> Кабинет открывается сразу — записи о встречах увидит любой, кто возьмёт устройство. На телефоне это особенно важно.'}
+      <div class="sub" style="margin-top:6px">Код закрывает вход, но не шифрует записи: тот, кто умеет читать хранилище браузера, доберётся до них и без кода. Забытый код восстановить нельзя.</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn mini" data-act="setPin">${pinOn()?'Задать новый код':'Задать код входа'}</button>
+        ${pinOn()?'<button class="btn mini ghost" data-act="pinOff">Убрать код</button>':''}
+      </div></div>
+    <div class="fgrid" style="margin-top:12px"
       <label class="f"><span>Начало приёма</span><input data-set="start" value="${esc(S.settings.start)}"></label>
       <label class="f"><span>Конец приёма</span><input data-set="end" value="${esc(S.settings.end)}"></label>
     </div>
@@ -1780,12 +1876,25 @@ function copyText(t){try{if(navigator.clipboard)navigator.clipboard.writeText(t)
 /* ── Карточка встречи ── */
 const TPLS={SOAP:[['s','Субъективно — что говорит клиент'],['o','Объективно — что наблюдалось'],['a','Оценка — как это понимается'],['p','План — что дальше']],
   DAP:[['d','Данные — что происходило на встрече'],['a','Оценка — как это понимается'],['p','План — что дальше']],
-  CONS:[['theme','Тема встречи'],['hyp','Рабочая гипотеза'],['interv','Интервенция'],['react','Реакция клиента'],['hw','Домашнее задание'],['next','План следующей встречи']]};
-const TPLNAME={SOAP:'SOAP',DAP:'DAP',CONS:'Консультативный'};
+  CONS:[['theme','Тема встречи'],['hyp','Рабочая гипотеза'],['interv','Интервенция'],['react','Реакция клиента'],['hw','Домашнее задание'],['next','План следующей встречи']],
+  GEST:[['fig','С чем пришёл — фигура встречи'],['proc','Что происходило в контакте'],['inter','Что прерывало контакт'],['exp','Эксперимент и чем закончился'],['fin','Чем завершили']],
+  PSD:[['mat','Материал встречи — о чём говорил клиент'],['tran','Перенос — как клиент обходился со мной'],['ctr','Контрперенос — что происходило со мной'],['them','Повторяющиеся темы'],['dyn','Куда движется работа']]};
+const TPLNAME={SOAP:'SOAP',DAP:'DAP',CONS:'Консультативный',GEST:'Гештальт',PSD:'Психодинамический'};
+/* Подход задаёт набор шаблонов записи и решает, ведутся ли шкалы.
+   Инструменты у подходов разные: в гештальте и психодинамике замеров по опросникам не делают. */
+const APPR={
+  kpt:{name:'Когнитивно-поведенческий',tpl:['SOAP','DAP','CONS'],def:'DAP',scales:true},
+  schema:{name:'Схема-терапия',tpl:['SOAP','DAP','CONS'],def:'CONS',scales:true},
+  gestalt:{name:'Гештальт',tpl:['GEST','CONS'],def:'GEST',scales:false},
+  psd:{name:'Психодинамический, психоанализ',tpl:['PSD','CONS'],def:'PSD',scales:false},
+  other:{name:'Другой подход',tpl:['SOAP','DAP','CONS','GEST','PSD'],def:'CONS',scales:true}};
+const appr=()=>APPR[(S.settings&&S.settings.appr)||'kpt']||APPR.kpt;
+const useScales=()=>appr().scales;
+const defTpl=()=>appr().def;
 function sessModal(id){
   const v=sess(id);if(!v)return;
   const c=v.cid?cl(v.cid):null;
-  const n=v.note||{tpl:'DAP'};
+  const n=v.note||{tpl:defTpl()};
   const prev=v.cid?doneSess(v.cid).filter(x=>x.id!==v.id&&x.note).pop():null;
   const late=v.status==='запланирована'||v.status==='подтверждена';
   const admin=`
@@ -1802,7 +1911,7 @@ function sessModal(id){
       <label class="f"><span>Длительность факт, мин</span><input id="v-fact" type="number" value="${v.fact}"></label>
       <label class="f"><span>Тип встречи</span><select id="v-type">${['первичная','регулярная','парная','семейная','групповая'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Формат</span><select id="v-fmt">${['очно','онлайн'].map(x=>`<option ${v.fmt===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f"><span>Ссылка на встречу — пусто означает постоянную комнату клиента</span><input id="v-link" value="${esc(v.link)}" placeholder="${esc(v.cid?roomUrl(cl(v.cid)):meetBase())}"></label>
+      <label class="f wide"><span>Ссылка на встречу — пусто означает постоянную комнату клиента</span><input id="v-link" value="${esc(v.link)}" placeholder="${esc(v.cid?roomUrl(cl(v.cid)):meetBase())}"></label>
       <label class="f"><span>Статус</span><select id="v-status">${STATUSES.map(x=>`<option ${v.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Стоимость, ₽</span><input id="v-price" type="number" value="${v.price}"></label>
       <label class="f"><span>Оплата</span><select id="v-pay">${['','оплачена','пакет','долг','не требуется'].map(x=>`<option ${v.pay===x?'selected':''}>${x}</option>`).join('')}</select></label>
@@ -1821,18 +1930,15 @@ function sessModal(id){
     <h3 style="font-family:'Spectral';font-size:16px;margin:18px 0 6px">Запись о встрече</h3>
     <p class="sub">Шаблон выбирается под способ работы, а не под кабинет. Переключение ничего не стирает: текст полей, которых нет в новом шаблоне, сохраняется и возвращается при переключении обратно.</p>
     ${kept.length?`<div class="note" style="margin:6px 0 0">Сохранено из других шаблонов и в этом не показано: ${kept.map(x=>esc(x)).join('; ')}. Текст не потерян — он вернётся при переключении на прежний шаблон.</div>`:''}
-    <div class="row" style="margin:8px 0 12px">${Object.keys(TPLS).map(k=>
+    <div class="row" style="margin:8px 0 12px">${[...new Set(appr().tpl.concat(n.tpl))].map(k=>
       `<button class="btn mini ${n.tpl===k?'':'ghost'}" data-act="tplSet" data-id="${v.id}" data-tpl="${k}">${TPLNAME[k]}</button>`).join('')}
       ${prev?`<button class="btn mini ghost" data-act="prevNote" data-id="${prev.id}">Открыть прошлую запись</button>`:''}
       <button class="btn mini ghost" data-act="aiHome" data-id="${v.id}">Сформулировать домашнее задание</button></div>
     <div class="note" style="margin-bottom:12px">
-      <b>Запись голосом.</b> Наговоренное попадает в поле «Свободный рассказ» ниже — из него собирается запись по частям шаблона. Поставьте курсор в это поле, нажмите Win+H и говорите; на телефоне — значок микрофона на клавиатуре. Нажмите «Разложить по полям», когда закончите. Оценка состояния при разборе не производится: текст только раскладывается по местам.
+      <b>Запись голосом.</b> Наговорите ход встречи в поле «Свободный рассказ» ниже: значок микрофона в его углу, затем Win+H. Когда закончите, нажмите «Разложить по полям» — сказанное разойдётся по частям выбранного шаблона. Оценка состояния при разборе не производится: текст только раскладывается по местам.
       <div class="row" style="margin-top:8px;gap:6px">
-        <button class="btn mini ghost" data-act="voiceStart" id="voice-btn">Записать голосом</button>
-        <button class="btn mini ghost" data-act="voiceStop" id="voice-stop" disabled>Остановить</button>
         <button class="btn mini ghost" data-act="voiceParse" data-id="${v.id}">Разложить по полям</button>
       </div>
-      <div class="sub" style="margin-top:8px" id="voice-hint">Кнопка «Записать голосом» работает не на всех устройствах. Способ, работающий всегда: поставьте курсор в поле «Свободный рассказ», нажмите Win+H и говорите. На телефоне — значок микрофона на клавиатуре. Раскладка должна быть русской.</div>
       <label class="f" style="margin-top:10px"><span>Свободный рассказ</span><textarea id="n-raw" style="min-height:95px" placeholder="Клиентка рассказала, что неделя прошла спокойнее. Наблюдалась в контакте, темп речи ровный. Похоже, помогает регулярность встреч. Договорились продолжить дневник. По опроснику девять баллов, было четырнадцать.">${esc(n.raw||'')}</textarea></label>
       <div id="voice-found"></div>
     </div>
@@ -1852,7 +1958,6 @@ function sessModal(id){
     <button class="btn" data-act="saveSess" data-id="${v.id}">Сохранить</button>`);
 }
 /* ═══ Запись голосом и разбор сказанного ═══ */
-let REC=null;
 /* Кнопка меняла надпись на «Идёт запись», даже когда распознавание не могло запуститься:
    человек говорил в пустоту. Готовность проверяется заранее, причина называется прямо. */
 function voiceReady(){
@@ -1866,11 +1971,6 @@ function voiceWhy(){
   if(!SR)return 'Встроенное распознавание речи в этом браузере не поддерживается — оно есть в Chrome и Edge.';
   if(location.protocol==='file:')return 'Кабинет открыт файлом с диска, поэтому встроенное распознавание недоступно: браузер включает его только по адресу в сети.';
   return 'Встроенное распознавание сейчас недоступно.';
-}
-function voiceBtns(on){
-  const b=document.getElementById('voice-btn'),st=document.getElementById('voice-stop');
-  if(b){b.textContent=on?'Идёт запись — говорите':'Записать голосом';b.classList.toggle('ghost',!on)}
-  if(st)st.disabled=!on;
 }
 const NUMW={'ноль':0,'один':1,'одна':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
  'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'тринадцать':13,'четырнадцать':14,
@@ -1966,8 +2066,8 @@ function readSess(v){
   }
   v.type=val('v-type');v.fmt=val('v-fmt');v.link=val('v-link');v.status=val('v-status');
   v.price=+val('v-price')||0;v.pay=val('v-pay');
-  if(document.getElementById('n-'+TPLS[(v.note&&v.note.tpl)||'DAP'][0][0])){
-    const t=(v.note&&v.note.tpl)||'DAP';
+  if(document.getElementById('n-'+TPLS[(v.note&&v.note.tpl)||defTpl()][0][0])){
+    const t=(v.note&&v.note.tpl)||defTpl();
     /* Запись собирается поверх прежней, а не с чистого листа: иначе текст полей,
        которых нет в новом шаблоне, стирался при первом же сохранении. */
     const n=Object.assign({},v.note||{},{tpl:t});
@@ -2301,35 +2401,6 @@ document.addEventListener('click',e=>{
           +esc(x.purpose)+'</td><td>'+x.sum.toLocaleString('ru-RU')+' ₽</td></tr>').join('')+'</table>';
       h+='<p class="muted">В выгрузку не входит поле «заметка для себя»: это рабочие заметки специалиста о собственных реакциях, они не являются сведениями о субъекте и не передаются.</p>';
       toWord('vygruzka-'+c.id+'-'+D(0),h)},
-    voiceStart:()=>{
-      if(!voiceReady()){toast('Запись голосом здесь не работает. Поставьте курсор в поле «Свободный рассказ». '+dictTip);return}
-      const box=document.getElementById('n-raw');if(!box)return;
-      try{if(REC){REC.stop();REC=null}}catch(e){}
-      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-      REC=new SR();REC.lang='ru-RU';REC.continuous=true;REC.interimResults=false;
-      let heard=0;
-      REC.onresult=(ev)=>{let add='';
-        for(let i=ev.resultIndex;i<ev.results.length;i++){if(ev.results[i].isFinal)add+=ev.results[i][0].transcript+' '}
-        if(add){heard++;box.value=(box.value?box.value.trim()+' ':'')+add.trim();saveDraft()}};
-      /* Причина срыва называется по существу, а надпись возвращается сразу. */
-      REC.onerror=(ev)=>{const c=ev&&ev.error;
-        toast(c==='not-allowed'||c==='service-not-allowed'
-            ? 'Браузер не дал доступ к микрофону. Разрешите его в адресной строке и начните заново'
-          :c==='network'?'Распознавание не отвечает: нет подключения к интернету'
-          :c==='no-speech'?'Речь не распознана — проверьте, тот ли микрофон выбран в системе'
-          :'Запись прервалась. '+dictTip);
-        REC=null;voiceBtns(false)};
-      REC.onend=()=>{const was=REC;REC=null;voiceBtns(false);
-        if(was&&!heard)toast('Не расслышал. Поставьте курсор в поле «Свободный рассказ» и нажмите Win+H')};
-      /* Запуск может не состояться — тогда надпись «Идёт запись» не появляется вовсе. */
-      try{REC.start()}catch(e){REC=null;voiceBtns(false);
-        toast('Запись не началась. Поставьте курсор в поле «Свободный рассказ». '+dictTip);return}
-      voiceBtns(true);
-      /* Поле, куда пойдёт текст, показывается сразу: раньше человек говорил, глядя в другое поле. */
-      try{box.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}
-      toast('Идёт запись — текст появится в поле «Свободный рассказ». Нажмите «Остановить», когда закончите')},
-    voiceStop:()=>{const was=REC;try{if(REC)REC.stop()}catch(e){}REC=null;voiceBtns(false);
-      toast(was?'Запись остановлена':'Запись не идёт')},
     voiceParse:()=>{
       const v=sess(id);if(!v)return;
       const box=document.getElementById('n-raw');if(!box||!box.value.trim()){toast('Сначала наговорите или впишите текст в поле «Свободный рассказ»');return}
@@ -2560,6 +2631,17 @@ document.addEventListener('click',e=>{
         Object.keys(S.ui.drafts).forEach(k=>{if(ids.some(x=>k.indexOf('|'+x+'|')>=0||k.endsWith('|'+x)))delete S.ui.drafts[k]})}
       S.scales=S.scales.filter(m=>m.cid!==c.id);
       save();closeModal();render();toast('Клиент обезличен, статистика сохранена')},
+    goTab:()=>{closeModal();go(el.dataset.k)},
+    setPin:()=>{
+      if(pinOn()&&!confirm('Код входа уже задан. Задать новый?'))return;
+      PINSET='';LOCKED=true;
+      lockShow('Придумайте код','Четыре цифры. Введите код, затем повторите его.')},
+    pinOff:()=>{
+      if(!pinOn())return;
+      if(!confirm('Убрать код входа? Кабинет будет открываться без него — записи о встречах увидит любой, кто возьмёт устройство.'))return;
+      S.settings.pinHash='';save();render();clearTimeout(IDLE);toast('Код входа убран')},
+    setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';save();closeModal();renderHead();render();
+      toast('Подход: '+appr().name+'. Поменять можно в «Помощи», раздел «Специалист»')},
     reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();save();render();toast('Демонстрационные данные восстановлены')}}
   };
   if(A[a]){e.preventDefault();if(MUT.has(a))pushUndo(MUTL[a]||'');
@@ -2578,17 +2660,114 @@ document.addEventListener('change',e=>{
   if(t.dataset&&t.dataset.setspec){pushUndo(setLabel(t));S.settings.spec[t.dataset.setspec]=t.value;save();toast('Сохранено');
     setTimeout(renderHead,0);return}
   if(t.dataset&&t.dataset.set){pushUndo(setLabel(t));S.settings[t.dataset.set]=t.type==='number'?+t.value:t.value;save();toast('Сохранено');
-    if(['defFmt','meetBase','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
+    if(t.dataset.set==='appr'){setTimeout(()=>{renderHead();render()},0);
+      toast('Подход изменён: '+appr().name+'. Прежние записи сохранены — шаблон каждой остаётся тем, в котором её вели')}
+    else if(['defFmt','meetBase','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
   if(t.classList&&t.classList.contains('sc-i'))recalcScale();
 });
 document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('sc-i'))recalcScale()});
-document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)go(b.dataset.tab)});
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');
+  if(!b)return;
+  if(b.dataset.tab==='__more'){moreModal();return}
+  go(b.dataset.tab)});
+/* Поворот телефона и изменение окна меняют набор вкладок. */
+window.addEventListener('resize',()=>renderHead());
 document.getElementById('back').addEventListener('click',goBack);
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('redo').addEventListener('click',doRedo);
+
+/* ── Вход по коду и блокировка при бездействии ──
+   Кабинет открывается с ярлыка и на телефоне, и на компьютере. Без кода записи о встречах
+   видны любому, кто взял устройство. Код — не шифрование: он закрывает вход, но не сами
+   данные в браузере. Об этом сказано в разделе «Помощь» прямо. */
+function pinHash(v){
+  let h=2166136261;const salt='tochka-opory:'+(S.settings.room||'');
+  const t=salt+String(v);
+  for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}
+  return (h>>>0).toString(36);
+}
+let LOCKED=false,PINBUF='',PINWAIT=0,PINSET=null,IDLE=null;
+const pinOn=()=>!!(S.settings&&S.settings.pinHash);
+function lockPaint(){
+  const d=document.getElementById('lock-dots');
+  if(d)d.innerHTML=[0,1,2,3].map(i=>`<i class="${i<PINBUF.length?'on':''}"></i>`).join('');
+}
+function lockPad(){
+  const p=document.getElementById('lock-pad');if(!p)return;
+  p.innerHTML=[1,2,3,4,5,6,7,8,9].map(n=>`<button data-pin="${n}">${n}</button>`).join('')
+    +'<button class="blank" disabled></button><button data-pin="0">0</button><button data-pin="del">⌫</button>';
+}
+function lockShow(title,note){
+  const w=document.getElementById('lock-who'),t=document.getElementById('lock-title'),n=document.getElementById('lock-note');
+  if(w)w.textContent=SPEC().name+' · '+SPEC().title;
+  if(t)t.textContent=title;
+  if(n){n.textContent=note;n.classList.remove('bad')}
+  PINBUF='';lockPad();lockPaint();
+  document.getElementById('lockscr').hidden=false;
+}
+function lockNote(txt,bad){const n=document.getElementById('lock-note');if(!n)return;
+  n.textContent=txt;n.classList.toggle('bad',!!bad)}
+function lock(){
+  if(!pinOn()||LOCKED)return;
+  LOCKED=true;closeModal();
+  lockShow('Введите код','Кабинет закрыт после перерыва в работе.');
+}
+function unlock(){LOCKED=false;PINSET=null;document.getElementById('lockscr').hidden=true;idleReset()}
+function pinPress(k){
+  if(k==='del'){PINBUF=PINBUF.slice(0,-1);lockPaint();return}
+  if(PINBUF.length>=4)return;
+  PINBUF+=k;lockPaint();
+  if(PINBUF.length<4)return;
+  const v=PINBUF;
+  setTimeout(()=>{
+    /* Задание кода: два ввода подряд, чтобы опечатка не заперла кабинет. */
+    if(PINSET!==null){
+      if(PINSET===''){PINSET=v;PINBUF='';lockPaint();lockNote('Повторите код, чтобы не ошибиться.');return}
+      if(PINSET!==v){PINSET='';PINBUF='';lockPaint();lockNote('Коды не совпали. Введите новый код заново.',true);return}
+      S.settings.pinHash=pinHash(v);save();unlock();
+      toast('Код входа задан. Кабинет будет закрываться при бездействии через '+S.settings.lock+' мин');
+      return;
+    }
+    if(pinHash(v)===S.settings.pinHash){unlock();render();return}
+    PINWAIT++;PINBUF='';lockPaint();
+    lockNote(PINWAIT>=5?'Код не подошёл. Подождите и попробуйте снова — записи остаются закрытыми.':'Код не подошёл. Попробуйте ещё раз.',true);
+  },90);
+}
+document.getElementById('lock-pad').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pin]');if(b)pinPress(b.dataset.pin)});
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('lockscr').hidden)return;
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();pinPress(e.key)}
+  if(e.key==='Backspace'){e.preventDefault();pinPress('del')}
+});
+/* Отсчёт бездействия. Настройка «Блокировка при бездействии» до сих пор ни на что не влияла. */
+function idleReset(){
+  clearTimeout(IDLE);
+  if(!pinOn()||LOCKED)return;
+  const m=+S.settings.lock||15;
+  IDLE=setTimeout(lock,m*60000);
+}
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>
+  document.addEventListener(ev,()=>{if(!LOCKED)idleReset()},{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)lock()});
+if(pinOn()){LOCKED=true;lockShow('Введите код','Кабинет закрыт. Введите код, чтобы продолжить работу.')}
+else idleReset();
+
+/* При первом открытии кабинет спрашивает о подходе: от него зависят шаблоны записи
+   и то, ведутся ли шкалы. Инструменты у подходов разные. */
+function askAppr(){
+  modal('Как вы работаете',`
+    <p class="lead">От подхода зависит, какие шаблоны записи о встрече кабинет предложит и будет ли раздел «Шкалы». Выбор можно поменять в любой момент: «Помощь» → «Специалист».</p>
+    <div class="list">${Object.keys(APPR).map(k=>`<div class="item">
+      <div><b>${esc(APPR[k].name)}</b>
+      <div class="sub">Записи: ${APPR[k].tpl.map(t=>esc(TPLNAME[t])).join(', ')}. Шкалы ${APPR[k].scales?'ведутся':'не ведутся'}.</div></div>
+      <button class="btn mini" data-act="setAppr" data-k="${k}">Выбрать</button></div>`).join('')}</div>`,
+    '<button class="btn ghost" data-act="setAppr" data-k="kpt">Пропустить</button>');
+}
+if(!S.ui.apprAsked){S.ui.apprAsked=true;save();setTimeout(askAppr,400)}
 
 /* ── Диктовка: значок микрофона у каждого текстового поля ──
    Значок ставится сам, при каждой отрисовке, — и на вкладках, и внутри окон.
@@ -2600,10 +2779,19 @@ let MIC=null,MICF=null;
    ставит курсор в поле и называет способ, который работает всегда. */
 let VOICE_DEAD=false,VOICE_MISS=0;
 const dictTip='Нажмите Win+H и говорите. На телефоне — значок микрофона на клавиатуре. Раскладка должна быть русской.';
-const micOK=t=>{const n=(t.tagName||'').toLowerCase();
+/* Значок ставится только там, где диктовка осмысленна: словами наговаривают текст,
+   а не адрес комнаты, время, код, телефон, сумму или дату. */
+const MICNO=/link|room|url|code|phone|tel|mail|time|date|price|rate|sum|amount|debt|dur|fact|num|tz/i;
+const micOK=t=>{
+  const n=(t.tagName||'').toLowerCase();
+  if(t.id&&MICNO.test(t.id))return false;
   if(n==='textarea')return true;
   if(n!=='input')return false;
-  return ['text','search','tel','email','url',''].includes((t.type||'').toLowerCase())};
+  const ty=(t.type||'').toLowerCase();
+  if(!['text','search',''].includes(ty))return false;
+  /* Поле с подсказкой-адресом или с цифровым содержимым голосом не заполняют. */
+  if(/^https?:/i.test(t.placeholder||''))return false;
+  return true};
 function micLabel(f){const l=f.closest('label'),sp=l&&l.querySelector('span');
   return sp?sp.textContent.replace(/\s+/g,' ').trim():''}
 function micPaint(){
