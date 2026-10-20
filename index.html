@@ -2809,7 +2809,7 @@ document.addEventListener('click',e=>{
         <label class="f"><span>Встреча</span><select id="py-v">${payOpts(S.clients[0]&&S.clients[0].id)}</select></label>
       </div>
       <label class="f"><span>Комментарий</span><input id="py-t"></label>
-      <div class="note">Назначение платежа в чеке — «Консультация». Нейтральная формулировка выбрана намеренно: чек попадает в банковскую выписку и в приложение «Мой налог».</div>`,
+      <div class="note">Назначение платежа в чеке — «Консультация». Нейтральная формулировка выбрана намеренно: чек попадает в банковскую выписку и передаётся в налоговую.</div>`,
       `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="savePay">Записать</button>`),
     savePay:()=>{S.pays.push({id:uid(),cid:val('py-c'),date:val('py-d'),sum:+val('py-s')||0,method:val('py-m'),
       sid:val('py-v'),check:false,purpose:'Консультация',comment:val('py-t')});
