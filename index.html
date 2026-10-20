@@ -63,7 +63,7 @@ html[data-theme="dark"] nav.tabs button.on{color:#0B131B}
 .save.fail i{background:var(--warn)}
 .save.fail{opacity:1;font-weight:600}
 @media(max-width:900px){
-  .shell{grid-template-columns:1fr}
+  .shell{grid-template-columns:1fr;align-content:start}
   header.app{height:auto;position:sticky;top:0;z-index:50;flex-direction:row;align-items:center;gap:10px;overflow:visible;padding:7px 12px;flex-wrap:wrap;min-width:0}
   .brand span{display:none}
   .rolebox{display:flex;flex-wrap:wrap;border-bottom:0;padding-bottom:0;gap:6px}
@@ -256,7 +256,10 @@ textarea{min-height:70px;resize:vertical}
   display:flex;align-items:center;justify-content:center;padding:20px}
 /* Правило display:flex перебивает встроенное скрытие, и невидимый экран продолжал
    перехватывать нажатия по всему кабинету. */
-#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
+#demobar{background:var(--warn-soft);color:var(--ink);padding:9px 16px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
+#demobar button{background:var(--ink);color:var(--card);border:0;border-radius:8px;padding:5px 11px;font-size:13px;cursor:pointer}
+[hidden]{display:none!important}
+#demobar[hidden],#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
 #badscr{position:fixed;inset:0;z-index:510;background:var(--panel);color:#EAF1F7;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .badbtns{display:grid;gap:10px;margin:18px 0 6px}
 .badbtns button,.lockrec button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#EAF1F7;border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;text-align:left}
@@ -279,6 +282,7 @@ textarea{min-height:70px;resize:vertical}
 .cal .d:hover{border-color:var(--accent)}
 .cal .d.out{border-color:transparent;background:transparent;cursor:default}
 .cal .d.past{opacity:.6}
+.cal .d.off{background:repeating-linear-gradient(135deg,var(--soft),var(--soft) 5px,var(--card) 5px,var(--card) 10px)}
 .cal .d.today{background:var(--panel);border-color:var(--panel);color:#fff;opacity:1}
 .cal .dn{font:500 12px/1.2 ui-monospace,Menlo,Consolas,monospace;text-align:right}
 .cal .dp{font-size:10.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--soft);border-radius:4px;padding:1px 3px;color:var(--ink2)}
@@ -287,6 +291,7 @@ textarea{min-height:70px;resize:vertical}
 .cal .d.today .dp.more{color:#D7E3EE}
 @media(min-width:900px){.cal .d{min-height:92px}.cal .dp{font-size:11.5px}}
 @media(max-width:599px){.cal .dnm{display:none}.cal .dp{text-align:center;padding:1px 0}.cal .d{min-height:66px;padding:4px 2px}}
+.warnline{color:var(--warn);font-size:13.5px;font-weight:600;grid-column:1/-1}
 .freegrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .sec{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:6px}
 .sec>summary{cursor:pointer;font-family:'Spectral',Georgia,serif;font-size:17px;font-weight:600;color:var(--ink);padding:2px 0 8px}
@@ -391,7 +396,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в16</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в17</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -405,6 +410,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
   </div>
 </header>
 <div class="col">
+  <div id="demobar" hidden>Это пример с вымышленными клиентами. <button type="button" data-act="demoOff">Выйти из примера</button></div>
   <div class="meetwrap" id="meetbar"></div>
   <main id="view"></main>
 </div>
@@ -507,6 +513,10 @@ const STATUSES=['запланирована','подтверждена','сос�
 const CSTAT=['обращение','первичная','в работе','пауза','завершён','прервал'];
 
 /* ═══════════════ Демонстрационные данные ═══════════════ */
+/* Пустой кабинет: настройки и шаблоны документов есть, клиентов и встреч нет. */
+function emptyBase(){const z=seed();
+  ['clients','sessions','scales','docs','groups','packs','pays','disc','superv','wait'].forEach(k=>{if(Array.isArray(z[k]))z[k]=[]});
+  z.settings.lastBackup='';z.demo=false;z.off=[];z.ui.apprAsked=false;return z}
 function seed(){
   const C=[
     {id:'c1',code:'К-014',name:'Марина Соколова',phone:'+7 916 220-14-08',msg:'Telegram',contact:'Telegram',email:'m.sokolova@example.ru',tz:'МСК',tzOff:0,
@@ -987,7 +997,7 @@ let S;
     else BAD='Записи в этом браузере повреждены и не читаются.';
   }
   if(BAD){S=encStub({});return}
-  if(!S)S=seed();
+  if(!S)S=emptyBase();
   if(S.settings&&S.settings.pinHash&&S.settings.pinHash!=='enc')LEGACY=true;
 })();
 /* Приведение базы к текущей редакции: при открытии, после расшифровки и после загрузки копии. */
@@ -1002,6 +1012,9 @@ delete S.settings.mode;delete S.specs;if(S.ui){delete S.ui.role;delete S.ui.spec
 if(!S.settings.start)S.settings.start='09:00';
 if(!S.settings.end)S.settings.end='21:00';
 if(S.settings.lastBackup===undefined)S.settings.lastBackup='';
+/* Прежние базы: пример узнаётся по первому демонстрационному клиенту. */
+if(S.demo===undefined)S.demo=(S.clients||[]).some(c=>c.id==='c1'&&c.name==='Марина Соколова');
+if(!Array.isArray(S.off))S.off=[];
 delete S.settings.pinLen;if(S.settings.pinHash==='enc')delete S.settings.pinHash;
 S.fmt=FMT;
 }
@@ -1096,6 +1109,44 @@ function shortOk(v,mins){const plan=+v.dur||50;
   return !(mins<plan/2)||confirm('Встреча «'+title(v)+'» длилась '+mins+' мин при плане '+plan+' мин.\n\nОК — отметить встречу как состоявшуюся.\nОтмена — остановить отсчёт, статус выбрать в карточке встречи (например, «неявка» или «перенесена»).')}
 /* Список встреч в окне оплаты: только выбранного клиента, последние состоявшиеся и ближайшие будущие (предоплата). */
 const rateOf=cid=>{const c=cl(cid);return (c&&+c.rate)||S.settings.price};
+/* Пересечение по времени с учётом длительности. Парная и групповая встреча — одна запись. */
+function overlap(date,time,dur,exceptId){
+  const a=toMin(time),b=a+(+dur||50);
+  return daySess(date).find(v=>v.id!==exceptId&&toMin(v.time)<b&&toMin(v.time)+(+v.dur||50)>a)}
+const busyText=o=>o?`В ${o.time} уже ${title(o)} (до ${fmt(toMin(o.time)+(+o.dur||50))})`:'';
+const isOff=d=>(S.off||[]).some(r=>d>=r.from&&d<=r.to);
+/* Постоянное расписание клиента: встречи на 4 недели вперёд от даты начала.
+   Пропускаются дни отпуска, дни, где у клиента уже есть встреча, и занятое время. */
+function seriesPlan(c,weeks){
+  const sl=c.slot;if(!sl||sl.d===undefined||!okTime(sl.time))return {add:[],skip:[]};
+  const step=(+sl.every||1)*7,from=sl.from&&sl.from>D(0)?sl.from:D(0);
+  let d=pd(from);while(d.getDay()!==+sl.d)d.setDate(d.getDate()+1);
+  if(sl.from&&+sl.every===2){const s0=pd(sl.from);while(s0.getDay()!==+sl.d)s0.setDate(s0.getDate()+1);
+    const k=Math.round((d-s0)/864e5)%14;if(k)d.setDate(d.getDate()+(14-k))}
+  const end=pd(D(weeks*7));const add=[],skip=[];
+  for(;d<=end;d.setDate(d.getDate()+step)){const ds=isoL(d);
+    if(isOff(ds)){skip.push(ru(ds)+' — отпуск');continue}
+    if(S.sessions.some(v=>(v.cid===c.id||v.partner===c.id)&&v.date===ds&&!v.status.startsWith('отменена'))){continue}
+    const o=overlap(ds,sl.time,S.settings.dur);
+    if(o){skip.push(ru(ds)+' — '+busyText(o));continue}
+    add.push(ds)}
+  return {add,skip}}
+function seriesMake(c,dates){
+  dates.forEach(ds=>S.sessions.push({id:uid(),cid:c.id,partner:'',date:ds,time:c.slot.time,dur:+S.settings.dur||50,fact:+S.settings.dur||50,
+    type:'регулярная',fmt:c.fmt==='смешанный'?(S.settings.defFmt||'очно'):c.fmt,link:'',status:'запланирована',price:+c.rate||S.settings.price,pay:'',
+    risk:'без изменений',done:false,note:null,self:'',by:SPEC().name,upd:'',before:0,charged:0,rule:'',reason:'',sent:'',series:c.id}))}
+function seriesModal(cid){
+  const c=cl(cid);const p=seriesPlan(c,4);
+  if(!p.add.length&&!p.skip.length){toast('Постоянное время не задано или все встречи уже стоят');return}
+  modal('Расставить встречи',`
+    <p class="lead">${esc(nm(c))} · ${DOW_FULL[c.slot.d]} в ${esc(c.slot.time)}${+c.slot.every===2?' · раз в две недели':''}</p>
+    ${p.add.length?`<b>Будут записаны (${p.add.length}):</b><div class="sub" style="margin:4px 0 10px">${p.add.map(ru).join(', ')}</div>`:'<p class="sub">Новых встреч нет.</p>'}
+    ${p.skip.length?`<b>Пропущены:</b><div class="sub" style="margin-top:4px">${p.skip.map(esc).join('<br>')}</div>`:''}`,
+    `<button class="btn ghost" data-act="closeModal">Отмена</button>${p.add.length?`<button class="btn" data-act="seriesGo" data-id="${c.id}">Записать</button>`:''}`)}
+const DOW_FULL=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function busyNote(elId,d,t,dur,ex){const n=document.getElementById(elId);if(!n)return;
+  const o=okTime(t)&&d?overlap(d,t,dur,ex):null;n.textContent=o?busyText(o):'';n.hidden=!o}
+let MOVE_ID=null;
 function payOpts(cid){
   const list=S.sessions.filter(v=>(v.cid===cid||v.partner===cid)&&['состоялась','запланирована','подтверждена'].includes(v.status))
     .sort((a,b)=>(a.date+a.time)<(b.date+b.time)?1:-1).slice(0,25);
@@ -1331,14 +1382,15 @@ function syncRail(){const b=document.getElementById('back'),u=document.getElemen
   if(b)b.disabled=!HIST.length; if(u)u.disabled=!UNDO.length; if(r)r.disabled=!REDO.length}
 const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
   'saveDoc','saveDisc','savePay','check','usePack','payDebt','forgiveDebt','saveSup','saveWait','delWait',
-  'doAnon','import','reset']);
+  'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff']);
 /* Название действия показывается в уведомлении об отмене — иначе непонятно, что именно откатилось. */
 const MUTL={voiceScale:'замер со слов',createSess:'новая встреча',saveSess:'запись о встрече',tplSet:'смена шаблона записи',
   meetEnd:'завершение встречи',meetSwitch:'переход к следующей встрече',saveClient:'карточка клиента',savePlan:'план работы',
   saveScale:'замер по шкале',doCancel:'отмена встречи',revoke:'отзыв согласия',saveDoc:'документ',saveDisc:'согласие',
   savePay:'оплата',check:'отметка о выполнении',usePack:'списание из пакета',payDebt:'погашение задолженности',
   forgiveDebt:'прощение задолженности',saveSup:'запись в реестре супервизии',saveWait:'лист ожидания',delWait:'строка листа ожидания',
-  doAnon:'обезличивание клиента',import:'загрузка копии базы',reset:'возврат демонстрационных данных'};
+  doAnon:'обезличивание клиента',import:'загрузка копии базы',reset:'возврат демонстрационных данных',delSess:'удаление встречи',delPay:'удаление платежа',
+  delClient:'удаление клиента',moveGo:'перенос встречи',seriesGo:'постоянное расписание',offGo:'отпуск',offDel:'отмена отпуска',demoOn:'открытие примера',demoOff:'выход из примера'};
 
 /* Черновики незаполненных форм: если окно закрыто случайно, введённое не теряется. */
 /* Ключ черновика привязан не только к названию окна, но и к записи, которую в нём правят:
@@ -1456,7 +1508,8 @@ function renderHead(){
     <div class="who"><b>${esc(SPEC().name)}</b><span>${esc(SPEC().title)}</span></div>
     <button class="hbtn ${S.ui.anon?'on':''}" data-act="anon">${S.ui.anon?'Имена скрыты':'Скрыть имена'}</button>`;
 }
-function render(){
+function demoBar(){const b=document.getElementById('demobar');if(b)b.hidden=!(S&&S.demo&&!ENC_WAIT)}
+function render(){demoBar();
   renderHead();renderMeetBar();
   const v=document.getElementById('view');
   v.innerHTML=({today:vToday,sched:vSched,clients:vClients,scales:vScales,docs:vDocs,pay:vPay,
@@ -1538,6 +1591,15 @@ function vToday(){
   if(backupOld)items.push(`<div class="t">Копия базы ${bd?'не сохранялась с '+ru(bd):'ещё ни разу не сохранялась'}
     <div><button class="btn mini" data-act="export">Сохранить копию</button></div></div>`);
 
+  const start=!S.clients.length?`<div class="card">
+    <h2>С чего начать</h2>
+    <div class="list" style="margin-top:10px">
+      <div class="item"><div><b>1. Добавьте клиента</b><div class="sub">имя, телефон, тариф</div></div><button class="btn mini" data-act="newClient">Добавить</button></div>
+      <div class="item"><div><b>2. Запишите встречу</b><div class="sub">или задайте клиенту постоянное время</div></div><button class="btn mini ghost" data-act="newSess">Записать</button></div>
+      <div class="item"><div><b>3. Задайте код входа</b><div class="sub">записи будут закрыты кодом</div></div><button class="btn mini ghost" data-act="goTab" data-k="help">Настройки</button></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div></div>`:'';
+  if(start)return start;
   return `
   <div class="card">
     <div class="spread">
@@ -1624,7 +1686,7 @@ function monthCard(y,m){
   for(let i=1;i<=dim;i++){
     const ds=key+'-'+p2(i),list=daySess(ds);
     const prev=list.slice(0,2).map(v=>`<span class="dp">${v.time}<span class="dnm"> ${esc(calLabel(v))}</span></span>`).join('')+(list.length>2?`<span class="dp more">ещё ${list.length-2}</span>`:'');
-    cells+=`<button type="button" class="d${ds===D(0)?' today':''}${ds<D(0)?' past':''}" data-act="calDay" data-date="${ds}" aria-label="${ru(ds)}, встреч: ${list.length}"><span class="dn">${i}</span>${prev}</button>`;
+    cells+=`<button type="button" class="d${ds===D(0)?' today':''}${ds<D(0)?' past':''}${isOff(ds)?' off':''}" data-act="calDay" data-date="${ds}" aria-label="${ru(ds)}, встреч: ${list.length}"><span class="dn">${i}</span>${prev}</button>`;
   }
   return `<div class="mcard"><div class="mtitle">${MONTHS_N[m]} ${y}</div><div class="cal">${heads}${cells}</div></div>`;
 }
@@ -1632,7 +1694,7 @@ function vSched(){
   const back=+S.ui.calPast||0,t=pd(D(0));let months='';
   for(let k=-back;k<3;k++){const d=new Date(t.getFullYear(),t.getMonth()+k,1);months+=monthCard(d.getFullYear(),d.getMonth())}
   return `<div class="card">
-    <div class="spread"><h2>Расписание</h2><button class="btn" data-act="newSess">Новая встреча</button></div>
+    <div class="spread"><h2>Расписание</h2><div class="row"><button class="btn ghost" data-act="offNew">Отпуск</button><button class="btn" data-act="newSess">Новая встреча</button></div></div>
     ${back<12?`<button class="btn ghost mini" style="margin:6px 0 10px" data-act="calPast">Показать прошлый месяц</button>`:''}
     <div class="cstream">${months}</div>
     <h3>Лист ожидания</h3>
@@ -1650,7 +1712,7 @@ function dayModal(ds){
   for(let h=st;h<en;h++){const from=h*60,to=from+60;
     if(ds===D(0)&&to<=nowMin())continue;
     if(!list.some(v=>{const m=toMin(v.time);return m<to&&m+v.dur>from}))free.push(fmt(from))}
-  modal(`${dow(ds)}, ${ru(ds)}`,`
+  modal(`${dow(ds)}, ${ru(ds)}${isOff(ds)?' · отпуск':''}`,`
     <div class="list">${list.map(v=>`<div class="item" style="cursor:pointer" data-act="openSess" data-id="${v.id}">
       <div><span class="mono">${v.time}</span> <b>${esc(title(v))}</b><div class="sub">${esc(v.fmt)} · ${esc(v.status)}</div></div></div>`).join('')||'<p class="sub">Встреч нет.</p>'}</div>
     ${ds>=D(0)&&free.length?`<h3 style="margin-top:14px">Свободно</h3><div class="freegrid">${free.map(t=>`<button class="btn mini ghost" data-act="newSess" data-date="${ds}" data-time="${t}">${t}</button>`).join('')}</div>
@@ -1713,7 +1775,7 @@ function clientCard(id){
     </div>
     <div class="grid g2" style="margin-top:12px">
       <div class="item"><div>Тариф встречи</div><span class="mono">${rub(c.rate)}</span></div>
-      <div class="item"><div>Постоянное время</div><span class="chip">${c.slot?['вс','пн','вт','ср','чт','пт','сб'][c.slot.d]+' '+c.slot.time:'не закреплено'}</span></div>
+      <div class="item"><div>Постоянное время${c.slot&&c.status!=='пауза'?` <button class="btn mini ghost" data-act="series" data-id="${c.id}" style="margin-left:6px">Расставить на 4 недели</button>`:''}</div><span class="chip">${c.slot?(+c.slot.every===2?'раз в 2 нед. · ':'')+['вс','пн','вт','ср','чт','пт','сб'][c.slot.d]+' '+c.slot.time:'не закреплено'}</span></div>
       <div class="item"><div>Дата обращения</div><span class="mono">${ru(c.since)}</span>${c.end?'<span class="chip">завершено '+ru(c.end)+'</span>':''}</div>
     </div>
     <div class="item" style="margin-top:12px;align-items:flex-start">
@@ -1931,7 +1993,7 @@ function vPay(){
         <td>${esc(p.purpose)}${p.comment?'<div class="sub">'+esc(p.comment)+'</div>':''}</td>
         <td class="sub">${v?ru(v.date)+' '+v.time:'—'}</td>
         <td class="num">${p.sum.toLocaleString('ru-RU')}</td>
-        <td>${p.check?'<span class="chip g">выдан</span>':`<button class="btn mini ghost" data-act="check" data-id="${p.id}">Отметить</button>`}</td></tr>`}).join('')}</tbody></table></div>
+        <td>${p.check?'<span class="chip g">выдан</span>':`<button class="btn mini ghost" data-act="check" data-id="${p.id}">Отметить</button>`} <button class="btn mini ghost" data-act="delPay" data-id="${p.id}" title="Удалить платёж">Удалить</button></td></tr>`}).join('')}</tbody></table></div>
   </div>`;
 }
 
@@ -2096,7 +2158,7 @@ function vHelp(){
       <button class="btn ghost" data-act="import">Загрузить копию</button>
       <button class="btn ghost" data-act="exportClient">Выгрузка по запросу клиента</button>
       <button class="btn ghost" data-act="anonClient">Обезличить клиента</button>
-      <button class="btn ghost warn" data-act="reset">Вернуть демонстрационные данные</button>
+      ${S.demo?'<button class="btn ghost warn" data-act="demoOff">Выйти из примера</button>':(!S.clients.length?'<button class="btn ghost" data-act="demoOn">Посмотреть на примере</button>':'')}
     </div>
   </div>
   <div class="card">
@@ -2161,6 +2223,7 @@ function sessModal(id){
       <div class="sub">${c?esc(ph(c))+' · '+esc(c.msg):'групповая встреча'}</div></div>
       <div style="text-align:right"><span class="chip ${v.status==='состоялась'?'g':(v.status==='неявка'||v.status.startsWith('отменена'))?'r':'b'}">${esc(v.status)}</span>
       ${!v.gid?`<div class="sub">встреча № ${sessNum(v)} в работе</div>`:''}</div></div>
+      ${late?`<div class="row" style="margin-top:8px"><button class="btn mini" data-act="moveSess" data-id="${v.id}">Перенести</button></div>`:''}
     </div>
     <div class="fgrid">
       <label class="f"><span>Дата</span><input id="v-date" type="date" value="${v.date}"></label>
@@ -2172,6 +2235,7 @@ function sessModal(id){
       <label class="f wide"><span>Ссылка на встречу — пусто означает постоянную комнату клиента</span><input id="v-link" value="${esc(v.link)}" placeholder="${esc(v.cid?roomUrl(cl(v.cid)):meetBase())}"></label>
       <label class="f"><span>Статус</span><select id="v-status">${STATUSES.map(x=>`<option ${v.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Стоимость, ₽</span><input id="v-price" type="number" value="${v.price}"></label>
+      <label class="f" id="v-p-wrap" ${['парная','семейная'].includes(v.type)?'':'hidden'}><span>Второй участник</span><select id="v-partner"><option value="">— выберите —</option>${S.clients.filter(x=>x.id!==v.cid).map(x=>`<option value="${x.id}" ${v.partner===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label>
       <label class="f"><span>Оплата</span><select id="v-pay">${['','оплачена','пакет','долг','не требуется'].map(x=>`<option ${v.pay===x?'selected':''}>${x}</option>`).join('')}</select></label>
     </div>
     ${v.fmt==='онлайн'?`<div class="okbox" style="margin:4px 0 12px">
@@ -2211,7 +2275,7 @@ function sessModal(id){
   modal(`Встреча · ${ru(v.date)} · ${v.time}`,admin+clinBody,`
     <button class="btn ghost" data-act="closeModal">Закрыть</button>
     <button class="btn" data-act="saveSess" data-id="${v.id}">Сохранить</button>
-    ${late?`<button class="sflink" data-act="cancelSess" data-id="${v.id}">Отменить встречу</button>`:''}`);
+    ${late?`<button class="sflink" data-act="cancelSess" data-id="${v.id}">Отменить встречу</button>`:`<button class="sflink" data-act="delSess" data-id="${v.id}">Удалить</button>`}`);
 }
 /* ═══ Запись голосом и разбор сказанного ═══ */
 /* Кнопка меняла надпись на «Идёт запись», даже когда распознавание не могло запуститься:
@@ -2321,7 +2385,8 @@ function readSess(v){
   if(v.sent&&(v.date!==wasDate||v.time!==wasTime)){
     v.sentOld={at:v.sent,date:wasDate,time:wasTime};v.sent='';
   }
-  v.type=val('v-type');v.fmt=val('v-fmt');v.link=val('v-link');v.status=val('v-status');
+  v.type=val('v-type');v.fmt=val('v-fmt');
+  if(document.getElementById('v-partner'))v.partner=['парная','семейная'].includes(v.type)?val('v-partner'):'';v.link=val('v-link');v.status=val('v-status');
   v.price=+val('v-price')||0;
   const wasPay=v.pay;v.pay=val('v-pay');
   /* Отметка «оплачена» записывает платёж в журнал, снятие отметки убирает записанный так платёж. */
@@ -2427,6 +2492,14 @@ function clientModal(id){
       <label class="f"><span>Задолженность, ₽</span><input id="c-debt" type="number" value="${c.debt||0}"></label>
       <label class="f"><span>Дата обращения</span><input id="c-since" type="date" value="${c.since||D(0)}"></label>
     </div>
+    <h3 style="font-family:'Spectral';font-size:16px;margin:10px 0 6px">Постоянное время</h3>
+    <div class="fgrid">
+      <label class="f"><span>День</span><select id="c-sd"><option value="">нет</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}" ${c.slot&&+c.slot.d===d?'selected':''}>${DOW_FULL[d]}</option>`).join('')}</select></label>
+      <span id="c-slot" style="display:contents" ${c.slot?'':'hidden'}>
+      <label class="f"><span>Время</span><input id="c-st" type="time" step="300" value="${esc(c.slot&&c.slot.time||'10:00')}"></label>
+      <label class="f"><span>Как часто</span><select id="c-se"><option value="1">каждую неделю</option><option value="2" ${c.slot&&+c.slot.every===2?'selected':''}>раз в две недели</option></select></label>
+      <label class="f"><span>С какой даты</span><input id="c-sf" type="date" value="${c.slot&&c.slot.from||D(0)}"></label></span>
+    </div>
     <label class="f"><span>Ссылка на встречу — оставьте пустой, чтобы использовать постоянную комнату кабинета</span>
       <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc(id?roomOf(c.id):meetBase()+'tochka-opory-'+S.settings.room+'-…')}"></label>
     <label class="chip" style="cursor:pointer"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент</label>
@@ -2444,7 +2517,7 @@ function clientModal(id){
     <label class="f"><span>Предыдущий опыт получения помощи — как факт обращения</span><textarea id="c-prev">${esc(c.prev)}</textarea></label>
     <label class="f"><span>Противопоказания по методам</span><input id="c-contra" value="${esc(c.contra)}"></label>
     
-  `,`<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveClient" data-id="${id||''}">Сохранить</button>`);
+  `,`<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveClient" data-id="${id||''}">Сохранить</button>${id?`<button class="sflink" data-act="delClient" data-id="${id}">Удалить клиента</button>`:''}`);
 }
 function newSessModal(date,cid,time){
   modal('Новая встреча',`
@@ -2456,6 +2529,7 @@ function newSessModal(date,cid,time){
       <label class="f"><span>Тип</span><select id="s-type">${['первичная','регулярная','парная','семейная','групповая'].map(x=>`<option ${x==='регулярная'?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Формат</span><select id="s-fmt">${['очно','онлайн'].map(x=>`<option ${(S.settings.defFmt||'очно')===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Стоимость, ₽</span><input id="s-price" type="number" value="${rateOf(cid||(S.clients[0]&&S.clients[0].id))}"></label>
+      <div class="warnline wide" id="s-busy" hidden></div>
       <label class="f" id="s-p-wrap" hidden><span>Второй участник</span><select id="s-p"><option value="">— выберите —</option>${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
     </div>
     
@@ -2480,6 +2554,51 @@ document.addEventListener('click',e=>{
     backClients:()=>{pushHist();S.ui.client=null;save();render();syncRail()},
     filter:()=>{S.ui.filter=el.dataset.f;save();render()},
     calDay:()=>dayModal(el.dataset.date),
+    delSess:()=>{const v=sess(id);if(!v)return;
+      if(!confirm('Удалить встречу «'+title(v)+'» '+ru(v.date)+' в '+v.time+'?'+(v.note?'\n\nЗапись о встрече тоже будет удалена.':'')+'\n\nОтменить удаление можно кнопкой «Отменить».'))return;
+      S.sessions=S.sessions.filter(x=>x.id!==v.id);S.pays.forEach(p=>{if(p.sid===v.id)p.sid=''});
+      if(S.ui.meet&&S.ui.meet.id===v.id)S.ui.meet=null;
+      save();closeModal();render();toast('Встреча удалена')},
+    delPay:()=>{const p=S.pays.find(x=>x.id===id);if(!p)return;
+      if(!confirm('Удалить платёж '+rub(p.sum)+' от '+ru(p.date)+'?'))return;
+      S.pays=S.pays.filter(x=>x.id!==p.id);const v=sess(p.sid);if(v&&v.pay==='оплачена')v.pay='';
+      save();render();toast('Платёж удалён')},
+    delClient:()=>{const c=cl(id);if(!c)return;
+      const n=S.sessions.filter(v=>v.cid===c.id).length;
+      if(!confirm('Удалить клиента «'+c.name+'» и все его записи: '+n+' встреч, оплаты, документы, замеры?\n\nОтменить удаление можно кнопкой «Отменить».'))return;
+      S.clients=S.clients.filter(x=>x.id!==c.id);
+      S.sessions=S.sessions.filter(v=>v.cid!==c.id);S.sessions.forEach(v=>{if(v.partner===c.id)v.partner=''});
+      ['pays','docs','scales','packs','wait','disc'].forEach(k=>{S[k]=(S[k]||[]).filter(x=>x.cid!==c.id)});
+      S.clients.forEach(x=>{x.links=(x.links||[]).filter(l=>l.id!==c.id)});
+      (S.groups||[]).forEach(g=>{g.members=(g.members||[]).filter(m=>m!==c.id)});
+      if(S.ui.client===c.id)S.ui.client=null;
+      save();closeModal();render();toast('Клиент удалён')},
+    moveSess:()=>{const v=sess(id);if(!v)return;MOVE_ID=v.id;
+      modal('Перенести встречу',`<p class="lead">${esc(title(v))} · было ${ru(v.date)} в ${v.time}</p>
+        <div class="fgrid"><label class="f"><span>Новая дата</span><input id="mv-d" type="date" value="${v.date}"></label>
+        <label class="f"><span>Новое время</span><input id="mv-t" type="time" step="300" value="${v.time}"></label>
+        <div class="warnline" id="mv-busy" hidden></div></div>`,
+        `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="moveGo" data-id="${v.id}">Перенести</button>`)},
+    moveGo:()=>{const v=sess(id);if(!v)return;const d=val('mv-d'),t=val('mv-t');
+      if(!d||!okTime(t)){toast('Укажите дату и время');return}
+      if(d===v.date&&t===v.time){closeModal();return}
+      const ob=overlap(d,t,v.dur,v.id);if(ob&&!confirm(busyText(ob)+'.\n\nПеренести всё равно?'))return;
+      if(v.sent){v.sentOld={at:v.sent,date:v.date,time:v.time};v.sent=''}
+      v.date=d;v.time=t;v.upd=D(0);
+      save();closeModal();render();toast('Перенесено на '+ru(d)+' в '+t+(v.fmt==='онлайн'?'. Отправьте клиенту ссылку с новым временем':''))},
+    series:()=>seriesModal(id),
+    seriesGo:()=>{const c=cl(id);const p=seriesPlan(c,4);seriesMake(c,p.add);save();closeModal();render();toast('Записано встреч: '+p.add.length)},
+    offNew:()=>modal('Отпуск',`<div class="fgrid">
+        <label class="f"><span>С</span><input id="of-a" type="date" value="${D(1)}"></label>
+        <label class="f"><span>По</span><input id="of-b" type="date" value="${D(7)}"></label></div>
+        ${(S.off||[]).filter(r=>r.to>=D(0)).length?`<div class="list" style="margin-top:8px">${S.off.filter(r=>r.to>=D(0)).map((r,i)=>`<div class="item"><div>${ru(r.from)} — ${ru(r.to)}</div><button class="btn mini ghost" data-act="offDel" data-id="${r.id}">Убрать</button></div>`).join('')}</div>`:''}`,
+      `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="offGo">Закрыть дни</button>`),
+    offGo:()=>{const a=val('of-a'),b=val('of-b');if(!a||!b||b<a){toast('Укажите даты отпуска');return}
+      const hit=S.sessions.filter(v=>v.date>=a&&v.date<=b&&(v.status==='запланирована'||v.status==='подтверждена'));
+      if(hit.length&&!confirm('В эти дни стоит встреч: '+hit.length+'. Отменить их от вашего имени?\n\nКлиентам нужно сообщить самостоятельно.'))return;
+      hit.forEach(v=>{v.status='отменена специалистом';v.reason='отпуск специалиста'});
+      S.off.push({id:uid(),from:a,to:b});save();closeModal();render();toast('Дни отпуска закрыты'+(hit.length?', отменено встреч: '+hit.length:''))},
+    offDel:()=>{S.off=S.off.filter(r=>r.id!==id);save();closeModal();render();toast('Отпуск убран')},
     calPast:()=>{S.ui.calPast=(+S.ui.calPast||0)+1;save();render()},
     shift:()=>{const n=+el.dataset.n;S.ui.day=n?D(days(D(0),S.ui.day)+n):D(0);save();render()},
     openSess:()=>sessModal(id),
@@ -2550,7 +2669,9 @@ document.addEventListener('click',e=>{
     newClient:()=>clientModal(null),
     editClient:()=>clientModal(id),
     tplSet:()=>{const v=sess(id);readSess(v);v.note=Object.assign({},v.note||{},{tpl:el.dataset.tpl});save();sessModal(id)},
-    saveSess:()=>{const v=sess(id);if(!okTime(val('v-time'))){toast('Укажите время часами и минутами, например 10:00');return}PAY_NOTE='';readSess(v);save();closeModal();render();toast(PAY_NOTE||'Запись о встрече сохранена');PAY_NOTE=''},
+    saveSess:()=>{const v=sess(id);if(!okTime(val('v-time'))){toast('Укажите время часами и минутами, например 10:00');return}
+      if((val('v-date')!==v.date||val('v-time')!==v.time)){const ob=overlap(val('v-date'),val('v-time'),val('v-dur')||v.dur,v.id);
+        if(ob&&!confirm(busyText(ob)+'.\n\nСохранить всё равно?'))return}PAY_NOTE='';readSess(v);save();closeModal();render();toast(PAY_NOTE||'Запись о встрече сохранена');PAY_NOTE=''},
     cancelSess:()=>{const v=sess(id);if(document.getElementById('v-date'))readSess(v);save();cancelModal(id)},
     doCancel:()=>{
       const v=sess(id),rule=el.dataset.rule;
@@ -2746,6 +2867,8 @@ document.addEventListener('click',e=>{
     createSess:()=>{
       const cid=val('s-c');
       if(!okTime(val('s-t'))){toast('Укажите время часами и минутами, например 10:00');return}
+      const ob=overlap(val('s-d'),val('s-t'),val('s-dur'),'');
+      if(ob&&!confirm(busyText(ob)+'.\n\nЗаписать всё равно?'))return;
       const two=['парная','семейная'].includes(val('s-type'));
       if(two&&(!val('s-p')||val('s-p')===cid)){toast('Выберите второго участника встречи');return}
       const v={id:uid(),cid,partner:two?val('s-p'):'',date:val('s-d'),time:val('s-t'),dur:+val('s-dur')||50,fact:+val('s-dur')||50,
@@ -2761,13 +2884,19 @@ document.addEventListener('click',e=>{
       c.contact=val('c-contact')||contactOf(c);c.email=val('c-email');
       c.fmt=val('c-fmt');c.link=val('c-link');c.status=val('c-status');c.rate=+val('c-rate')||0;
       c.debt=+val('c-debt')||0;c.since=val('c-since');c.minor=chk('c-minor');
+      const sd=val('c-sd'),oldSlot=JSON.stringify(c.slot||null);
+      if(sd===''){c.slot=null}else{if(!okTime(val('c-st'))){toast('Укажите постоянное время часами и минутами');return}
+        c.slot={d:+sd,time:val('c-st'),every:+val('c-se')||1,from:val('c-sf')||D(0)}}
+      const slotChanged=JSON.stringify(c.slot||null)!==oldSlot;
       if(c.minor&&document.getElementById('c-gname'))c.guardian={name:val('c-gname'),rel:val('c-grel'),phone:val('c-gphone')};
       if(document.getElementById('c-toparent'))c.toParent=val('c-toparent');
       if(document.getElementById('c-req')){
         c.req=val('c-req');c.form=val('c-form');c.ctx=val('c-ctx');c.prev=val('c-prev');c.contra=val('c-contra');
         c.goals=val('c-goals').split('\n').map(x=>x.trim()).filter(Boolean);
       }
-      save();closeModal();render();toast('Карточка сохранена')},
+      save();closeModal();render();
+      if(slotChanged&&c.slot&&c.status!=='пауза'&&c.status!=='завершён'){setTimeout(()=>seriesModal(c.id),250);return}
+      toast('Карточка сохранена')},
     revoke:()=>{const d=S.docs.find(x=>x.id===id);d.st='отозвано';
       S.disc.push({id:uid(),date:D(0),cid:d.cid,who:'—',base:'отзыв согласия субъектом',vol:'зафиксирован отзыв документа «'+tpl(d.tid).name+'»'});
       save();render();toast('Согласие отозвано, отметка внесена в журнал')},
@@ -2958,7 +3087,14 @@ document.addEventListener('click',e=>{
       render();clearTimeout(IDLE);toast('Код входа убран. Записи в браузере больше не закрыты')},
     setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';save();closeModal();renderHead();render();
       toast('Подход: '+appr().name+'. Поменять можно в «Помощи», раздел «Специалист»')},
-    reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();save();render();toast('Демонстрационные данные восстановлены')}}
+    reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();S.demo=true;normS();save();render();toast('Демонстрационные данные восстановлены')}},
+    demoOn:()=>{if(S.clients.length&&!S.demo){toast('Пример открывается только в пустом кабинете');return}
+      const keep=S.settings;S=seed();S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.demo=true;S.ui.apprAsked=true;normS();
+      save();render();renderHead();toast('Открыт пример. Выйти — кнопкой вверху')},
+    demoOff:()=>{if(!confirm('Выйти из примера? Вымышленные клиенты и встречи будут удалены, кабинет станет пустым.'))return;
+      const keep=S.settings;S=emptyBase();S.ui.apprAsked=true;S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room,
+        start:keep.start,end:keep.end,price:keep.price,dur:keep.dur,cancelH:keep.cancelH,cancelRule:keep.cancelRule,meetBase:keep.meetBase,defFmt:keep.defFmt});
+      normS();save();render();renderHead();toast('Пример убран. Кабинет пустой — начните с первого клиента')},
   };
   if(A[a]){e.preventDefault();if(MUT.has(a))pushUndo(MUTL[a]||'');
     /* Черновик стирается по ключу, снятому до закрытия окна, — иначе он оставался бы в базе навсегда. */
@@ -2986,6 +3122,10 @@ document.addEventListener('change',e=>{
   /* Новая встреча: цена берётся из тарифа клиента, для парной и семейной — поле второго участника. */
   if(t.id==='s-c'){const pr=document.getElementById('s-price');if(pr)pr.value=rateOf(t.value);return}
   if(t.id==='s-type'){const w=document.getElementById('s-p-wrap');if(w)w.hidden=!['парная','семейная'].includes(t.value);return}
+  if(t.id==='v-type'){const w=document.getElementById('v-p-wrap');if(w)w.hidden=!['парная','семейная'].includes(t.value);return}
+  if(['s-d','s-t','s-dur'].includes(t.id)){busyNote('s-busy',val('s-d'),val('s-t'),val('s-dur'),'');return}
+  if(['mv-d','mv-t'].includes(t.id)){busyNote('mv-busy',val('mv-d'),val('mv-t'),(sess(MOVE_ID)||{}).dur,MOVE_ID);return}
+  if(t.id==='c-sd'){const w=document.getElementById('c-slot');if(w)w.hidden=t.value==='';return}
   if(t.id==='py-c'){const pv=document.getElementById('py-v');if(pv)pv.innerHTML=payOpts(t.value);return}
   if(t.classList&&t.classList.contains('sc-i'))recalcScale();
 });
