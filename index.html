@@ -305,7 +305,10 @@ textarea{min-height:70px;resize:vertical}
 html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 .sheet .sh h3{font-size:18px}
 .sheet .sb{padding:18px 20px}
-.sheet .sf{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.sheet .sf{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;position:sticky;z-index:6}
+@media(max-width:640px){.sheet .sf .btn{padding:9px 13px;font-size:14px}.sheet .sf{gap:6px;padding:12px 14px}.sflink{font-size:13px}}
+.sheet .sf:has(.sflink){flex-wrap:nowrap;align-items:center}
+.sflink{order:-1;margin-right:auto;white-space:nowrap;background:none;border:0;color:var(--warn);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;padding:6px 0}
 .x{background:transparent;border:0;color:inherit;font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
 
 /* ── Выноски ── */
@@ -363,7 +366,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в14</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в15</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2155,7 +2158,7 @@ function sessModal(id){
       <label class="f"><span>Оплата</span><select id="v-pay">${['','оплачена','пакет','долг','не требуется'].map(x=>`<option ${v.pay===x?'selected':''}>${x}</option>`).join('')}</select></label>
     </div>
     ${v.fmt==='онлайн'?`<div class="okbox" style="margin:4px 0 12px">
-      <b>Онлайн-встреча.</b> Адрес комнаты: <span class="mono" style="word-break:break-all">${esc(meetUrl(v))}</span>
+      <b>Онлайн-встреча.</b>
       <div class="sub" style="margin-top:4px">${v.sent?'Отметка: '+esc(sentLabel(v))+'.':sentStale(v)?'Отметка: '+esc(sentStale(v))+'. Встреча перенесена — отправьте ссылку заново.':'Ссылка клиенту ещё не отправлена.'}${meetOn(v)?' Встреча идёт: начата в '+esc(hhmmL(S.ui.meet.startedAt))+'.':''}</div>
       <div class="row" style="margin-top:8px;gap:6px">${meetBtns(v,true)}</div></div>`:''}
     ${v.rule?`<div class="note">Правило отмены: ${esc(v.rule)}${v.charged?' — удержано '+rub(v.charged):''}.</div>`:''}`;
@@ -2166,7 +2169,6 @@ function sessModal(id){
     .map(k=>'«'+FLD[k]+'»');
   const clinBody=`
     <h3 style="font-family:'Spectral';font-size:16px;margin:18px 0 6px">Запись о встрече</h3>
-    <p class="sub">Шаблон выбирается под способ работы, а не под кабинет. Переключение ничего не стирает: текст полей, которых нет в новом шаблоне, сохраняется и возвращается при переключении обратно.</p>
     ${kept.length?`<div class="note" style="margin:6px 0 0">Сохранено из других шаблонов и в этом не показано: ${kept.map(x=>esc(x)).join('; ')}. Текст не потерян — он вернётся при переключении на прежний шаблон.</div>`:''}
     <div class="row" style="margin:8px 0 12px">${[...new Set(appr().tpl.concat(n.tpl))].map(k=>
       `<button class="btn mini ${n.tpl===k?'':'ghost'}" data-act="tplSet" data-id="${v.id}" data-tpl="${k}">${TPLNAME[k]}</button>`).join('')}
@@ -2174,14 +2176,14 @@ function sessModal(id){
       <button class="btn mini ghost" data-act="aiHome" data-id="${v.id}">Сформулировать домашнее задание</button></div>
     <div class="note" style="margin-bottom:12px">
       Наговорите ход встречи в поле «Свободный рассказ» (Win+H или микрофон на клавиатуре телефона) и нажмите «Разложить по полям».
-      <div class="row" style="margin-top:8px;gap:6px">
-        <button class="btn mini ghost" data-act="voiceParse" data-id="${v.id}">Разложить по полям</button>
-      </div>
       <label class="f" style="margin-top:10px"><span>Свободный рассказ</span><textarea id="n-raw" style="min-height:95px" placeholder="Клиентка рассказала, что неделя прошла спокойнее. Наблюдалась в контакте, темп речи ровный. Похоже, помогает регулярность встреч. Договорились продолжить дневник. По опроснику девять баллов, было четырнадцать.">${esc(n.raw||'')}</textarea></label>
+      <div class="row" style="margin-top:2px;gap:6px">
+        <button class="btn mini" data-act="voiceParse" data-id="${v.id}">Разложить по полям</button>
+      </div>
       <div id="voice-found"></div>
     </div>
     ${TPLS[n.tpl].map(([k,lab])=>`<label class="f"><span>${lab}</span><textarea id="n-${k}">${esc(n[k]||'')}</textarea></label>`).join('')}
-    <label class="f"><span>Не разобрано</span><textarea id="n-rest" placeholder="Сюда попадает то, что кабинет не смог отнести ни к одной части. Ничего не теряется: перенесите вручную или оставьте здесь.">${esc(n.rest||'')}</textarea></label>
+    <label class="f"><span>Не разобрано</span><textarea id="n-rest" placeholder="Сюда попадёт то, что не удалось разложить">${esc(n.rest||'')}</textarea></label>
     <div class="fgrid">
       <label class="f"><span>Оценка риска на этой встрече</span><select id="v-risk">${['без изменений','повышен','требует действий'].map(x=>`<option ${v.risk===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Автор записи</span><input id="v-by" value="${esc(v.by||SPEC().name)}" readonly></label>
@@ -2191,8 +2193,8 @@ function sessModal(id){
     <div class="note">Заметка для себя — видите только вы.</div>`;
   modal(`Встреча · ${ru(v.date)} · ${v.time}`,admin+clinBody,`
     <button class="btn ghost" data-act="closeModal">Закрыть</button>
-    ${late?`<button class="btn ghost" data-act="cancelSess" data-id="${v.id}">Отменить встречу</button>`:''}
-    <button class="btn" data-act="saveSess" data-id="${v.id}">Сохранить</button>`);
+    <button class="btn" data-act="saveSess" data-id="${v.id}">Сохранить</button>
+    ${late?`<button class="sflink" data-act="cancelSess" data-id="${v.id}">Отменить встречу</button>`:''}`);
 }
 /* ═══ Запись голосом и разбор сказанного ═══ */
 /* Кнопка меняла надпись на «Идёт запись», даже когда распознавание не могло запуститься:
