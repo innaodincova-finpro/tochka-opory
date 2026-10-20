@@ -259,7 +259,9 @@ textarea{min-height:70px;resize:vertical}
 #demobar{background:var(--warn-soft);color:var(--ink);padding:9px 16px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
 #demobar button{background:var(--ink);color:var(--card);border:0;border-radius:8px;padding:5px 11px;font-size:13px;cursor:pointer}
 [hidden]{display:none!important}
-#demobar[hidden],#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
+#errbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:700;background:var(--warn);color:#fff;border-radius:12px;padding:11px 14px;font-size:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow)}
+#errbar button{background:#fff;color:var(--warn);border:0;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer}
+#errbar[hidden],#demobar[hidden],#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
 #badscr{position:fixed;inset:0;z-index:510;background:var(--panel);color:#EAF1F7;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .badbtns{display:grid;gap:10px;margin:18px 0 6px}
 .badbtns button,.lockrec button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#EAF1F7;border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;text-align:left}
@@ -396,7 +398,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в17</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в18</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -449,10 +451,19 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
     <p class="locknote">Сначала попробуйте загрузить последнюю копию базы. Файл «сохранённое как есть» пригодится, если копии нет: не удаляйте его.</p>
   </div>
 </div>
+<div id="errbar" hidden>Что-то пошло не так. <span id="errsave"></span> <button type="button" onclick="location.reload()">Обновить</button></div>
 <div id="robar" hidden>Кабинет уже открыт в другой вкладке или окне. Здесь только просмотр — правки не сохраняются.
   <button type="button" id="ro-take">Работать здесь</button></div>
 <div class="toast" id="toast" hidden></div>
 
+<script>
+/* Сбой в работе страницы: сообщение с кнопкой «Обновить» вместо молча сломанного экрана. Ничего не записывает. */
+(function(){function show(){const b=document.getElementById('errbar');if(!b||!b.hidden)return;
+  let ok=true;try{ok=!SAVE_FAIL&&(typeof PEND==='undefined'||PEND===null)}catch(e){}
+  const t=document.getElementById('errsave');if(t)t.textContent=ok?'Записи сохранены.':'Последнее изменение могло не сохраниться.';b.hidden=false}
+  window.addEventListener('error',e=>{if(e&&e.message&&/ResizeObserver/.test(e.message))return;show()});
+  window.addEventListener('unhandledrejection',()=>show())})();
+</script>
 <script>
 "use strict";
 /* ═══════════════ Данные ═══════════════ */
@@ -928,6 +939,60 @@ async function writeMeta(meta){
   ENC.meta=meta;PUB=pubOf();
   try{localStorage.setItem(KEY,markerStr())}catch(e){}
 }
+/* Содержимое файла копии. С кодом — закрыто тем же ключом, что и записи в браузере. */
+async function buildCopy(){
+  const made=new Date().toISOString();
+  if(ENC_ON&&ENC){const data=await sealData(JSON.stringify(S),ENC.dek);
+    return {kabinet:'Точка опоры',copyV:2,encV:2,fmt:FMT,made,pinLen:ENC.meta.pinLen,pin:packW(ENC.meta.pin),rec:packW(ENC.meta.rec),
+      data:{iv:b64(data.iv),ct:b64(data.ct)}}}
+  return Object.assign({},S,{fmt:FMT,copyMade:made})}
+/* ── Запасные копии внутри браузера ──
+   Раз в сутки при сохранении кабинет откладывает копию записей. Хранятся последние 7.
+   С кодом копия закрыта тем же ключом, что и записи. */
+const SNAP_MAX=7;
+async function snapTake(force){
+  if(BOOT||ENC_WAIT||BAD||RO||(ENC_ON&&!ENC))return;
+  let list=[];try{list=(await idbGet('snaps'))||[]}catch(e){return}
+  const last=list[list.length-1];
+  if(!force&&last&&last.day===D(0))return;
+  let item;
+  try{if(ENC_ON){const box=await sealData(JSON.stringify(S),ENC.dek);item={at:new Date().toISOString(),day:D(0),enc:true,box}}
+    else item={at:new Date().toISOString(),day:D(0),enc:false,text:JSON.stringify(S)};
+    item.sum=S.clients.length+' кл., '+S.sessions.length+' встр.';
+    list=list.filter(x=>x.day!==D(0));list.push(item);while(list.length>SNAP_MAX)list.shift();
+    await idbPut('snaps',list)}catch(e){}
+}
+async function snapModal(){
+  let list=[];try{list=(await idbGet('snaps'))||[]}catch(e){}
+  modal('Прежние состояния',list.length?`<div class="list">${list.slice().reverse().map((x,i)=>`<div class="item"><div><b>${ru(x.day)}</b> в ${hhmmL(x.at)}<div class="sub">${esc(x.sum||'')}</div></div>
+      <button class="btn mini ghost" data-act="snapBack" data-id="${list.length-1-i}">Вернуть</button></div>`).join('')}</div>`
+    :'<p class="lead">Запасных копий пока нет. Кабинет откладывает копию раз в сутки, когда вы вносите изменения.</p>')}
+async function snapBack(i){
+  let list=[];try{list=(await idbGet('snaps'))||[]}catch(e){}
+  const x=list[i];if(!x)return;
+  let d=null;
+  try{d=x.enc?await openData(x.box,ENC.dek):JSON.parse(x.text)}
+  catch(e){alert('Эта копия сделана при другом коде входа и не открывается текущим. Записи не изменены.');return}
+  d.copyMade=x.at;closeModal();importData(d)}
+/* ── Автокопия в файл (компьютер, Chrome или Edge) ──
+   Пользователь один раз выбирает файл, например в папке Яндекс Диска. Дальше кабинет
+   записывает в него копию не чаще раза в минуту. После перезапуска браузер просит разрешение заново. */
+const canAuto=()=>typeof window.showSaveFilePicker==='function';
+let AUTO=null,AUTO_ST='',AUTO_AT=null,AUTO_T=null;
+async function autoLoad(){if(!canAuto())return;try{AUTO=await idbGet('autoFile')||null}catch(e){AUTO=null}
+  if(AUTO){try{AUTO_ST=(await AUTO.queryPermission({mode:'readwrite'}))==='granted'?'ok':'perm'}catch(e){AUTO_ST='perm'}}}
+async function autoWrite(){
+  if(!AUTO||AUTO_ST!=='ok'||BOOT||ENC_WAIT||BAD||RO||(ENC_ON&&!ENC))return;
+  try{const body=JSON.stringify(await buildCopy());const w=await AUTO.createWritable();await w.write(body);await w.close();
+    AUTO_AT=new Date();S.settings.lastBackup=D(0)}
+  catch(e){AUTO_ST='perm'}
+  const st=document.getElementById('auto-st');if(st)st.innerHTML=autoLine()}
+function autoSoon(){if(!AUTO||AUTO_ST!=='ok')return;if(AUTO_T)return;AUTO_T=setTimeout(()=>{AUTO_T=null;autoWrite()},60000)}
+function autoLine(){
+  if(!canAuto())return 'Автокопия в файл работает на компьютере в браузере Chrome или Edge. На телефоне сохраняйте копию кнопкой «Скачать копию».';
+  if(!AUTO)return 'Автокопия не настроена.';
+  if(AUTO_ST==='perm')return 'Автокопия на паузе: нужно разрешение браузера. Нажмите «Возобновить автокопию».';
+  return 'Автокопия включена: файл «'+esc(AUTO.name)+'»'+(AUTO_AT?', последняя запись в '+hhmmL(AUTO_AT.toISOString()):'')+'.'}
 /* Единственный путь записи базы в браузер. */
 function persist(){
   if(BOOT){BOOT_SAVE=true;return}
@@ -936,9 +1001,9 @@ function persist(){
   S.fmt=FMT;
   if(S.settings){delete S.settings.pinLen;if(ENC_ON)delete S.settings.pinHash}
   const t=JSON.stringify(S);
-  if(!ENC_ON){localStorage.setItem(KEY,t);return}
+  if(!ENC_ON){localStorage.setItem(KEY,t);snapTake();autoSoon();return}
   if(!ENC)return;
-  PEND=t;writer();
+  PEND=t;writer();snapTake();autoSoon();
 }
 /* Черновики пишутся не на каждое нажатие клавиши, а через короткую паузу. */
 let SOON=null;
@@ -1340,8 +1405,11 @@ function importData(d){
   d.settings=Object.assign({},base.settings,d.settings||{});
   delete d.settings.pinHash;delete d.settings.pinLen;
   const когда=d.copyMade?'\nКопия сохранена: '+ru(isoL(new Date(d.copyMade)))+' в '+hhmmL(d.copyMade)+'.':'';
+  const dAt=d.changedAt||d.copyMade;
+  const old=!BAD&&S.changedAt&&dAt&&dAt<S.changedAt
+    ?'\n\nВНИМАНИЕ: копия старее текущих записей. В копии последнее изменение '+ru(isoL(new Date(dAt)))+' в '+hhmmL(dAt)+', в кабинете — '+ru(isoL(new Date(S.changedAt)))+' в '+hhmmL(S.changedAt)+'. Изменения, внесённые позже, пропадут.':'';
   delete d.copyMade;
-  if(!confirm('Заменить всё содержимое кабинета данными из файла?\n\nСейчас в кабинете: '+было+'.\nВ файле: '+станет+'.'+когда+'\n\nТекущие записи будут заменены. Отменить замену можно кнопкой «Отменить».'))return;
+  if(!confirm('Заменить всё содержимое кабинета данными из файла?\n\nСейчас в кабинете: '+было+'.\nВ файле: '+станет+'.'+когда+old+'\n\nТекущие записи будут заменены. Отменить замену можно кнопкой «Отменить».'))return;
   try{const wasBad=!!BAD;S=d;normS();
     if(wasBad){
       /* Прежние закрытые записи не открываются: копия записывается открыто, код задаётся заново. */
@@ -1377,12 +1445,12 @@ function stepBack(from,to,verb){
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
 const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
-  'wordReport','wordClient','exportClient','doExportClient','recDone','export']);
+  'wordReport','wordClient','exportClient','doExportClient','recDone','export','snaps']);
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
   if(b)b.disabled=!HIST.length; if(u)u.disabled=!UNDO.length; if(r)r.disabled=!REDO.length}
 const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
   'saveDoc','saveDisc','savePay','check','usePack','payDebt','forgiveDebt','saveSup','saveWait','delWait',
-  'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff']);
+  'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff','snapBack']);
 /* Название действия показывается в уведомлении об отмене — иначе непонятно, что именно откатилось. */
 const MUTL={voiceScale:'замер со слов',createSess:'новая встреча',saveSess:'запись о встрече',tplSet:'смена шаблона записи',
   meetEnd:'завершение встречи',meetSwitch:'переход к следующей встрече',saveClient:'карточка клиента',savePlan:'план работы',
@@ -1390,7 +1458,7 @@ const MUTL={voiceScale:'замер со слов',createSess:'новая вст�
   savePay:'оплата',check:'отметка о выполнении',usePack:'списание из пакета',payDebt:'погашение задолженности',
   forgiveDebt:'прощение задолженности',saveSup:'запись в реестре супервизии',saveWait:'лист ожидания',delWait:'строка листа ожидания',
   doAnon:'обезличивание клиента',import:'загрузка копии базы',reset:'возврат демонстрационных данных',delSess:'удаление встречи',delPay:'удаление платежа',
-  delClient:'удаление клиента',moveGo:'перенос встречи',seriesGo:'постоянное расписание',offGo:'отпуск',offDel:'отмена отпуска',demoOn:'открытие примера',demoOff:'выход из примера'};
+  delClient:'удаление клиента',moveGo:'перенос встречи',seriesGo:'постоянное расписание',offGo:'отпуск',offDel:'отмена отпуска',demoOn:'открытие примера',demoOff:'выход из примера',snapBack:'возврат к прежнему состоянию'};
 
 /* Черновики незаполненных форм: если окно закрыто случайно, введённое не теряется. */
 /* Ключ черновика привязан не только к названию окна, но и к записи, которую в нём правят:
@@ -2152,10 +2220,13 @@ function vHelp(){
     </div>
 
     <h3>Копия записей</h3>
+    <div class="note" id="auto-st" style="margin-bottom:8px">${autoLine()}</div>
+    ${canAuto()?`<div class="row" style="margin-bottom:10px">${!AUTO?'<button class="btn mini" data-act="autoSet">Включить автокопию в файл</button>':AUTO_ST==='perm'?'<button class="btn mini" data-act="autoResume">Возобновить автокопию</button> <button class="btn mini ghost" data-act="autoOff">Выключить</button>':'<button class="btn mini ghost" data-act="autoOff">Выключить автокопию</button>'}</div>`:''}
     <p class="lead">Последняя копия: <b>${S.settings.lastBackup?ru(S.settings.lastBackup):'ещё не сохранялась'}</b>${S.settings.lastBackup&&days(S.settings.lastBackup,D(0))>=7?' — '+days(S.settings.lastBackup,D(0))+' дн. назад':''}. Сохраняйте копию раз в неделю на компьютер или в российское облако (Яндекс Диск).</p>
     <div class="row" style="margin-top:10px">
       <button class="btn" data-act="export">Скачать копию базы</button>
       <button class="btn ghost" data-act="import">Загрузить копию</button>
+      <button class="btn ghost" data-act="snaps">Прежние состояния</button>
       <button class="btn ghost" data-act="exportClient">Выгрузка по запросу клиента</button>
       <button class="btn ghost" data-act="anonClient">Обезличить клиента</button>
       ${S.demo?'<button class="btn ghost warn" data-act="demoOff">Выйти из примера</button>':(!S.clients.length?'<button class="btn ghost" data-act="demoOn">Посмотреть на примере</button>':'')}
@@ -2554,6 +2625,13 @@ document.addEventListener('click',e=>{
     backClients:()=>{pushHist();S.ui.client=null;save();render();syncRail()},
     filter:()=>{S.ui.filter=el.dataset.f;save();render()},
     calDay:()=>dayModal(el.dataset.date),
+    snaps:()=>snapModal(),
+    snapBack:()=>snapBack(+id),
+    autoSet:async()=>{try{const h=await window.showSaveFilePicker({suggestedName:'tochka-opory-avtokopiya.json',types:[{description:'Копия кабинета',accept:{'application/json':['.json']}}]});
+        AUTO=h;AUTO_ST='ok';await idbPut('autoFile',h);await autoWrite();render();toast('Автокопия включена')}catch(e){}},
+    autoResume:async()=>{if(!AUTO)return;try{AUTO_ST=(await AUTO.requestPermission({mode:'readwrite'}))==='granted'?'ok':'perm'}catch(e){AUTO_ST='perm'}
+      if(AUTO_ST==='ok'){await autoWrite();toast('Автокопия возобновлена')}render()},
+    autoOff:async()=>{AUTO=null;AUTO_ST='';try{await idbDel('autoFile')}catch(e){}render();toast('Автокопия выключена. Файл на диске остался')},
     delSess:()=>{const v=sess(id);if(!v)return;
       if(!confirm('Удалить встречу «'+title(v)+'» '+ru(v.date)+' в '+v.time+'?'+(v.note?'\n\nЗапись о встрече тоже будет удалена.':'')+'\n\nОтменить удаление можно кнопкой «Отменить».'))return;
       S.sessions=S.sessions.filter(x=>x.id!==v.id);S.pays.forEach(p=>{if(p.sid===v.id)p.sid=''});
@@ -2965,14 +3043,8 @@ document.addEventListener('click',e=>{
     /* Копия базы. Если задан код, копия закрыта тем же ключом, что и записи в браузере:
        открыть её можно кодом входа или кодом восстановления, действовавшими в момент сохранения. */
     export:async()=>{
-      persistNow();
-      const made=new Date().toISOString();let body;
-      try{
-        if(ENC_ON&&ENC){const data=await sealData(JSON.stringify(S),ENC.dek);
-          body={kabinet:'Точка опоры',copyV:2,encV:2,fmt:FMT,made,pinLen:ENC.meta.pinLen,pin:packW(ENC.meta.pin),rec:packW(ENC.meta.rec),
-            data:{iv:b64(data.iv),ct:b64(data.ct)}}}
-        else body=Object.assign({},S,{fmt:FMT,copyMade:made});
-      }catch(err){alert('Копию сохранить не удалось. Записи не изменены.');return}
+      persistNow();let body;
+      try{body=await buildCopy()}catch(err){alert('Копию сохранить не удалось. Записи не изменены.');return}
       const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(body)],{type:'application/json'}));
       a.download='tochka-opory-kopiya-'+D(0)+'.json';a.click();
       if(!RO){S.settings.lastBackup=D(0);save();render()}
@@ -3096,7 +3168,7 @@ document.addEventListener('click',e=>{
         start:keep.start,end:keep.end,price:keep.price,dur:keep.dur,cancelH:keep.cancelH,cancelRule:keep.cancelRule,meetBase:keep.meetBase,defFmt:keep.defFmt});
       normS();save();render();renderHead();toast('Пример убран. Кабинет пустой — начните с первого клиента')},
   };
-  if(A[a]){e.preventDefault();if(MUT.has(a))pushUndo(MUTL[a]||'');
+  if(A[a]){e.preventDefault();if(MUT.has(a)){pushUndo(MUTL[a]||'');S.changedAt=new Date().toISOString()}
     /* Черновик стирается по ключу, снятому до закрытия окна, — иначе он оставался бы в базе навсегда. */
     const kBefore=draftKey();
     A[a]();
@@ -3403,6 +3475,8 @@ window.addEventListener('beforeunload',e=>{
 });
 /* Проверка хранилища при запуске: закрытая база в IndexedDB главнее того, что лежит в localStorage.
    Так прежняя редакция кабинета, записавшая поверх метки пример, не лишает доступа к настоящим записям. */
+/* Браузер может стереть данные сайта при нехватке места. Просим не трогать записи кабинета. */
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist()})}catch(e){}
 (async function bootCheck(){
   let v=null,io=false;
   for(let i=0;i<4;i++){try{v=await idbGet('vault');io=false;break}catch(e){io=true;await new Promise(r=>setTimeout(r,400))}}
@@ -3418,6 +3492,7 @@ window.addEventListener('beforeunload',e=>{
   BOOT=false;
   if(BAD){showBad();return}
   if(!ENC_WAIT&&BOOT_SAVE)save();
+  await autoLoad();
   render();renderHead();
 })();
 
