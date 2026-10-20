@@ -342,7 +342,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в11</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в12</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -412,6 +412,7 @@ const rub=n=>(Math.round(n||0)).toLocaleString('ru-RU')+' ₽';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const dow=s=>['вс','пн','вт','ср','чт','пт','сб'][pd(s).getDay()];
+const okTime=t=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t||'').trim());
 const fmt=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 
 /* ── Опросники ── */
@@ -1039,6 +1040,16 @@ function finishMeet(v,mins){
   if(S.ui.meet&&S.ui.meet.id===v.id){S.ui.meet=null;MEET_HIDDEN=false}
   save();
 }
+/* Короткая встреча (меньше половины плана) могла быть завершена случайно или не состояться:
+   без подтверждения она не получает статус «состоялась» и не попадает в доход. */
+function shortOk(v,mins){const plan=+v.dur||50;
+  return !(mins<plan/2)||confirm('Встреча «'+title(v)+'» длилась '+mins+' мин при плане '+plan+' мин.\n\nОК — отметить встречу как состоявшуюся.\nОтмена — остановить отсчёт, статус выбрать в карточке встречи (например, «неявка» или «перенесена»).')}
+/* Список встреч в окне оплаты: только выбранного клиента, последние состоявшиеся и ближайшие будущие (предоплата). */
+const rateOf=cid=>{const c=cl(cid);return (c&&+c.rate)||S.settings.price};
+function payOpts(cid){
+  const list=S.sessions.filter(v=>(v.cid===cid||v.partner===cid)&&['состоялась','запланирована','подтверждена'].includes(v.status))
+    .sort((a,b)=>(a.date+a.time)<(b.date+b.time)?1:-1).slice(0,25);
+  return '<option value="">не привязывать</option>'+list.map(v=>`<option value="${v.id}">${ru(v.date)} ${v.time} · ${esc(title(v))}${v.date>D(0)?' · предстоит':''}${v.pay==='оплачена'?' · уже оплачена':''}</option>`).join('')}
 function meetBusyModal(cur,next){
   const mins=meetMins();
   modal('Идёт другая встреча',`
@@ -1832,7 +1843,7 @@ function vDocs(){
 function vPay(){
   const debt=S.clients.reduce((s,c)=>s+(c.debt||0),0);
   const oblig=S.packs.reduce((s,p)=>s+Math.max(0,p.n-p.used)*p.price,0);
-  const m30=S.pays.filter(p=>days(p.date,D(0))<=30);
+  const m30=S.pays.filter(p=>p.date<=D(0)&&days(p.date,D(0))<=30);
   const sum30=m30.reduce((s,p)=>s+p.sum,0);
   const noCheck=S.pays.filter(p=>!p.check);
   return `<div class="card">
@@ -2156,7 +2167,7 @@ function sessModal(id){
     </div>
     <div class="fgrid">
       <label class="f"><span>Дата</span><input id="v-date" type="date" value="${v.date}"></label>
-      <label class="f"><span>Время</span><input id="v-time" value="${esc(v.time)}"></label>
+      <label class="f"><span>Время</span><input id="v-time" type="time" step="300" value="${esc(v.time)}"></label>
       <label class="f"><span>Длительность план, мин</span><input id="v-dur" type="number" value="${v.dur}"></label>
       <label class="f"><span>Длительность факт, мин</span><input id="v-fact" type="number" value="${v.fact}"></label>
       <label class="f"><span>Тип встречи</span><select id="v-type">${['первичная','регулярная','парная','семейная','групповая'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
@@ -2306,6 +2317,7 @@ function findScores(text){
   });
   return out;
 }
+let PAY_NOTE='';
 function readSess(v){
   const wasDate=v.date,wasTime=v.time;
   v.date=val('v-date');v.time=val('v-time');v.dur=+val('v-dur')||v.dur;v.fact=+val('v-fact')||v.fact;
@@ -2315,7 +2327,14 @@ function readSess(v){
     v.sentOld={at:v.sent,date:wasDate,time:wasTime};v.sent='';
   }
   v.type=val('v-type');v.fmt=val('v-fmt');v.link=val('v-link');v.status=val('v-status');
-  v.price=+val('v-price')||0;v.pay=val('v-pay');
+  v.price=+val('v-price')||0;
+  const wasPay=v.pay;v.pay=val('v-pay');
+  /* Отметка «оплачена» записывает платёж в журнал, снятие отметки убирает записанный так платёж. */
+  if(v.pay==='оплачена'&&wasPay!=='оплачена'&&!S.pays.some(p=>p.sid===v.id)&&v.price>0){
+    S.pays.push({id:uid(),cid:v.cid,date:D(0),sum:v.price,method:'СБП',sid:v.id,check:false,purpose:'Консультация',comment:'Отмечено в карточке встречи',auto:true});
+    PAY_NOTE='Платёж '+v.price+' ₽ записан в журнал оплат сегодняшним числом. Дату и способ можно поправить в «Оплатах»'}
+  if(wasPay==='оплачена'&&v.pay!=='оплачена'){const i=S.pays.findIndex(p=>p.sid===v.id&&p.auto);
+    if(i>=0){S.pays.splice(i,1);PAY_NOTE='Платёж по этой встрече убран из журнала оплат'}}
   if(document.getElementById('n-'+TPLS[(v.note&&v.note.tpl)||defTpl()][0][0])){
     const t=(v.note&&v.note.tpl)||defTpl();
     /* Запись собирается поверх прежней, а не с чистого листа: иначе текст полей,
@@ -2438,11 +2457,12 @@ function newSessModal(date,cid,time){
     <div class="fgrid">
       <label class="f"><span>Клиент</span><select id="s-c">${S.clients.map(c=>`<option value="${c.id}" ${cid===c.id?'selected':''}>${esc(nm(c))}</option>`).join('')}</select></label>
       <label class="f"><span>Дата</span><input id="s-d" type="date" value="${date||D(1)}"></label>
-      <label class="f"><span>Время</span><input id="s-t" value="${esc(time||'12:00')}"></label>
+      <label class="f"><span>Время</span><input id="s-t" type="time" step="300" value="${esc(time||'12:00')}"></label>
       <label class="f"><span>Длительность, мин</span><input id="s-dur" type="number" value="${S.settings.dur}"></label>
       <label class="f"><span>Тип</span><select id="s-type">${['первичная','регулярная','парная','семейная','групповая'].map(x=>`<option ${x==='регулярная'?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Формат</span><select id="s-fmt">${['очно','онлайн'].map(x=>`<option ${(S.settings.defFmt||'очно')===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f"><span>Стоимость, ₽</span><input id="s-price" type="number" value="${S.settings.price}"></label>
+      <label class="f"><span>Стоимость, ₽</span><input id="s-price" type="number" value="${rateOf(cid||(S.clients[0]&&S.clients[0].id))}"></label>
+      <label class="f" id="s-p-wrap" hidden><span>Второй участник</span><select id="s-p"><option value="">— выберите —</option>${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
     </div>
     <div class="note">Запись создаётся в статусе «запланирована». Подтверждение — отдельное действие: подтверждает клиент, а не кабинет.
     Для формата «онлайн» подставляется постоянная комната клиента; заменить адрес можно в карточке встречи.</div>
@@ -2486,7 +2506,8 @@ document.addEventListener('click',e=>{
     meetSwitch:()=>{
       const next=sess(id);const cur=S.ui.meet?sess(S.ui.meet.id):null;
       const mins=meetMins();
-      if(cur)finishMeet(cur,mins);
+      if(cur){if(shortOk(cur,mins))finishMeet(cur,mins);
+        else{cur.fact=mins;if(S.ui.meet&&S.ui.meet.id===cur.id){S.ui.meet=null;MEET_HIDDEN=false}}}
       closeModal();
       if(!next){render();return}
       startMeet(next,true);render();
@@ -2501,8 +2522,7 @@ document.addEventListener('click',e=>{
       const mins=meetMins();
       /* Короткая встреча (меньше половины плана) могла быть завершена случайно или не состояться:
          без подтверждения она не получает статус «состоялась» и не попадает в доход и отчёты. */
-      const plan=+v.dur||50;
-      if(mins<plan/2&&!confirm('Встреча длилась '+mins+' мин при плане '+plan+' мин.\n\nОК — отметить встречу как состоявшуюся.\nОтмена — остановить отсчёт, статус выбрать в карточке встречи (например, «неявка» или «перенесена»).')){
+      if(!shortOk(v,mins)){
         v.fact=mins;
         if(S.ui.meet&&S.ui.meet.id===v.id){S.ui.meet=null;MEET_HIDDEN=false}
         save();render();sessModal(v.id);
@@ -2535,7 +2555,7 @@ document.addEventListener('click',e=>{
     newClient:()=>clientModal(null),
     editClient:()=>clientModal(id),
     tplSet:()=>{const v=sess(id);readSess(v);v.note=Object.assign({},v.note||{},{tpl:el.dataset.tpl});save();sessModal(id)},
-    saveSess:()=>{const v=sess(id);readSess(v);save();closeModal();render();toast('Запись о встрече сохранена')},
+    saveSess:()=>{const v=sess(id);if(!okTime(val('v-time'))){toast('Укажите время часами и минутами, например 10:00');return}PAY_NOTE='';readSess(v);save();closeModal();render();toast(PAY_NOTE||'Запись о встрече сохранена');PAY_NOTE=''},
     cancelSess:()=>{const v=sess(id);readSess(v);save();cancelModal(id)},
     doCancel:()=>{
       const v=sess(id),rule=el.dataset.rule;
@@ -2668,7 +2688,10 @@ document.addEventListener('click',e=>{
       const keys=TPLS[tpl].map(x=>x[0]);
       const buckets={};keys.forEach(k=>buckets[k]=[]);
       const rest=[];
+      /* Предложение, которое уже стоит в каком-либо поле записи, второй раз не добавляется. */
+      const have=[...keys.map(k=>'n-'+k),'n-rest'].map(i=>(document.getElementById(i)||{}).value||'').join('\n');
       splitSentences(box.value).forEach(sent=>{
+        if(have.includes(sent.trim()))return;
         const k=pickKey(sent,keys);
         if(k)buckets[k].push(sent);else rest.push(sent);
       });
@@ -2729,7 +2752,10 @@ document.addEventListener('click',e=>{
       save();closeModal();render();toast('Версия плана добавлена')},
     createSess:()=>{
       const cid=val('s-c');
-      const v={id:uid(),cid,date:val('s-d'),time:val('s-t'),dur:+val('s-dur')||50,fact:+val('s-dur')||50,
+      if(!okTime(val('s-t'))){toast('Укажите время часами и минутами, например 10:00');return}
+      const two=['парная','семейная'].includes(val('s-type'));
+      if(two&&(!val('s-p')||val('s-p')===cid)){toast('Выберите второго участника встречи');return}
+      const v={id:uid(),cid,partner:two?val('s-p'):'',date:val('s-d'),time:val('s-t'),dur:+val('s-dur')||50,fact:+val('s-dur')||50,
         type:val('s-type'),fmt:val('s-fmt'),link:'',status:'запланирована',price:+val('s-price')||0,pay:'',
         risk:'без изменений',done:false,note:null,self:'',by:SPEC().name,upd:'',before:0,charged:0,rule:'',reason:'',sent:''};
       S.sessions.push(v);save();closeModal();render();toast('Записано на '+ru(v.date)+' в '+v.time)},
@@ -2780,13 +2806,15 @@ document.addEventListener('click',e=>{
         <label class="f"><span>Дата</span><input id="py-d" type="date" value="${D(0)}"></label>
         <label class="f"><span>Сумма, ₽</span><input id="py-s" type="number" value="${S.settings.price}"></label>
         <label class="f"><span>Способ</span><select id="py-m"><option>СБП</option><option>карта</option><option>наличные</option><option>перевод</option></select></label>
-        <label class="f"><span>Встреча</span><select id="py-v"><option value="">не привязывать</option>${S.sessions.filter(v=>v.status==='состоялась').slice(-25).reverse().map(v=>`<option value="${v.id}">${ru(v.date)} ${v.time} · ${esc(title(v))}</option>`).join('')}</select></label>
+        <label class="f"><span>Встреча</span><select id="py-v">${payOpts(S.clients[0]&&S.clients[0].id)}</select></label>
       </div>
       <label class="f"><span>Комментарий</span><input id="py-t"></label>
-      <div class="note">Назначение платежа в чеке — «Консультация». Нейтральная формулировка выбрана намеренно: чек попадает в банковскую выписку и в приложение оператора фискальных данных.</div>`,
+      <div class="note">Назначение платежа в чеке — «Консультация». Нейтральная формулировка выбрана намеренно: чек попадает в банковскую выписку и в приложение «Мой налог».</div>`,
       `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="savePay">Записать</button>`),
     savePay:()=>{S.pays.push({id:uid(),cid:val('py-c'),date:val('py-d'),sum:+val('py-s')||0,method:val('py-m'),
-      sid:val('py-v'),check:false,purpose:'Консультация',comment:val('py-t')});save();closeModal();render();toast('Оплата записана')},
+      sid:val('py-v'),check:false,purpose:'Консультация',comment:val('py-t')});
+      const ps=sess(val('py-v'));if(ps&&ps.pay!=='пакет')ps.pay='оплачена';
+      save();closeModal();render();toast('Оплата записана'+(ps?' и отмечена во встрече':''))},
     check:()=>{const p=S.pays.find(x=>x.id===id);p.check=true;save();render();toast('Чек отмечен как выданный')},
     usePack:()=>{const p=S.packs.find(x=>x.id===id);if(p.used>=p.n){toast('Пакет израсходован');return}p.used++;save();render();toast('Списана одна встреча из пакета')},
     payDebt:()=>{const c=cl(id);S.pays.push({id:uid(),cid:c.id,date:D(0),sum:c.debt,method:'СБП',sid:'',check:false,purpose:'Консультация',comment:'Погашение задолженности'});
@@ -2963,6 +2991,10 @@ document.addEventListener('change',e=>{
     return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
+  /* Новая встреча: цена берётся из тарифа клиента, для парной и семейной — поле второго участника. */
+  if(t.id==='s-c'){const pr=document.getElementById('s-price');if(pr)pr.value=rateOf(t.value);return}
+  if(t.id==='s-type'){const w=document.getElementById('s-p-wrap');if(w)w.hidden=!['парная','семейная'].includes(t.value);return}
+  if(t.id==='py-c'){const pv=document.getElementById('py-v');if(pv)pv.innerHTML=payOpts(t.value);return}
   if(t.classList&&t.classList.contains('sc-i'))recalcScale();
 });
 document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('sc-i'))recalcScale()});
