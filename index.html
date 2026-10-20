@@ -82,6 +82,12 @@ html[data-theme="dark"] nav.tabs button.on{color:#0B131B}
   .rolebox .who span{display:none}
   .hbtn{padding:5px 8px;font-size:12px}
   nav.tabs button{padding:7px 10px;font-size:13.5px}
+  /* Телефон: название — отдельной строкой, имя специалиста не выводится, вкладки делят ширину поровну и видны целиком. */
+  .brand{flex:1 1 auto}
+  .rolebox .who{display:none}
+  .tabwrap::after{display:none}
+  nav.tabs{overflow-x:visible}
+  nav.tabs button{flex:1 1 auto;min-width:0;padding:7px 4px;font-size:12.5px;text-align:center;white-space:nowrap}
   .sb{padding:13px}
   .sb .grid{gap:9px}
   /* Поля идут по два в ряд: иначе карточка встречи разворачивается в длинный столбец. */
@@ -227,7 +233,21 @@ textarea{min-height:70px;resize:vertical}
   display:flex;align-items:center;justify-content:center;padding:20px}
 /* Правило display:flex перебивает встроенное скрытие, и невидимый экран продолжал
    перехватывать нажатия по всему кабинету. */
-#lockscr[hidden]{display:none}
+#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
+#badscr{position:fixed;inset:0;z-index:510;background:var(--panel);color:#EAF1F7;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.badbtns{display:grid;gap:10px;margin:18px 0 6px}
+.badbtns button,.lockrec button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#EAF1F7;border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;text-align:left}
+.badbtns button:hover,.lockrec button:hover{border-color:var(--ochre);color:var(--ochre)}
+.badbtns .badwarn{border-color:rgba(232,167,156,.5);color:#E8A79C}
+.lockrec{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:6px}
+.lockrec input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:11px 12px;font:15px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;min-width:0}
+.locklinks{display:flex;gap:16px;margin-top:14px}
+.locklink{background:none;border:0;color:#A9BDD0;font-size:13px;text-decoration:underline;cursor:pointer;padding:4px 0}
+.locklink:hover{color:var(--ochre)}
+.locklink[hidden]{display:none}
+#robar{position:relative;z-index:60;background:var(--ochre);color:#1d1d1d;padding:9px 16px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+#robar button{background:#1d1d1d;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.reccode{font-size:clamp(15px,5vw,22px);white-space:nowrap;letter-spacing:.06em;text-align:center;padding:16px;margin:12px 0;border:1px dashed var(--line);border-radius:12px;background:var(--soft,rgba(0,0,0,.03))}
 .lockbox{width:100%;max-width:320px;text-align:left}
 .lockbrand b{font-family:'Spectral',Georgia,serif;font-size:21px;display:block}
 .lockbrand span{font-size:12.5px;color:#A9BDD0}
@@ -241,6 +261,7 @@ textarea{min-height:70px;resize:vertical}
   border-radius:10px;padding:15px 0;font-size:19px;font-family:inherit;cursor:pointer}
 .lockpad button:hover:not(:disabled){border-color:var(--ochre);color:var(--ochre)}
 .lockpad button.blank{border:0;cursor:default}
+.lockpad.wait button{opacity:.35;cursor:default}
 .locknote{margin-top:22px;font-size:12px;color:#93A9BE;line-height:1.45}
 .locknote.bad{color:#E8A79C}
 /* Значок микрофона у каждого поля: одна кнопка на весь кабинет заставляла помнить,
@@ -321,7 +342,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 28.08.2026 · в10</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в11</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -346,21 +367,51 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
     <h2 id="lock-title">Введите код</h2>
     <div class="lockdots" id="lock-dots"></div>
     <div class="lockpad" id="lock-pad"></div>
-    <div class="locknote" id="lock-note">Код известен только вам. Забытый код восстановить нельзя — записи останутся закрытыми.</div>
+    <div class="lockrec" id="lock-rec" hidden>
+      <input id="lock-rec-in" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="Код восстановления">
+      <button type="button" id="lock-rec-go">Войти</button>
+    </div>
+    <div class="locknote" id="lock-note"></div>
+    <div class="locklinks">
+      <button type="button" class="locklink" id="lock-forgot" hidden>Забыли код?</button>
+      <button type="button" class="locklink" id="lock-cancel" hidden>Отмена</button>
+    </div>
   </div>
 </div>
+<div id="badscr" hidden>
+  <div class="lockbox">
+    <div class="lockbrand"><b>Точка опоры</b><span>кабинет специалиста</span></div>
+    <h2 style="margin-top:34px">Записи не удалось открыть</h2>
+    <p class="locknote" id="bad-why" style="font-size:14px;color:#EAF1F7"></p>
+    <p class="locknote">Кабинет ничего не изменил и ничего не будет записывать, пока вы не выберете действие.</p>
+    <div class="badbtns">
+      <button type="button" id="bad-retry" hidden>Открыть кабинет снова</button>
+      <button type="button" id="bad-imp">Загрузить копию базы</button>
+      <button type="button" id="bad-dl">Скачать сохранённое как есть</button>
+      <button type="button" id="bad-reset" class="badwarn">Начать с пустого кабинета</button>
+    </div>
+    <p class="locknote">Сначала попробуйте загрузить последнюю копию базы. Файл «сохранённое как есть» пригодится, если копии нет: не удаляйте его.</p>
+  </div>
+</div>
+<div id="robar" hidden>Кабинет уже открыт в другой вкладке или окне. Здесь только просмотр — правки не сохраняются.
+  <button type="button" id="ro-take">Работать здесь</button></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 "use strict";
 /* ═══════════════ Данные ═══════════════ */
 const KEY='tochka-opory-v1';
-const D=(n=0)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+/* Даты считаются по часам устройства, а не по Гринвичу: иначе ночью «сегодня» показывало вчерашний день. */
+const p2=n=>String(n).padStart(2,'0');
+const isoL=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+const pd=s=>{const a=String(s).slice(0,10).split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
+const hhmmL=t=>{const d=new Date(t);return p2(d.getHours())+':'+p2(d.getMinutes())};
+const D=(n=0)=>{const d=new Date();d.setDate(d.getDate()+n);return isoL(d)};
 const ru=s=>{if(!s)return '—';const[y,m,d]=s.split('-');return d+'.'+m+'.'+y};
 const rub=n=>(Math.round(n||0)).toLocaleString('ru-RU')+' ₽';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
-const dow=s=>['вс','пн','вт','ср','чт','пт','сб'][new Date(s).getDay()];
+const dow=s=>['вс','пн','вт','ср','чт','пт','сб'][pd(s).getDay()];
 const fmt=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 
 /* ── Опросники ── */
@@ -729,9 +780,167 @@ function seed(){
     ui:{tab:'today',anon:false,client:null,day:D(0),filter:'все',scale:'PHQ-9',chartC:'c1'}
   };
 }
+/* ── Хранение базы и защита кодом ──
+   Без кода база лежит в браузере открыто (localStorage), как и раньше.
+   С кодом база лежит закрытой в IndexedDB: записи шифруются одним случайным ключом базы,
+   а сам ключ закрыт двумя замками — кодом входа и кодом восстановления (записывается на бумагу).
+   Длина кода и замки хранятся рядом с базой, а не внутри неё: поэтому отмена действий,
+   загрузка копии и возврат примера больше не могут изменить код.
+   В localStorage в этом случае лежит только метка: имя специалиста для экрана входа,
+   срок блокировки и длина кода. Сведений о клиентах в метке нет.
+   Пока база не открыта кодом (ENC_WAIT), пока идёт проверка при запуске (BOOT),
+   пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
+   иначе пустая заготовка затёрла бы настоящие записи. */
+const FMT=2;
+const IDB_NAME='tochka-opory',IDB_STORE='v';
+const KDF_PIN=600000,KDF_REC=200000;
+let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=u=>{let t='';const a=new Uint8Array(u);for(let i=0;i<a.length;i++)t+=String.fromCharCode(a[i]);return btoa(t)};
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+function idb(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(IDB_NAME,1)}catch(e){rej(e);return}
+  r.onupgradeneeded=()=>{try{r.result.createObjectStore(IDB_STORE)}catch(e){}};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('blocked'))})}
+async function idbGet(k){const db=await idb();return new Promise((res,rej)=>{
+  const q=db.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).get(k);
+  q.onsuccess=()=>{db.close();res(q.result)};q.onerror=()=>{db.close();rej(q.error)}})}
+async function idbPut(k,v){const db=await idb();return new Promise((res,rej)=>{
+  const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(v,k);
+  tx.oncomplete=()=>{db.close();res()};tx.onerror=tx.onabort=()=>{db.close();rej(tx.error||new Error('abort'))}})}
+async function idbDel(k){const db=await idb();return new Promise((res,rej)=>{
+  const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).delete(k);
+  tx.oncomplete=()=>{db.close();res()};tx.onerror=tx.onabort=()=>{db.close();rej(tx.error||new Error('abort'))}})}
+async function kek(secret,salt,iter){
+  const base=await crypto.subtle.importKey('raw',te.encode('tochka-opory|'+secret),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['wrapKey','unwrapKey'])}
+async function wrapDek(dek,secret,iter){
+  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.wrapKey('raw',dek,await kek(secret,salt,iter),{name:'AES-GCM',iv});
+  return {salt,iv,ct:new Uint8Array(ct),iter}}
+async function unwrapDek(w,secret){
+  return crypto.subtle.unwrapKey('raw',w.ct,await kek(secret,w.salt,w.iter),{name:'AES-GCM',iv:w.iv},{name:'AES-GCM',length:256},true,['encrypt','decrypt'])}
+async function sealData(text,dek){const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},dek,te.encode(text));return {iv,ct:new Uint8Array(ct)}}
+async function openData(box,dek){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:box.iv},dek,box.ct);return JSON.parse(td.decode(pt))}
+/* Код восстановления: 16 знаков без похожих друг на друга (нет O, 0, I, 1).
+   Русские буквы, похожие на латинские, принимаются: на телефоне раскладка часто русская. */
+function newRecCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const r=crypto.getRandomValues(new Uint8Array(16));
+  let s='';for(let i=0;i<16;i++){s+=A[r[i]%32];if(i%4===3&&i<15)s+='-'}return s}
+function recNorm(s){const map={'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','Р':'P','С':'C','Т':'T','Х':'X','У':'Y'};
+  return String(s||'').toUpperCase().replace(/[АВЕКМНРСТХУ]/g,ch=>map[ch]).replace(/[^A-Z0-9]/g,'')}
+const packW=w=>({salt:b64(w.salt),iv:b64(w.iv),ct:b64(w.ct),iter:w.iter});
+const unpackW=w=>({salt:unb64(w.salt),iv:unb64(w.iv),ct:unb64(w.ct),iter:w.iter});
+function pubOf(){const st=(S&&S.settings)||{};
+  return {spec:st.spec||null,lock:st.lock||15,pinLen:ENC?ENC.meta.pinLen:((PUB&&PUB.pinLen)||6)}}
+function markerStr(){return JSON.stringify({encV:2,fmt:FMT,pub:pubOf()})}
+/* Заготовка на время, пока база закрыта: настройки для экрана входа есть, сведений о клиентах нет. */
+function encStub(pub){const z=seed();
+  Object.keys(z).forEach(k=>{if(Array.isArray(z[k]))z[k]=[]});
+  if(pub&&pub.spec)z.settings.spec=pub.spec;if(pub&&pub.lock)z.settings.lock=pub.lock;
+  z.ui.apprAsked=true;return z}
+
+/* Запись закрытой базы: всегда берётся последнее состояние, промежуточные пропускаются. */
+let PEND=null,WRITING=false,WAITERS=[];
+function flushed(){return (!WRITING&&PEND===null)?Promise.resolve():new Promise(r=>WAITERS.push(r))}
+async function writer(){
+  if(WRITING||RO)return;WRITING=true;let fail=false;
+  try{
+    while(PEND!==null&&ENC){
+      const t=PEND;PEND=null;
+      const data=await sealData(t,ENC.dek);
+      await idbPut('vault',{encV:2,fmt:FMT,pinLen:ENC.meta.pinLen,pin:ENC.meta.pin,rec:ENC.meta.rec,pub:pubOf(),data,at:new Date().toISOString()});
+      try{localStorage.setItem(KEY,markerStr())}catch(e){}
+    }
+  }catch(e){fail=true}
+  WRITING=false;
+  if(fail){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Откройте «Помощь» и скачайте копию базы')}
+  if(PEND!==null&&ENC){writer();return}
+  const w=WAITERS.splice(0);w.forEach(f=>f());
+}
+/* Запись базы с новыми замками: замки в памяти меняются только после того, как запись прошла.
+   Иначе при сбое кабинет сообщал «не изменено», а новый код уже начинал действовать. */
+async function writeMeta(meta){
+  if(RO)throw new Error('ro');
+  await flushed();
+  const data=await sealData(JSON.stringify(S),ENC.dek);
+  await idbPut('vault',{encV:2,fmt:FMT,pinLen:meta.pinLen,pin:meta.pin,rec:meta.rec,pub:Object.assign(pubOf(),{pinLen:meta.pinLen}),data,at:new Date().toISOString()});
+  ENC.meta=meta;PUB=pubOf();
+  try{localStorage.setItem(KEY,markerStr())}catch(e){}
+}
+/* Единственный путь записи базы в браузер. */
+function persist(){
+  if(BOOT){BOOT_SAVE=true;return}
+  if(ENC_WAIT||BAD||RO)return;
+  clearTimeout(SOON);SOON=null;
+  S.fmt=FMT;
+  if(S.settings){delete S.settings.pinLen;if(ENC_ON)delete S.settings.pinHash}
+  const t=JSON.stringify(S);
+  if(!ENC_ON){localStorage.setItem(KEY,t);return}
+  if(!ENC)return;
+  PEND=t;writer();
+}
+/* Черновики пишутся не на каждое нажатие клавиши, а через короткую паузу. */
+let SOON=null;
+function persistSoon(){clearTimeout(SOON);SOON=setTimeout(()=>{SOON=null;try{persist()}catch(e){}},700)}
+function persistNow(){if(SOON){clearTimeout(SOON);SOON=null;try{persist()}catch(e){}}}
+
+/* Включение защиты: ключ базы создаётся один раз, база закрывается им и записывается в IndexedDB.
+   Открытая база в localStorage заменяется меткой только после того, как закрытая записана и прочитана обратно. */
+async function enableEnc(pin){
+  if(RO)throw new Error('ro');
+  if(!window.indexedDB||!window.crypto||!crypto.subtle)throw new Error('nocrypto');
+  const dek=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+  const rc=newRecCode();
+  const meta={pinLen:pin.length,pin:await wrapDek(dek,pin,KDF_PIN),rec:await wrapDek(dek,recNorm(rc),KDF_REC)};
+  const copy=JSON.parse(JSON.stringify(S));
+  if(copy.settings){delete copy.settings.pinHash;delete copy.settings.pinLen}
+  copy.fmt=FMT;
+  const data=await sealData(JSON.stringify(copy),dek);
+  ENC={dek,meta};
+  await idbPut('vault',{encV:2,fmt:FMT,pinLen:meta.pinLen,pin:meta.pin,rec:meta.rec,pub:pubOf(),data,at:new Date().toISOString()});
+  const chk=await idbGet('vault');
+  if(!chk||!chk.data){ENC=null;throw new Error('readback')}
+  localStorage.setItem(KEY,markerStr());
+  if(S.settings){delete S.settings.pinHash;delete S.settings.pinLen}
+  ENC_ON=true;LEGACY=false;PUB=pubOf();
+  return rc;
+}
+/* Открытие базы кодом входа или кодом восстановления. Ответ: true, false (код не подошёл) или 'bad'. */
+async function openVault(secret,isRec,keepS){
+  let v=null;
+  try{v=await idbGet('vault')}catch(e){return 'io'}
+  if(!v||!v.data){BAD='Закрытые записи не найдены в хранилище браузера. Так бывает, если данные браузера были очищены.';return 'bad'}
+  let dek=null;
+  try{dek=await unwrapDek(isRec?v.rec:v.pin,isRec?recNorm(secret):secret)}catch(e){return false}
+  if(keepS&&ENC_KEEP){ENC=ENC_KEEP;ENC_KEEP=null;return true}
+  let d=null;
+  try{d=await openData(v.data,dek)}catch(e){BAD='Код верный, но сохранённые записи повреждены и не читаются.';return 'bad'}
+  if((+d.fmt||1)>FMT){BAD='Записи сделаны более новой редакцией кабинета. Эта редакция не будет их менять.';return 'bad'}
+  if(!d||!Array.isArray(d.clients)||!Array.isArray(d.sessions)){BAD='Сохранённые записи повреждены и не читаются.';return 'bad'}
+  ENC={dek,meta:{pinLen:v.pinLen,pin:v.pin,rec:v.rec}};
+  S=d;normS();ENC_WAIT=false;PUB=pubOf();
+  return true;
+}
+
 let S;
-try{const raw=localStorage.getItem(KEY);S=raw?JSON.parse(raw):seed()}catch(e){S=seed()}
-if(!S||!S.clients||!S.sessions)S=seed();
+(function boot(){
+  let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
+  let d=null;
+  if(raw){try{d=JSON.parse(raw)}catch(e){BAD='Записи в этом браузере повреждены и не читаются.'}}
+  if(d&&d.encV===2){ENC_ON=true;ENC_WAIT=true;PUB=d.pub||{};S=encStub(PUB);return}
+  if(!BAD&&d&&d.encV)BAD='Записи сохранены в виде, который эта редакция кабинета не знает.';
+  if(!BAD&&d){
+    if(typeof d!=='object'||Array.isArray(d))BAD='Записи в этом браузере повреждены и не читаются.';
+    else if((+d.fmt||1)>FMT)BAD='Записи сделаны более новой редакцией кабинета. Эта редакция не будет их менять.';
+    else if(Array.isArray(d.clients)&&Array.isArray(d.sessions))S=d;
+    else BAD='Записи в этом браузере повреждены и не читаются.';
+  }
+  if(BAD){S=encStub({});return}
+  if(!S)S=seed();
+  if(S.settings&&S.settings.pinHash&&S.settings.pinHash!=='enc')LEGACY=true;
+})();
+/* Приведение базы к текущей редакции: при открытии, после расшифровки и после загрузки копии. */
+function normS(){
 if(!S.settings.appr)S.settings.appr='kpt';
 if(!S.settings.room)S.settings.room='k'+Math.random().toString(36).slice(2,8);
 if(!S.settings.meetBase)S.settings.meetBase='https://meet.jit.si/';
@@ -742,10 +951,14 @@ delete S.settings.mode;delete S.specs;if(S.ui){delete S.ui.role;delete S.ui.spec
 if(!S.settings.start)S.settings.start='09:00';
 if(!S.settings.end)S.settings.end='21:00';
 if(S.settings.lastBackup===undefined)S.settings.lastBackup='';
+delete S.settings.pinLen;if(S.settings.pinHash==='enc')delete S.settings.pinHash;
+S.fmt=FMT;
+}
+if(!BAD&&!ENC_WAIT)normS();
 /* Индикатор показывал время открытия файла и горел зелёным даже тогда, когда запись не прошла.
    Теперь у него три состояния: записано, есть незаписанное, запись не удалась. */
 let SAVED_AT=null,SAVE_FAIL=false,DIRTY=false;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));SAVED_AT=new Date();SAVE_FAIL=false;saveMark()}
+function save(){try{persist();SAVED_AT=new Date();SAVE_FAIL=false;saveMark()}
   catch(e){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Скопируйте набранный текст, откройте «Помощь» и скачайте копию базы')}}
 function saveMark(){const el=document.getElementById('save');if(!el)return;
   el.classList.remove('wait','fail');
@@ -1004,6 +1217,37 @@ function lineChart(pts,kind,events){
 }
 
 /* ═══════════════ Назад, Отмена, Черновики ═══════════════ */
+let IMPORT_COPY=null;
+/* Загрузка копии: проверка, вопрос с цифрами «сейчас / в файле», замена. Код входа копия не меняет. */
+function importData(d){
+  if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.clients)||!Array.isArray(d.sessions)){
+    alert('Файл не является копией базы кабинета «Точка опоры». Записи не изменены.\n\nОбратите внимание: выгрузка по запросу клиента — тоже файл .json, но копией базы она не является.');return}
+  if((+d.fmt||1)>FMT){alert('Копия сделана более новой редакцией кабинета. Обновите кабинет и загрузите копию снова. Записи не изменены.');return}
+  const skl=(n,a,b,c)=>{const n1=n%10,n2=n%100;return n+' '+(n2>=11&&n2<=14?c:n1===1?a:n1>=2&&n1<=4?b:c)};
+  const свод=o=>skl((o.clients||[]).length,'клиент','клиента','клиентов')+', '+skl((o.sessions||[]).length,'встреча','встречи','встреч');
+  const было=BAD?'записи не читаются':свод(S),станет=свод(d);
+  const base=seed();
+  Object.keys(base).forEach(k=>{if(d[k]===undefined)d[k]=Array.isArray(base[k])?[]:base[k]});
+  d.ui=Object.assign({},base.ui,d.ui||{});d.ui.drafts={};d.ui.meet=null;
+  d.settings=Object.assign({},base.settings,d.settings||{});
+  delete d.settings.pinHash;delete d.settings.pinLen;
+  const когда=d.copyMade?'\nКопия сохранена: '+ru(isoL(new Date(d.copyMade)))+' в '+hhmmL(d.copyMade)+'.':'';
+  delete d.copyMade;
+  if(!confirm('Заменить всё содержимое кабинета данными из файла?\n\nСейчас в кабинете: '+было+'.\nВ файле: '+станет+'.'+когда+'\n\nТекущие записи будут заменены. Отменить замену можно кнопкой «Отменить».'))return;
+  try{const wasBad=!!BAD;S=d;normS();
+    if(wasBad){
+      /* Прежние закрытые записи не открываются: копия записывается открыто, код задаётся заново. */
+      const hadEnc=ENC_ON;
+      BAD=null;ENC_ON=false;ENC=null;ENC_WAIT=false;LEGACY=false;
+      UNDO.length=0;REDO.length=0;syncRail();
+      S.fmt=FMT;localStorage.setItem(KEY,JSON.stringify(S));
+      idbDel('vault').catch(()=>{});
+      document.getElementById('badscr').hidden=true;shellOff(false);
+      render();renderHead();
+      toast(hadEnc?'Копия загружена. Задайте код входа заново в «Помощи» — без него записи не закрыты':'Копия загружена: '+станет);return}
+    save();render();renderHead();toast('Копия загружена: '+станет)}
+  catch(e){alert('Копию загрузить не удалось. Записи не изменены.')}
+}
 const HIST=[],UNDO=[],REDO=[];
 function pushHist(){HIST.push({tab:S.ui.tab,client:S.ui.client,filter:S.ui.filter});if(HIST.length>40)HIST.shift();syncRail()}
 function goBack(){const h=HIST.pop();if(!h)return;S.ui.tab=h.tab;S.ui.client=h.client;S.ui.filter=h.filter;save();render();syncRail()}
@@ -1022,8 +1266,10 @@ function stepBack(from,to,verb){
     save();closeModal();render();syncRail();
     toast(verb+(e.label?': '+e.label:''))}catch(err){}
 }
-function doUndo(){stepBack(UNDO,REDO,'Отменено')}
-function doRedo(){stepBack(REDO,UNDO,'Возвращено')}
+function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
+function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
+const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
+  'wordReport','wordClient','exportClient','doExportClient','recDone','export']);
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
   if(b)b.disabled=!HIST.length; if(u)u.disabled=!UNDO.length; if(r)r.disabled=!REDO.length}
 const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
@@ -1046,7 +1292,7 @@ function setDraftKey(title){DKEY='d:'+String(title).trim()+'|'+CTX}
 function saveDraft(){const k=draftKey();if(!k)return;markDirty(true);const d={};
   document.querySelectorAll('#modal input,#modal select,#modal textarea').forEach(el=>{
     if(!el.id||el.id.slice(0,3)==='ai-')return;d[el.id]=el.type==='checkbox'?el.checked:el.value});
-  S.ui.drafts=S.ui.drafts||{};S.ui.drafts[k]=d;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  S.ui.drafts=S.ui.drafts||{};S.ui.drafts[k]=d;persistSoon()}
 function loadDraft(){const k=draftKey();if(!k||!S.ui.drafts||!S.ui.drafts[k])return;
   const d=S.ui.drafts[k];let filled=false;
   Object.keys(d).forEach(id=>{const el=document.getElementById(id);if(!el)return;
@@ -1314,7 +1560,7 @@ function dayRail(date){
 /* ═══════════════ Расписание ═══════════════ */
 function vSched(){
   const base=S.ui.day;
-  const week=[...Array(7)].map((_,i)=>{const d=new Date(base);d.setDate(d.getDate()+i);return d.toISOString().slice(0,10)});
+  const week=[...Array(7)].map((_,i)=>{const d=pd(base);d.setDate(d.getDate()+i);return isoL(d)});
   const rec=S.clients.filter(c=>c.slot);
   return `<div class="card">
     <div class="spread"><div><h2>Расписание</h2><p class="lead">Неделя с ${ru(week[0])}. Повторяющиеся встречи стоят на фиксированном времени; для онлайн-встреч показан часовой пояс клиента.</p></div>
@@ -1703,11 +1949,11 @@ function vRep(){
     <button class="btn ghost" data-act="wordReport">Отчёт за месяц в Word</button></div>
     <p class="lead">Операционные показатели за последние ${r.win} дней, заполняемость — за 30 дней. Каждое число считается из данных кабинета; формула подписана под показателем.</p>
     <div class="grid g4" style="margin-top:14px">
-      <div class="kpi ${fill<50?'alert':fill>=70?'ok':''}"><div class="k">Заполняемость</div><div class="v">${fill}%</div><div class="s">${Math.round(r.doneH)} состоявшихся ч ÷ ${r.openH} открытых ч</div></div>
+      <div class="kpi ${fill<50?'alert':fill>=70?'ok':''}"><div class="k">Заполняемость</div><div class="v">${fill}%</div><div class="s">${String(Math.round(r.doneH*10)/10).replace('.',',')} состоявшихся ч ÷ ${r.openH} открытых ч</div></div>
       <div class="kpi ${pct(r.cancLate.length)>10?'alert':''}"><div class="k">Поздние отмены</div><div class="v">${pct(r.cancLate.length)}%</div><div class="s">менее ${S.settings.cancelH} ч · ${r.cancLate.length} шт.</div></div>
       <div class="kpi"><div class="k">Отмены заранее</div><div class="v">${pct(r.cancEarly.length)}%</div><div class="s">более ${S.settings.cancelH} ч · ${r.cancEarly.length} шт.</div></div>
       <div class="kpi"><div class="k">Отменил специалист</div><div class="v">${pct(r.cancSpec.length)}%</div><div class="s">${r.cancSpec.length} шт.</div></div>
-      <div class="kpi ${nsPct>=10?'alert':'ok'}"><div class="k">Неявки</div><div class="v">${nsPct}%</div><div class="s">устойчивые 10 %+ — правило не работает</div></div>
+      <div class="kpi ${nsPct>=10?'alert':'ok'}"><div class="k">Неявки</div><div class="v">${nsPct}%</div><div class="s">${nsPct>=10?"10 % и выше — правило отмены не работает":"ниже 10 % — правило отмены работает"}</div></div>
       <div class="kpi ${r.lost>0?'alert':''}"><div class="k">Потери от отмен</div><div class="v">${r.lost.toLocaleString('ru-RU')}</div><div class="s">Σ пропущенных − Σ удержанного</div></div>
       <div class="kpi"><div class="k">Конверсия первичной</div><div class="v">${conv}%</div><div class="s">${r.second.length} из ${r.firsts.length} дошли до второй</div></div>
       <div class="kpi"><div class="k">Удержание</div><div class="v">${ret}%</div><div class="s">${r.keep.length} из ${r.started.length} дошли до 5 встреч</div></div>
@@ -1745,7 +1991,9 @@ function vRep(){
 function vHelp(){
   return `<div class="card">
     <h2>Настройки кабинета</h2>
-    <p class="lead"><b>Вход по коду.</b> Кабинет закрывается кодом из четырёх цифр: при каждом открытии, при переключении на другое приложение и после перерыва в работе — срок задаётся ниже, по умолчанию 15 минут. Код задаётся в разделе «Вход по коду». Он закрывает вход, но не шифрует записи: тот, кто умеет читать хранилище браузера, доберётся до них и без кода. Забытый код восстановить нельзя — записи останутся закрытыми, поэтому держите свежую копию базы.</p>
+    <p class="lead"><b>Вход по коду.</b> Кабинет закрывается кодом из шести цифр при каждом открытии, при переходе в другое приложение и после перерыва в работе. Срок перерыва задаётся ниже, по умолчанию 15 минут. Во время идущей видеовстречи кабинет не закрывается, пока вы находитесь в окне встречи.</p>
+    <p class="lead"><b>Что защищает код.</b> Пока код задан, записи в браузере и файл копии базы хранятся закрытыми: без кода их не прочитать. После пяти неверных попыток вход замедляется. Код защищает от постороннего человека, в руках у которого оказалось ваше устройство. Шесть цифр не остановят специалиста, который скопирует данные браузера и будет подбирать код на мощном компьютере, поэтому не оставляйте устройство без присмотра.</p>
+    <p class="lead"><b>Код восстановления.</b> При задании кода кабинет один раз показывает код восстановления из 16 знаков. Запишите его на бумагу. Если код входа забудется, нажмите на экране входа «Забыли код?» и введите код восстановления. Без кода входа и без кода восстановления записи открыть нельзя.</p>
 
     <p class="lead"><b>На телефоне.</b> В строку помещаются четыре раздела: «Сегодня», «Расписание», «Клиенты» и «Шкалы». Остальные — под кнопкой «Ещё»: на телефоне их читают, а не ведут. На компьютере все разделы видны сразу.</p>
 
@@ -1774,14 +2022,15 @@ function vHelp(){
     </div>
     <h3>Вход по коду</h3>
     <div class="note">${pinOn()
-      ? 'Код задан. Кабинет закрывается при бездействии через '+S.settings.lock+' мин и при каждом открытии.'
+      ? (LEGACY?'Код задан в прежней редакции кабинета. При следующем входе записи будут закрыты этим кодом.':'Код задан, записи в браузере закрыты. Кабинет закрывается при бездействии через '+S.settings.lock+' мин и при каждом открытии.'+(ENC&&ENC.meta.pinLen<6?' <b>В коде четыре цифры — задайте новый код из шести цифр.</b>':''))
       : '<b>Код не задан.</b> Кабинет открывается сразу — записи о встречах увидит любой, кто возьмёт устройство. На телефоне это особенно важно.'}
-      <div class="sub" style="margin-top:6px">Код закрывает вход, но не шифрует записи: тот, кто умеет читать хранилище браузера, доберётся до них и без кода. Забытый код восстановить нельзя.</div>
+      <div class="sub" style="margin-top:6px">${ENC_ON?'Если код входа забудется, войдите кодом восстановления: «Забыли код?» на экране входа. Если потеряна бумага с кодом восстановления, нажмите «Новый код восстановления» — кабинет выдаст новый. Если потеряны и код входа, и код восстановления, записи открыть нельзя.':'После задания кода записи в браузере и копии базы будут закрыты этим кодом.'}</div>
       <div class="row" style="margin-top:8px">
         <button class="btn mini" data-act="setPin">${pinOn()?'Задать новый код':'Задать код входа'}</button>
+        ${ENC_ON?'<button class="btn mini ghost" data-act="newRec">Новый код восстановления</button>':''}
         ${pinOn()?'<button class="btn mini ghost" data-act="pinOff">Убрать код</button>':''}
       </div></div>
-    <div class="fgrid" style="margin-top:12px"
+    <div class="fgrid" style="margin-top:12px">
       <label class="f"><span>Начало приёма</span><input data-set="start" value="${esc(S.settings.start)}"></label>
       <label class="f"><span>Конец приёма</span><input data-set="end" value="${esc(S.settings.end)}"></label>
     </div>
@@ -1825,8 +2074,8 @@ function vHelp(){
     Видеовстреча — там же и в линии дня: кнопка «Войти во встречу» у встреч формата «онлайн». После нажатия в верхней части кабинета остаётся оранжевая полоса с продолжительностью встречи и кнопками «Вернуться к окну встречи» и «Завершить встречу и заполнить запись»; полоса видна на всех вкладках и сохраняется после перезагрузки страницы.
     Отправка ссылки клиенту — кнопка «Отправить ссылку клиенту» в карточке клиента, в карточке встречи и в линии дня.</p>
     <h3>Сохранность данных</h3>
-    <p class="lead">Последняя копия базы: <b>${S.settings.lastBackup?ru(S.settings.lastBackup):'ещё не сохранялась'}</b>${S.settings.lastBackup&&days(S.settings.lastBackup,D(0))>=7?' — это было '+days(S.settings.lastBackup,D(0))+' дн. назад':''}. Копию следует делать раз в неделю и класть в папку, которая синхронизируется с облаком.</p>
-    <p class="lead">Все записи хранятся только в этом браузере на этом устройстве и не уходят ни на какой сервер. Это не освобождает от обязанностей оператора персональных данных: устройство должно быть под паролем, диск — зашифрован, резервная копия — сделана и тоже защищена. Очистка данных браузера сотрёт базу без возможности восстановления.</p>
+    <p class="lead">Последняя копия базы: <b>${S.settings.lastBackup?ru(S.settings.lastBackup):'ещё не сохранялась'}</b>${S.settings.lastBackup&&days(S.settings.lastBackup,D(0))>=7?' — это было '+days(S.settings.lastBackup,D(0))+' дн. назад':''}. Копию следует делать раз в неделю. Храните файл на компьютере или в российском облаке, например на Яндекс Диске: по закону сведения о клиентах, включая копии, хранятся в России. Зарубежные облака (OneDrive, Google Диск, iCloud) для этого не подходят.</p>
+    <p class="lead">Все записи хранятся только в этом браузере на этом устройстве и не уходят ни на какой сервер. Если задан код входа, копия базы закрыта тем же кодом; без кода копия не защищена. Это не освобождает от обязанностей оператора персональных данных: устройство должно быть под паролем. Очистка данных браузера сотрёт записи, поэтому восстановить их можно только из копии.</p>
     <div class="row" style="margin-top:10px">
       <button class="btn" data-act="export">Скачать копию базы</button>
       <button class="btn ghost" data-act="import">Загрузить копию</button>
@@ -1834,6 +2083,7 @@ function vHelp(){
       <button class="btn ghost" data-act="anonClient">Обезличить клиента</button>
       <button class="btn ghost warn" data-act="reset">Вернуть демонстрационные данные</button>
     </div>
+    <p class="sub" style="margin-top:8px">Загрузка копии не меняет код входа. Если копия сделана в кабинете с кодом из прежней редакции, после загрузки задайте код в разделе «Вход по коду».</p>
     <p class="sub" style="margin-top:8px">Выгрузка по запросу клиента содержит административные сведения, документы, оплаты, даты и статусы встреч и замеры по шкалам. Клиническая часть — формулировка случая, план работы и тексты записей — добавляется отдельной отметкой в окне выгрузки, по решению специалиста. Не выгружаются никогда: поле «заметка для себя», отметки о риске и записи совместных встреч парной работы.
     Обезличивание удаляет имя, телефон, адрес почты, дату рождения, сведения о законном представителе и клинические записи, сохраняя статистику встреч и оплат, чтобы отчёты за прошлые периоды не изменились.</p>
 
@@ -1871,7 +2121,7 @@ function modal(title,body,footer){
   loadDraft();
   m.addEventListener('input',saveDraft);
 }
-function closeModal(){const m=document.getElementById('modal');m.hidden=true;m.innerHTML='';markDirty(false)}
+function closeModal(){if(MODAL_HOLD)return;const m=document.getElementById('modal');m.hidden=true;m.innerHTML='';markDirty(false)}
 function copyText(t){try{if(navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{})}catch(e){}}
 /* ── Карточка встречи ── */
 const TPLS={SOAP:[['s','Субъективно — что говорит клиент'],['o','Объективно — что наблюдалось'],['a','Оценка — как это понимается'],['p','План — что дальше']],
@@ -1918,7 +2168,7 @@ function sessModal(id){
     </div>
     ${v.fmt==='онлайн'?`<div class="okbox" style="margin:4px 0 12px">
       <b>Онлайн-встреча.</b> Адрес комнаты: <span class="mono" style="word-break:break-all">${esc(meetUrl(v))}</span>
-      <div class="sub" style="margin-top:4px">${v.sent?'Отметка: '+esc(sentLabel(v))+'.':sentStale(v)?'Отметка: '+esc(sentStale(v))+'. Встреча перенесена — отправьте ссылку заново.':'Ссылка клиенту ещё не отправлена.'}${meetOn(v)?' Встреча идёт: начата в '+esc(S.ui.meet.startedAt.slice(11,16))+'.':''}</div>
+      <div class="sub" style="margin-top:4px">${v.sent?'Отметка: '+esc(sentLabel(v))+'.':sentStale(v)?'Отметка: '+esc(sentStale(v))+'. Встреча перенесена — отправьте ссылку заново.':'Ссылка клиенту ещё не отправлена.'}${meetOn(v)?' Встреча идёт: начата в '+esc(hhmmL(S.ui.meet.startedAt))+'.':''}</div>
       <div class="row" style="margin-top:8px;gap:6px">${meetBtns(v,true)}</div></div>`:''}
     ${v.rule?`<div class="note">Правило отмены: ${esc(v.rule)}${v.charged?' — удержано '+rub(v.charged):''}.</div>`:''}`;
   /* Поля из других шаблонов, в которых есть текст: показываем, что он никуда не делся. */
@@ -2203,6 +2453,8 @@ function newSessModal(date,cid,time){
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act,id=el.dataset.id;
+  /* В окне только для просмотра действия, которые что-то меняют, не выполняются. */
+  if(RO&&!RO_OK.has(a)){e.preventDefault();toast('Здесь только просмотр. Чтобы работать в этом окне, нажмите «Работать здесь» вверху');return}
   if(document.getElementById('modal').hidden)CTX=a+'|'+(id||'')+'|'+(S.ui.client||'');
   const A={
     tab:()=>go(el.dataset.t),
@@ -2247,6 +2499,14 @@ document.addEventListener('click',e=>{
     meetEnd:()=>{
       const v=sess(id)||(S.ui.meet?sess(S.ui.meet.id):null);if(!v)return;
       const mins=meetMins();
+      /* Короткая встреча (меньше половины плана) могла быть завершена случайно или не состояться:
+         без подтверждения она не получает статус «состоялась» и не попадает в доход и отчёты. */
+      const plan=+v.dur||50;
+      if(mins<plan/2&&!confirm('Встреча длилась '+mins+' мин при плане '+plan+' мин.\n\nОК — отметить встречу как состоявшуюся.\nОтмена — остановить отсчёт, статус выбрать в карточке встречи (например, «неявка» или «перенесена»).')){
+        v.fact=mins;
+        if(S.ui.meet&&S.ui.meet.id===v.id){S.ui.meet=null;MEET_HIDDEN=false}
+        save();render();sessModal(v.id);
+        toast('Отсчёт остановлен. Статус встречи не изменён — выберите его в карточке');return}
       finishMeet(v,mins);render();
       sessModal(v.id);
       toast('Встреча завершена. Фактическая продолжительность '+mins+' мин — исправьте, если нужно')},
@@ -2357,7 +2617,7 @@ document.addEventListener('click',e=>{
       h+='<p class="muted">Кабинет «'+esc(S.settings.name)+'». Сформировано '+ru(D(0))+'. Период операционных показателей — последние '+r.win+' дней, заполняемость — последние 30 дней.</p>';
       h+='<p class="muted">В отчёте нет ни одного имени клиента и ни одной клинической записи: только агрегированные числа.</p>';
       h+='<h2>Заполняемость и объём</h2><table>'
-        +'<tr><th>Заполняемость</th><td>'+fill+' % ('+Math.round(r.doneH)+' состоявшихся часов ÷ '+r.openH+' открытых часов)</td></tr>'
+        +'<tr><th>Заполняемость</th><td>'+fill+' % ('+String(Math.round(r.doneH*10)/10).replace('.',',')+' состоявшихся часов ÷ '+r.openH+' открытых часов)</td></tr>'
         +'<tr><th>Встреч в периоде</th><td>'+r.all.length+', из них состоялось '+r.done.length+'</td></tr>'
         +'<tr><th>Средняя пауза между встречами</th><td>'+r.gap+' дней</td></tr></table>';
       h+='<h2>Отмены и неявки</h2><table><tr><th>Показатель</th><th>Штук</th><th>Доля</th></tr>'
@@ -2552,29 +2812,48 @@ document.addEventListener('click',e=>{
       `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveWait">Добавить</button>`),
     saveWait:()=>{S.wait.push({id:uid(),cid:val('w-c'),want:val('w-t')||'любое время',added:D(0)});save();closeModal();render()},
     delWait:()=>{S.wait=S.wait.filter(w=>w.id!==id);save();render()},
-    export:()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tochka-opory-'+D(0)+'.json';a.click();
-      S.settings.lastBackup=D(0);save();render();
-      toast('Копия сохранена — положите файл в папку, которая синхронизируется с облаком')},
+    /* Копия базы. Если задан код, копия закрыта тем же ключом, что и записи в браузере:
+       открыть её можно кодом входа или кодом восстановления, действовавшими в момент сохранения. */
+    export:async()=>{
+      persistNow();
+      const made=new Date().toISOString();let body;
+      try{
+        if(ENC_ON&&ENC){const data=await sealData(JSON.stringify(S),ENC.dek);
+          body={kabinet:'Точка опоры',copyV:2,encV:2,fmt:FMT,made,pinLen:ENC.meta.pinLen,pin:packW(ENC.meta.pin),rec:packW(ENC.meta.rec),
+            data:{iv:b64(data.iv),ct:b64(data.ct)}}}
+        else body=Object.assign({},S,{fmt:FMT,copyMade:made});
+      }catch(err){alert('Копию сохранить не удалось. Записи не изменены.');return}
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(body)],{type:'application/json'}));
+      a.download='tochka-opory-kopiya-'+D(0)+'.json';a.click();
+      if(!RO){S.settings.lastBackup=D(0);save();render()}
+      toast(ENC_ON?'Копия сохранена и закрыта вашим кодом. Храните файл на компьютере или в российском облаке, например на Яндекс Диске'
+        :'Копия сохранена, но не закрыта кодом: задайте код входа в «Помощи». Храните файл на компьютере или в российском облаке')},
     /* Файл проверяется до замены базы: посторонний файл не должен стирать данные. */
-    import:()=>{const i=document.createElement('input');i.type='file';i.accept='.json';
+    import:()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
       i.onchange=()=>{const r=new FileReader();r.onload=()=>{
         let d=null;
-        try{d=JSON.parse(r.result)}catch(e){alert('Файл не является копией базы: содержимое не читается. База не изменена.');return}
-        if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.clients)||!Array.isArray(d.sessions)){
-          alert('Файл не является копией базы кабинета «Точка опоры». База не изменена.\n\nОбратите внимание: выгрузка по запросу клиента — тоже файл .json, но копией базы она не является.');return}
-        const skl=(n,a,b,c)=>{const n1=n%10,n2=n%100;return n+' '+(n2>=11&&n2<=14?c:n1===1?a:n1>=2&&n1<=4?b:c)};
-        const свод=o=>skl((o.clients||[]).length,'клиент','клиента','клиентов')+', '+skl((o.sessions||[]).length,'встреча','встречи','встреч');
-        const было=свод(S),станет=свод(d);
-        /* Недостающие разделы восполняются пустыми, чтобы копия постарше открылась без сбоя. */
-        const base=seed();
-        Object.keys(base).forEach(k=>{if(d[k]===undefined)d[k]=Array.isArray(base[k])?[]:base[k]});
-        d.ui=Object.assign({},base.ui,d.ui||{});d.ui.drafts={};
-        d.settings=Object.assign({},base.settings,d.settings||{});
-        if(!confirm('Заменить всё содержимое кабинета данными из файла?\n\nСейчас в кабинете: '+было+'.\nВ файле: '+станет+'.\n\nТекущие данные будут заменены. Отменить замену можно кнопкой «Отменить» в боковой панели, пока страница не закрыта.'))return;
-        try{S=d;save();render();toast('Копия загружена: '+станет)}
-        catch(e){alert('Копию загрузить не удалось. База не изменена.')}};
+        try{d=JSON.parse(r.result)}catch(e){alert('Файл не является копией базы: содержимое не читается. Записи не изменены.');return}
+        /* Файл «сохранённое как есть» с экрана ошибки тоже принимается. */
+        if(d&&d.kabinet&&d.vault&&d.vault.data){d=Object.assign({made:d.vault.at},d.vault)}
+        else if(d&&d.kabinet&&('localStorage' in d)&&!d.clients){try{d=JSON.parse(d.localStorage)}catch(e){d=null}}
+        if(d&&d.encV===2&&d.data&&d.pin&&d.rec){IMPORT_COPY=d;
+          modal('Копия закрыта кодом',`
+            <p class="lead">Копия сохранена ${d.made?ru(isoL(new Date(d.made)))+' в '+hhmmL(d.made):''} и закрыта кодом. Введите код входа, который действовал, когда копию сохраняли, или код восстановления с бумаги.</p>
+            <label class="f"><span>Код входа или код восстановления</span><input id="imp-code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>`,
+            '<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="importCode">Открыть копию</button>');
+          return}
+        importData(d)};
         r.readAsText(i.files[0])};i.click()},
+    importCode:async()=>{
+      const d=IMPORT_COPY,code=val('imp-code');if(!d)return;
+      if(!code.trim()){toast('Введите код');return}
+      let dek=null;
+      if(/^\d{4,6}$/.test(code.trim())){try{dek=await unwrapDek(unpackW(d.pin),code.trim())}catch(e){dek=null}}
+      if(!dek){try{dek=await unwrapDek(unpackW(d.rec),recNorm(code))}catch(e){dek=null}}
+      if(!dek){toast('Код не подошёл к этой копии');return}
+      let data=null;
+      try{data=await openData({iv:unb64(d.data.iv),ct:unb64(d.data.ct)},dek)}catch(e){alert('Код верный, но файл копии повреждён. Записи не изменены.');return}
+      IMPORT_COPY=null;closeModal();data.copyMade=d.made;importData(data)},
     exportClient:()=>modal('Выгрузка данных по запросу клиента',`
       <label class="f"><span>Клиент</span><select id="ex-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
       <div class="note">Войдут всегда: административная карточка, документы и согласия, оплаты, даты и статусы встреч, замеры по шкалам — это ответы самого клиента.
@@ -2634,12 +2913,29 @@ document.addEventListener('click',e=>{
     goTab:()=>{closeModal();go(el.dataset.k)},
     setPin:()=>{
       if(pinOn()&&!confirm('Код входа уже задан. Задать новый?'))return;
-      PINSET='';LOCKED=true;
-      lockShow('Придумайте код','Четыре цифры. Введите код, затем повторите его.')},
-    pinOff:()=>{
+      persistNow();PINSET='';PINFORCED=false;LOCKED=true;
+      lockShow('Придумайте код','Шесть цифр. Введите код, затем повторите его.'+(ENC_ON?'':' Этим кодом будут закрыты записи.'))},
+    newRec:async()=>{
+      if(!ENC_ON||!ENC)return;
+      if(!confirm('Выдать новый код восстановления? Прежний код восстановления перестанет открывать записи в этом браузере. Копии, сохранённые раньше, по-прежнему открываются прежними кодами.'))return;
+      const rc=newRecCode();
+      try{await writeMeta({pinLen:ENC.meta.pinLen,pin:ENC.meta.pin,rec:await wrapDek(ENC.dek,recNorm(rc),KDF_REC)})}
+      catch(e){alert('Новый код восстановления выдать не удалось. Действует прежний.');return}
+      showRecovery(rc,false)},
+    recDone:()=>{const cb=document.getElementById('rec-ok');if(cb&&!cb.checked){toast('Сначала запишите код на бумагу и поставьте отметку «Я записал(а) код восстановления»');return}MODAL_HOLD=false;closeModal();
+      toast('Готово. Код восстановления понадобится, только если код входа забудется')},
+    pinOff:async()=>{
       if(!pinOn())return;
-      if(!confirm('Убрать код входа? Кабинет будет открываться без него — записи о встречах увидит любой, кто возьмёт устройство.'))return;
-      S.settings.pinHash='';save();render();clearTimeout(IDLE);toast('Код входа убран')},
+      if(!confirm('Убрать код входа? Кабинет будет открываться без него, записи в браузере перестанут быть закрытыми — их увидит любой, кто возьмёт устройство.'))return;
+      if(LEGACY){delete S.settings.pinHash;LEGACY=false;save();render();clearTimeout(IDLE);toast('Код входа убран');return}
+      persistNow();await flushed();
+      /* Сначала записывается открытая база, и только потом удаляется закрытая. */
+      try{S.fmt=FMT;localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Убрать код не удалось: в хранилище браузера не хватает места. Записи остаются закрытыми.');return}
+      try{await idbDel('vault')}
+      catch(e){try{localStorage.setItem(KEY,markerStr())}catch(e2){}
+        alert('Убрать код не удалось: браузер не удалил закрытые записи. Код остаётся прежним, записи на месте.');return}
+      ENC_ON=false;ENC=null;
+      render();clearTimeout(IDLE);toast('Код входа убран. Записи в браузере больше не закрыты')},
     setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';save();closeModal();renderHead();render();
       toast('Подход: '+appr().name+'. Поменять можно в «Помощи», раздел «Специалист»')},
     reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();save();render();toast('Демонстрационные данные восстановлены')}}
@@ -2648,7 +2944,7 @@ document.addEventListener('click',e=>{
     /* Черновик стирается по ключу, снятому до закрытия окна, — иначе он оставался бы в базе навсегда. */
     const kBefore=draftKey();
     A[a]();
-    if(MUT.has(a)&&kBefore&&S.ui.drafts){delete S.ui.drafts[kBefore];try{localStorage.setItem(KEY,JSON.stringify(S))}catch(err){}}}
+    if(MUT.has(a)&&kBefore&&S.ui.drafts){delete S.ui.drafts[kBefore];try{persist()}catch(err){}}}
 });
 
 /* Настройка — такое же изменение, как любое другое: раньше она сохранялась мимо цепочки отмены,
@@ -2657,6 +2953,7 @@ const setLabel=t=>{const l=t.closest('label'),sp=l&&l.querySelector('span');
   return 'настройка'+(sp?' «'+sp.textContent.replace(/,\s*[^,]*$/,'').trim()+'»':'')};
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(RO&&t.dataset&&(t.dataset.set||t.dataset.setspec)){toast('Здесь только просмотр — настройка не сохранена');render();return}
   if(t.dataset&&t.dataset.setspec){pushUndo(setLabel(t));S.settings.spec[t.dataset.setspec]=t.value;save();toast('Сохранено');
     setTimeout(renderHead,0);return}
   if(t.dataset&&t.dataset.set){pushUndo(setLabel(t));S.settings[t.dataset.set]=t.type==='number'?+t.value:t.value;save();toast('Сохранено');
@@ -2680,81 +2977,285 @@ document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('redo').addEventListener('click',doRedo);
 
 /* ── Вход по коду и блокировка при бездействии ──
-   Кабинет открывается с ярлыка и на телефоне, и на компьютере. Без кода записи о встречах
-   видны любому, кто взял устройство. Код — не шифрование: он закрывает вход, но не сами
-   данные в браузере. Об этом сказано в разделе «Помощь» прямо. */
+   Код закрывает и вход, и сами записи: при блокировке записи выгружаются из памяти страницы,
+   страница становится недоступной для мыши и клавиатуры, а при входе база заново читается
+   из хранилища и открывается кодом. Поэтому из-под экрана кода нельзя ни скачать копию,
+   ни отменить действие, ни затереть правки, сделанные в другом окне. */
 function pinHash(v){
   let h=2166136261;const salt='tochka-opory:'+(S.settings.room||'');
   const t=salt+String(v);
   for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}
   return (h>>>0).toString(36);
 }
-let LOCKED=false,PINBUF='',PINWAIT=0,PINSET=null,IDLE=null;
-const pinOn=()=>!!(S.settings&&S.settings.pinHash);
+let LOCKED=false,PINBUF='',PINSET=null,PINFORCED=false,IDLE=null,PINBUSY=false,RECMODE=false,TRYTICK=null;
+const pinOn=()=>ENC_ON||LEGACY;
+/* Новый код — шесть цифр; действующий код сохраняет свою длину. */
+const PL=()=>PINSET!==null?6:(ENC?ENC.meta.pinLen:((PUB&&PUB.pinLen)||(LEGACY?4:6)));
+/* Пауза после ошибок хранится вне базы и переживает перезагрузку страницы. */
+const TKEY=KEY+'-tries';
+function tries(){try{return JSON.parse(localStorage.getItem(TKEY))||{n:0,until:0}}catch(e){return {n:0,until:0}}}
+function setTries(t){try{localStorage.setItem(TKEY,JSON.stringify(t))}catch(e){}}
+function failTry(){const t=tries();t.n=(t.n||0)+1;if(t.n>=5)t.until=Date.now()+Math.min(15*60e3,30e3*Math.pow(2,t.n-5));setTries(t);return t}
+const waitLeft=()=>Math.max(0,(tries().until||0)-Date.now());
+function waitText(){const s=Math.ceil(waitLeft()/1000);return s>90?Math.ceil(s/60)+' мин':s+' сек'}
+function shellOff(on){
+  const sh=document.querySelector('.shell'),m=document.getElementById('modal');
+  [sh,m].forEach(x=>{if(!x)return;x.inert=!!on;if(on)x.setAttribute('aria-hidden','true');else x.removeAttribute('aria-hidden')});
+}
 function lockPaint(){
   const d=document.getElementById('lock-dots');
-  if(d)d.innerHTML=[0,1,2,3].map(i=>`<i class="${i<PINBUF.length?'on':''}"></i>`).join('');
+  if(d)d.innerHTML=Array.from({length:PL()},(_,i)=>`<i class="${i<PINBUF.length?'on':''}"></i>`).join('');
 }
 function lockPad(){
   const p=document.getElementById('lock-pad');if(!p)return;
   p.innerHTML=[1,2,3,4,5,6,7,8,9].map(n=>`<button data-pin="${n}">${n}</button>`).join('')
-    +'<button class="blank" disabled></button><button data-pin="0">0</button><button data-pin="del">⌫</button>';
+    +'<button class="blank" disabled></button><button data-pin="0">0</button><button data-pin="del" aria-label="Стереть">⌫</button>';
+}
+function lockMode(rec){
+  RECMODE=!!rec;
+  document.getElementById('lock-dots').hidden=RECMODE;
+  document.getElementById('lock-pad').hidden=RECMODE;
+  document.getElementById('lock-rec').hidden=!RECMODE;
+  document.getElementById('lock-forgot').hidden=RECMODE||PINSET!==null||!ENC_ON;
+  document.getElementById('lock-cancel').hidden=!(RECMODE||(PINSET!==null&&!PINFORCED));
+  if(RECMODE){const i=document.getElementById('lock-rec-in');i.value='';setTimeout(()=>{try{i.focus()}catch(e){}},50)}
 }
 function lockShow(title,note){
-  const w=document.getElementById('lock-who'),t=document.getElementById('lock-title'),n=document.getElementById('lock-note');
+  const w=document.getElementById('lock-who'),t=document.getElementById('lock-title');
   if(w)w.textContent=SPEC().name+' · '+SPEC().title;
   if(t)t.textContent=title;
-  if(n){n.textContent=note;n.classList.remove('bad')}
-  PINBUF='';lockPad();lockPaint();
+  lockNote(note,false);
+  PINBUF='';lockPad();lockPaint();lockMode(false);
   document.getElementById('lockscr').hidden=false;
+  shellOff(true);
+  lockTick();
 }
 function lockNote(txt,bad){const n=document.getElementById('lock-note');if(!n)return;
   n.textContent=txt;n.classList.toggle('bad',!!bad)}
-function lock(){
-  if(!pinOn()||LOCKED)return;
-  LOCKED=true;closeModal();
-  lockShow('Введите код','Кабинет закрыт после перерыва в работе.');
+/* Пока идёт пауза после ошибок, под кодом идёт отсчёт. */
+function lockTick(){clearInterval(TRYTICK);
+  const pad=document.getElementById('lock-pad'),rg=document.getElementById('lock-rec-go');
+  const on=PINSET===null&&!!waitLeft();
+  if(pad)pad.classList.toggle('wait',on);if(rg)rg.disabled=on;
+  if(!on)return;
+  const msg=()=>'Слишком много неверных попыток. Следующая попытка через '+waitText()+'. Пауза действует и для кода восстановления.';
+  lockNote(msg(),true);
+  TRYTICK=setInterval(()=>{if(!waitLeft()){clearInterval(TRYTICK);if(pad)pad.classList.remove('wait');if(rg)rg.disabled=false;lockNote('Можно ввести код.',false);return}
+    lockNote(msg(),true)},1000)}
+const meetRunning=()=>!!(S&&S.ui&&S.ui.meet&&!ENC_WAIT);
+function lock(why){
+  if(!pinOn()||LOCKED||PINSET!==null||BAD)return;
+  persistNow();
+  LOCKED=true;closeModal();try{micStop()}catch(e){}
+  lockShow('Введите код',why==='away'?'Кабинет закрыт: вы перешли в другое приложение или окно.':'Кабинет закрыт после перерыва в работе.');
+  if(ENC_ON){
+    /* Записи выгружаются из памяти, когда последняя правка уже записана. */
+    flushed().then(()=>{if(!LOCKED)return;
+      /* Последняя правка не записалась: записи остаются в памяти, чтобы не потерять её; после входа запись повторяется. */
+      if(SAVE_FAIL){ENC_KEEP=ENC;ENC=null;const v=document.getElementById('view');if(v)v.innerHTML='';return}
+      PUB=pubOf();ENC=null;ENC_WAIT=true;S=encStub(PUB);
+      UNDO.length=0;REDO.length=0;HIST.length=0;syncRail();
+      const v=document.getElementById('view');if(v)v.innerHTML='';
+      const mb=document.getElementById('meetbar');if(mb)mb.innerHTML=''});
+  }
 }
-function unlock(){LOCKED=false;PINSET=null;document.getElementById('lockscr').hidden=true;idleReset()}
+function unlock(){LOCKED=false;PINSET=null;PINFORCED=false;clearInterval(TRYTICK);
+  document.getElementById('lockscr').hidden=true;shellOff(false);idleReset()}
+/* Окно с кодом восстановления: код показывается один раз, закрыть окно можно только отметив, что код записан. */
+let MODAL_HOLD=false;
+function showRecovery(rc,first){
+  MODAL_HOLD=true;
+  modal('Код восстановления',`
+    <p class="lead">${first?'Записи теперь закрыты кодом входа. ':''}Если код входа забудется, войти можно этим кодом. Без него забытый код означает потерю всех записей.</p>
+    <div class="reccode mono">${esc(rc)}</div>
+    <p class="lead"><b>Запишите код на бумагу</b> и храните отдельно от устройства. Не сохраняйте его в телефоне и не отправляйте в мессенджеры. Кабинет показывает этот код один раз.</p>
+    <label class="chip" style="cursor:pointer;margin-top:6px"><input type="checkbox" id="rec-ok" style="width:auto;margin-right:6px">Я записал(а) код восстановления</label>`,
+    `<button class="btn" data-act="recDone" id="rec-done">Готово</button>`);
+  const x=document.querySelector('#modal .x');if(x)x.remove();
+}
+async function pinDone(v){
+  /* Задание кода: два ввода подряд, чтобы опечатка не заперла кабинет. */
+  if(PINSET!==null){
+    if(PINSET===''){PINSET=v;PINBUF='';lockPaint();document.getElementById('lock-title').textContent='Повторите код';lockNote('Введите те же цифры ещё раз, чтобы не ошибиться.');return}
+    if(PINSET!==v){PINSET='';PINBUF='';lockPaint();document.getElementById('lock-title').textContent='Придумайте код';lockNote('Коды не совпали. Введите новый код заново.',true);return}
+    PINBUSY=true;let rc=null;
+    try{
+      if(RO)throw new Error('ro');
+      if(ENC_ON&&ENC){lockNote('Меняю код…');
+        await writeMeta({pinLen:v.length,pin:await wrapDek(ENC.dek,v,KDF_PIN),rec:ENC.meta.rec});
+      }else{lockNote('Закрываю записи кодом…');rc=await enableEnc(v)}
+    }catch(e){
+      PINBUSY=false;PINSET='';PINBUF='';lockPaint();
+      lockNote(e&&e.message==='ro'?'В этом окне только просмотр. Код задаётся в окне, где идёт работа.'
+        :ENC_ON?'Код не изменён: браузер не записал изменение. Действует прежний код. Попробуйте ещё раз.'
+        :'Код не задан: в этом режиме браузера записи закрыть нельзя (например, в режиме инкогнито). Записи не изменены.',true);
+      if(PINFORCED&&e&&e.message==='ro'){PINSET=null;PINFORCED=false;unlock();render();renderHead()}
+      return}
+    PINBUSY=false;setTries({n:0,until:0});unlock();render();renderHead();
+    if(rc)showRecovery(rc,true);
+    else toast('Код входа изменён. Код восстановления прежний');
+    return;
+  }
+  if(waitLeft()){PINBUF='';lockPaint();lockTick();return}
+  PINBUSY=true;lockNote('Проверяю код…');
+  let ok=false,rc=null;
+  if(ENC_ON){const r=await openVault(v,false,!!ENC_KEEP);
+    if(r==='bad'){PINBUSY=false;showBad();return}
+    if(r==='io'){PINBUSY=false;PINBUF='';lockPaint();lockNote('Хранилище браузера не ответило. Введите код ещё раз; если не поможет — закройте и снова откройте кабинет.',true);return}
+    ok=r===true}
+  else if(LEGACY&&pinHash(v)===S.settings.pinHash){
+    ok=true;
+    /* Код из прежней редакции: записи ещё не закрыты. Закрываем их этим же кодом (только в рабочем окне). */
+    if(!RO){try{rc=await enableEnc(v)}catch(e){rc=null;setTimeout(()=>toast('Записи не удалось закрыть кодом в этом браузере. Вход по прежнему коду сохранён'),600)}}
+  }
+  PINBUSY=false;
+  if(ok){setTries({n:0,until:0});
+    if(S.ui&&!S.ui.apprAsked&&!rc){S.ui.apprAsked=true;setTimeout(()=>{save();if(!MODAL_HOLD)askAppr()},400)}
+    /* Метку на месте прежней записи (её могла затереть старая редакция кабинета) ставим сразу. */
+    if(ENC_ON&&!RO){try{localStorage.setItem(KEY,markerStr())}catch(e){}}
+    unlock();render();renderHead();saveMark();
+    if(SAVE_FAIL&&ENC){PEND=JSON.stringify(S);writer()}
+    if(rc)showRecovery(rc,true);return}
+  const t=failTry();PINBUF='';lockPaint();
+  if(t.until>Date.now())lockTick();
+  else lockNote('Код не подошёл. Попробуйте ещё раз.',true);
+}
 function pinPress(k){
+  if(PINBUSY||RECMODE)return;
   if(k==='del'){PINBUF=PINBUF.slice(0,-1);lockPaint();return}
-  if(PINBUF.length>=4)return;
+  if(PINSET===null&&waitLeft()){lockTick();return}
+  if(PINBUF.length>=PL())return;
   PINBUF+=k;lockPaint();
-  if(PINBUF.length<4)return;
+  if(PINBUF.length<PL())return;
   const v=PINBUF;
-  setTimeout(()=>{
-    /* Задание кода: два ввода подряд, чтобы опечатка не заперла кабинет. */
-    if(PINSET!==null){
-      if(PINSET===''){PINSET=v;PINBUF='';lockPaint();lockNote('Повторите код, чтобы не ошибиться.');return}
-      if(PINSET!==v){PINSET='';PINBUF='';lockPaint();lockNote('Коды не совпали. Введите новый код заново.',true);return}
-      S.settings.pinHash=pinHash(v);save();unlock();
-      toast('Код входа задан. Кабинет будет закрываться при бездействии через '+S.settings.lock+' мин');
-      return;
-    }
-    if(pinHash(v)===S.settings.pinHash){unlock();render();return}
-    PINWAIT++;PINBUF='';lockPaint();
-    lockNote(PINWAIT>=5?'Код не подошёл. Подождите и попробуйте снова — записи остаются закрытыми.':'Код не подошёл. Попробуйте ещё раз.',true);
-  },90);
+  setTimeout(()=>pinDone(v),90);
+}
+async function recGo(){
+  if(PINBUSY)return;
+  const code=document.getElementById('lock-rec-in').value;
+  if(recNorm(code).length<16){lockNote('В коде восстановления 16 знаков. Проверьте запись.',true);return}
+  if(waitLeft()){lockTick();return}
+  PINBUSY=true;lockNote('Проверяю код восстановления…');
+  const r=await openVault(code,true,!!ENC_KEEP);PINBUSY=false;
+  if(r==='bad'){showBad();return}
+  if(r==='io'){lockNote('Хранилище браузера не ответило. Попробуйте ещё раз.',true);return}
+  if(r!==true){const t=failTry();if(t.until>Date.now())lockTick();else lockNote('Код восстановления не подошёл.',true);return}
+  setTries({n:0,until:0});
+  if(RO){unlock();render();renderHead();toast('Записи открыты для просмотра. Новый код входа задайте в окне, где идёт работа');return}
+  /* Записи открыты. Сразу задаётся новый код входа: прежний забыт. */
+  PINSET='';PINFORCED=true;
+  lockShow('Придумайте новый код','Шесть цифр. Введите код, затем повторите его.');
+}
+function lockCancel(){
+  if(RECMODE){lockShow('Введите код','Кабинет закрыт. Введите код, чтобы продолжить работу.');return}
+  if(PINSET!==null&&!PINFORCED){PINSET=null;LOCKED=false;document.getElementById('lockscr').hidden=true;shellOff(false);idleReset()}
 }
 document.getElementById('lock-pad').addEventListener('click',e=>{
   const b=e.target.closest('[data-pin]');if(b)pinPress(b.dataset.pin)});
+document.getElementById('lock-forgot').addEventListener('click',()=>{
+  document.getElementById('lock-title').textContent='Код восстановления';
+  lockNote('Введите 16 знаков с бумаги, на которой вы записали код восстановления. Дефисы и пробелы можно не ставить.',false);
+  lockMode(true)});
+document.getElementById('lock-cancel').addEventListener('click',lockCancel);
+document.getElementById('lock-rec-go').addEventListener('click',recGo);
+document.getElementById('lock-rec-in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();recGo()}});
 document.addEventListener('keydown',e=>{
   if(document.getElementById('lockscr').hidden)return;
+  if(e.key==='Escape'){e.preventDefault();lockCancel();return}
+  if(RECMODE)return;
   if(/^[0-9]$/.test(e.key)){e.preventDefault();pinPress(e.key)}
   if(e.key==='Backspace'){e.preventDefault();pinPress('del')}
 });
-/* Отсчёт бездействия. Настройка «Блокировка при бездействии» до сих пор ни на что не влияла. */
+/* Отсчёт бездействия. Во время идущей видеовстречи кабинет не закрывается,
+   пока специалист находится в окне встречи: иначе код пришлось бы вводить на каждой встрече. */
 function idleReset(){
   clearTimeout(IDLE);
   if(!pinOn()||LOCKED)return;
   const m=+S.settings.lock||15;
-  IDLE=setTimeout(lock,m*60000);
+  IDLE=setTimeout(()=>{if(meetRunning()&&document.hidden){idleReset();return}lock('idle')},m*60000);
 }
 ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>
   document.addEventListener(ev,()=>{if(!LOCKED)idleReset()},{passive:true}));
-document.addEventListener('visibilitychange',()=>{if(document.hidden)lock()});
-if(pinOn()){LOCKED=true;lockShow('Введите код','Кабинет закрыт. Введите код, чтобы продолжить работу.')}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&!meetRunning())lock('away')});
+if(!BAD&&(LEGACY||ENC_WAIT)){LOCKED=true;lockShow('Введите код','Кабинет закрыт. Введите код, чтобы продолжить работу.')}
 else idleReset();
+
+/* ── Записи не читаются ──
+   Кабинет ничего не записывает поверх и предлагает три действия. */
+function showBad(){
+  LOCKED=false;document.getElementById('lockscr').hidden=true;
+  const b=document.getElementById('badscr');if(!b)return;
+  document.getElementById('bad-why').textContent=BAD||'Записи не удалось прочитать.';
+  document.getElementById('bad-retry').hidden=false;
+  b.hidden=false;shellOff(true);
+}
+async function badDownload(){
+  const out={kabinet:'Точка опоры',saved:new Date().toISOString(),localStorage:null,vault:null};
+  try{out.localStorage=localStorage.getItem(KEY)}catch(e){}
+  try{const v=await idbGet('vault');if(v)out.vault={encV:v.encV,fmt:v.fmt,pinLen:v.pinLen,pin:packW(v.pin),rec:packW(v.rec),
+    data:{iv:b64(v.data.iv),ct:b64(v.data.ct)},at:v.at}}catch(e){}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:'application/json'}));
+  a.download='tochka-opory-sohranennoe-'+D(0)+'.json';a.click();
+  toast('Файл сохранён. Не удаляйте его, пока записи не восстановлены')}
+async function badReset(){
+  if(BAD_IO&&!confirm('Хранилище браузера только что не ответило — записи, скорее всего, целы. Сначала попробуйте «Открыть кабинет снова».\n\nВсё равно удалить записи?'))return;
+  if(!confirm('Начать с пустого кабинета?\n\nСохранённые в этом браузере записи будут удалены. Сначала скачайте их кнопкой «Скачать сохранённое как есть».'))return;
+  if(!confirm('Подтвердите ещё раз: удалить сохранённые записи и начать заново?'))return;
+  try{await idbDel('vault')}catch(e){}
+  try{localStorage.removeItem(KEY)}catch(e){}
+  location.reload()}
+document.getElementById('bad-dl').addEventListener('click',badDownload);
+document.getElementById('bad-imp').addEventListener('click',()=>{const b=document.createElement('button');b.dataset.act='import';
+  b.hidden=true;document.body.appendChild(b);b.click();b.remove()});
+document.getElementById('bad-reset').addEventListener('click',badReset);
+document.getElementById('bad-retry').addEventListener('click',()=>location.reload());
+
+/* ── Несколько окон ──
+   Кабинет работает в одном окне. Второе окно открывается только для просмотра:
+   раньше два окна молча затирали правки друг друга. */
+const TAB_ID=Math.random().toString(36).slice(2);let CHAN=null,TAKING=false;
+function goRO(){
+  if(RO)return;RO=true;persistNow();
+  const r=document.getElementById('robar');if(r){document.body.prepend(r);r.hidden=false}
+  document.body.classList.add('ro');
+}
+try{CHAN=new BroadcastChannel('tochka-opory-tabs')}catch(e){CHAN=null}
+if(CHAN){
+  CHAN.onmessage=ev=>{const m=ev.data||{};if(m.id===TAB_ID)return;
+    if(m.t==='hello'&&!RO)CHAN.postMessage({t:'busy',id:TAB_ID});
+    if(m.t==='busy'&&!RO&&!TAKING)goRO();
+    if(m.t==='take'&&!RO){persistNow();flushed().then(()=>{goRO();CHAN.postMessage({t:'released',id:TAB_ID,to:m.id})})}
+    if(m.t==='released'&&m.to===TAB_ID&&TAKING)location.reload();
+  };
+  CHAN.postMessage({t:'hello',id:TAB_ID});
+}
+document.getElementById('ro-take').addEventListener('click',()=>{
+  TAKING=true;if(CHAN)CHAN.postMessage({t:'take',id:TAB_ID});
+  setTimeout(()=>location.reload(),2500)});
+/* Незаписанное при закрытии окна: браузер переспросит. */
+window.addEventListener('beforeunload',e=>{
+  if(SOON&&!ENC_ON)persistNow();
+  if(WRITING||PEND!==null||(SOON&&ENC_ON)){if(SOON)persistNow();e.preventDefault();e.returnValue=''}
+});
+/* Проверка хранилища при запуске: закрытая база в IndexedDB главнее того, что лежит в localStorage.
+   Так прежняя редакция кабинета, записавшая поверх метки пример, не лишает доступа к настоящим записям. */
+(async function bootCheck(){
+  let v=null,io=false;
+  for(let i=0;i<4;i++){try{v=await idbGet('vault');io=false;break}catch(e){io=true;await new Promise(r=>setTimeout(r,400))}}
+  if(io){BOOT=false;
+    if(ENC_ON){BAD='Хранилище браузера не ответило. Записи, скорее всего, целы: закройте кабинет и откройте его снова.';BAD_IO=true;showBad();return}
+    if(!ENC_WAIT&&BOOT_SAVE)save();render();renderHead();return}
+  if(v&&v.encV===2&&v.data){
+    if((+v.fmt||1)>FMT&&!BAD)BAD='Записи сделаны более новой редакцией кабинета. Эта редакция не будет их менять.';
+    if(!ENC_ON){ENC_ON=true;ENC_WAIT=true;LEGACY=false;PUB=v.pub||{};S=encStub(PUB);
+      if(!BAD){LOCKED=true;lockShow('Введите код','Кабинет закрыт. Введите код, чтобы продолжить работу.')}}
+    else if(PUB&&!PUB.pinLen)PUB.pinLen=v.pinLen;
+  }else if(ENC_ON&&!BAD){BAD='Закрытые записи не найдены в хранилище браузера. Так бывает, если данные браузера были очищены.'}
+  BOOT=false;
+  if(BAD){showBad();return}
+  if(!ENC_WAIT&&BOOT_SAVE)save();
+  render();renderHead();
+})();
 
 /* При первом открытии кабинет спрашивает о подходе: от него зависят шаблоны записи
    и то, ведутся ли шкалы. Инструменты у подходов разные. */
@@ -2784,6 +3285,7 @@ const dictTip='Нажмите Win+H и говорите. На телефоне �
 const MICNO=/link|room|url|code|phone|tel|mail|time|date|price|rate|sum|amount|debt|dur|fact|num|tz/i;
 const micOK=t=>{
   const n=(t.tagName||'').toLowerCase();
+  if(t.closest&&t.closest('#lockscr,#badscr'))return false;
   if(t.id&&MICNO.test(t.id))return false;
   if(n==='textarea')return true;
   if(n!=='input')return false;
@@ -2874,6 +3376,7 @@ document.getElementById('theme').addEventListener('click',()=>{
 function inField(t){if(!t)return false;const n=(t.tagName||'').toLowerCase();
   return n==='input'||n==='textarea'||n==='select'||t.isContentEditable===true}
 document.addEventListener('keydown',e=>{
+  if(LOCKED||BAD||!document.getElementById('lockscr').hidden)return;
   const typing=inField(e.target)||inField(document.activeElement);
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey){if(typing)return;e.preventDefault();doUndo()}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.key.toLowerCase()==='z'&&e.shiftKey))){if(typing)return;e.preventDefault();doRedo()}
