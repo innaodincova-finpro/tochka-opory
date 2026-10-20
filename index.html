@@ -55,6 +55,8 @@ html[data-theme="dark"] nav.tabs button.on{color:#0B131B}
 .hbtn{background:transparent;border:1px solid rgba(255,255,255,.22);color:var(--panel-text);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;text-align:left}
 .hbtn:hover:not(:disabled){border-color:var(--ochre);color:var(--ochre)}
 .hbtn:disabled{opacity:.35;cursor:default}
+#mmenu{display:none;font-size:16px;padding:4px 11px}
+@media(max-width:640px){#mmenu{display:inline-block}}
 .save{font-size:11.5px;opacity:.75;display:flex;align-items:center;gap:6px;padding:2px 2px}
 .save i{width:7px;height:7px;border-radius:50%;background:#7FB795;flex:none}
 .save.wait i{background:#C08463}
@@ -79,6 +81,10 @@ html[data-theme="dark"] nav.tabs button.on{color:#0B131B}
 /* Телефон: шапка ужимается, поля карточки идут по два в ряд. */
 @media(max-width:640px){
   header.app{padding:6px 10px;gap:7px}
+  .rolebox{display:none}
+  .railfoot{flex-wrap:nowrap;gap:8px;align-items:center}
+  .railfoot>#back,.railfoot>#undo,.railfoot>#redo,.railfoot>#theme{display:none}
+  .save span{display:none}
   .rolebox .who span{display:none}
   .hbtn{padding:5px 8px;font-size:12px}
   nav.tabs button{padding:7px 10px;font-size:13.5px}
@@ -150,6 +156,17 @@ html[data-theme="dark"] .btn.warn:hover{background:var(--warn);color:#20100D;bor
 /* ── Таблицы ── */
 .tw{overflow-x:auto;border:1px solid var(--line2);border-radius:11px}
 table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+@media(max-width:640px){
+  .tw{border:0;overflow:visible}
+  .tw table{min-width:0}
+  .tw thead{display:none}
+  .tw tr{display:block;border:1px solid var(--line2);border-radius:11px;padding:8px 12px;margin-bottom:8px;background:var(--card)}
+  .tw td{display:flex;justify-content:space-between;gap:12px;padding:3px 0!important;border:0!important;text-align:right}
+  .tw td::before{content:attr(data-l);color:var(--ink3);font-size:12.5px;text-align:left;flex:none;max-width:45%}
+  .tw td:first-child{font-weight:600;text-align:left}
+  .tw td:first-child::before{display:none}
+  .tw td[colspan]{display:block;text-align:left}
+}
 th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
 th{background:var(--soft);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);font-weight:600}
 tr:last-child td{border-bottom:0}
@@ -193,11 +210,17 @@ textarea{min-height:70px;resize:vertical}
 .hr.past{opacity:.55}
 .hr.past .dot{background:var(--line)}
 .hr .free{color:var(--ink3);font-size:13px;padding:4px 0}
+.freebtn{background:none;border:1px dashed var(--line);border-radius:8px;color:var(--ink3);font:inherit;font-size:13px;padding:5px 10px;cursor:pointer}
+.freebtn:hover{border-color:var(--accent);color:var(--accent)}
 .now{position:relative;height:0;margin:2px 0}
 .now::before{content:"";position:absolute;left:-20px;right:0;top:0;height:2px;background:#C08463;border-radius:2px}
 .now span{position:absolute;right:0;top:-9px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#C08463;background:var(--card);padding:0 7px;font-weight:600}
 .today{display:grid;grid-template-columns:1fr 300px;gap:26px;align-items:start}
-@media(max-width:900px){.today{grid-template-columns:1fr;gap:16px}}
+@media(max-width:900px){.today{grid-template-columns:1fr;gap:16px}.today>div:last-child{order:-1}}
+.today .side-block.stats{}
+@media(max-width:640px){.side-block.stats{display:none}}
+.todo-d>summary{cursor:pointer;font-family:'Spectral',Georgia,serif;font-size:17px;font-weight:600;color:var(--ink)}
+.todo-d[open]>summary{margin-bottom:10px}
 .side-block{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:12px}
 .side-block h3{font-size:15px;margin:0 0 10px}
 .stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-top:1px solid var(--line2)}
@@ -265,6 +288,8 @@ textarea{min-height:70px;resize:vertical}
 @media(min-width:900px){.cal .d{min-height:92px}.cal .dp{font-size:11.5px}}
 @media(max-width:599px){.cal .dnm{display:none}.cal .dp{text-align:center;padding:1px 0}.cal .d{min-height:66px;padding:4px 2px}}
 .freegrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sec{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:6px}
+.sec>summary{cursor:pointer;font-family:'Spectral',Georgia,serif;font-size:17px;font-weight:600;color:var(--ink);padding:2px 0 8px}
 .hlp{border-top:1px solid var(--line);padding:10px 0}
 .hlp summary{cursor:pointer;font-weight:600;color:var(--ink);list-style-position:inside}
 .hlp p{margin:8px 0 0;color:var(--ink2);line-height:1.5}
@@ -366,7 +391,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в15</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в16</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -376,6 +401,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
     <button class="hbtn" id="redo" disabled>↷ Повторить</button>
     <div class="save" id="save"><i></i><span>сохранено</span></div>
     <button class="hbtn" id="theme">Тема</button>
+    <button class="hbtn" id="mmenu" aria-label="Меню">☰</button>
   </div>
 </header>
 <div class="col">
@@ -1133,7 +1159,6 @@ function sendSheet(v,c){
     <div class="note">Кабинет откроет приложение с готовым текстом. Отправляете вы.</div>
     ${v&&v.sent?`<div class="okbox" style="margin-top:10px">Отметка в карточке встречи: ${esc(sentLabel(v))}.</div>`:''}
     ${v&&sentStale(v)?`<div class="alertbox" style="margin-top:10px">Прежняя отметка: ${esc(sentStale(v))}. Встреча перенесена, у клиента на руках прежнее время.</div>`:''}
-    <div class="sub" style="margin-top:8px">В тексте нет ни характера встречи, ни сведений о работе — только дата, время в часовом поясе клиента, ссылка и порядок подключения.</div>
   `,`<button class="btn ghost" data-act="closeModal">Закрыть</button>`);
 }
 const title=v=>v.gid?(gr(v.gid)?gr(v.gid).name:'Группа'):(nm(cl(v.cid))+(v.partner?' и '+nm(cl(v.partner)):''));
@@ -1157,7 +1182,7 @@ function band(kind,n){
   return '';
 }
 function interp(kind,n){
-  return `Сумма <b class="mono">${n}</b> из ${SCALES[kind].max}. Показатель — ${band(kind,n)}. Это скрининговый результат самоотчёта: он указывает на диапазон, требующий клинической оценки, и не является диагнозом. Значение интерпретируется только вместе с клинической беседой.`;
+  return `Сумма <b class="mono">${n}</b> из ${SCALES[kind].max} — ${band(kind,n)}.`;
 }
 /* Флаги внимания */
 function flagUnfilled(){
@@ -1245,8 +1270,7 @@ function lineChart(pts,kind,events){
       g+=`<text x="${dx}" y="${PT+ih+14}" text-anchor="${dan}" font-size="10" fill="var(--ink3)">${ru(p.date).slice(0,5)}</text>`;
     }
   });
-  return `<div class="chartbox" data-chart="1"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Динамика ${kind}">${g}</svg></div>
-    <p class="sub chart-hint" hidden>График шире экрана: он прокручивается вбок. Показан правый край — самые свежие замеры.</p>`;
+  return `<div class="chartbox" data-chart="1"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Динамика ${kind}">${g}</svg></div>`;
 }
 
 /* ═══════════════ Назад, Отмена, Черновики ═══════════════ */
@@ -1340,9 +1364,7 @@ function aiModal(title,text,extra){
     
     <div class="alertbox">Имена, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</div>
     ${extra||''}
-    <label class="chip" style="cursor:default;margin:6px 0"><input type="checkbox" id="ai-anon" style="width:auto;margin-right:6px" checked disabled>Обезличивание — применяется постоянно</label>
     <label class="f"><span>${esc(title)}</span><textarea id="ai-t" style="min-height:210px">${esc(anon(text))}</textarea></label>
-    <p class="sub" style="margin:-4px 0 8px">Кабинет распознаёт имена, телефоны и адреса почты. Место работы, редкие обстоятельства и прозвища распознать нельзя — эти сведения специалист убирает из описания сам.</p>
     <div class="row"><a class="btn ghost mini" href="https://claude.ai" target="_blank" rel="noopener">Открыть Claude</a>
     <a class="btn ghost mini" href="https://chatgpt.com" target="_blank" rel="noopener">Открыть ChatGPT</a></div>`,
     `<button class="btn ghost" data-act="closeModal">Закрыть</button><button class="btn" data-act="aiCopy">Скопировать запрос</button>`);
@@ -1533,11 +1555,10 @@ function vToday(){
     </div>
     <div>
       <div class="side-block">
-        <h3>Нужно отметить</h3>
-        ${items.length?`<div class="todo">${items.join('')}</div>`
-          :'<div class="okbox">Всё заполнено, ничего не висит.</div>'}
+        ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Нужно отметить: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
+          :'<h3>Нужно отметить</h3><div class="okbox">Всё заполнено.</div>'}
       </div>
-      <div class="side-block">
+      <div class="side-block stats">
         <h3>День в цифрах</h3>
         <div class="stat"><span class="k">Встреч сегодня</span><span class="v">${tv.length}</span></div>
         <div class="stat"><span class="k">Часов приёма</span><span class="v">${(Math.round(busy/6)/10).toLocaleString('ru-RU')}</span></div>
@@ -1551,19 +1572,16 @@ function vToday(){
 function evCard(v){
   const c=v.cid?cl(v.cid):null;
   const stc=v.status==='состоялась'?'done':(v.status==='неявка')?'no':v.status==='запланирована'?'wait':'';
-  const tz=c&&v.fmt==='онлайн'&&c.tzOff?` · у клиента ${fmt(toMin(v.time)+c.tzOff*60)} ${esc(c.tz)}`:'';
+  const tz=c&&v.fmt==='онлайн'&&c.tzOff?` · у клиента ${fmt(toMin(v.time)+c.tzOff*60)}`:'';
+  /* Одна главная кнопка: идёт встреча — вернуться; ссылка отправлена — войти; не отправлена — отправить. */
+  const btn=v.fmt!=='онлайн'||v.status==='состоялась'?'':meetOn(v)
+    ?`<button class="btn mini" data-act="meetBack" data-id="${v.id}">Вернуться во встречу</button>`
+    :v.sent?`<button class="btn mini ghost" data-act="openMeet" data-id="${v.id}">Войти во встречу</button>`
+    :`<button class="btn mini" data-act="sendLink" data-id="${v.id}">Отправить ссылку</button>`;
   return `<div class="ev ${stc}" data-act="openSess" data-id="${v.id}" style="margin-bottom:6px">
-    <div class="spread"><div>
-      <div class="n">${v.time} · ${esc(title(v))}</div>
-      <div class="d">${esc(v.type)} · ${esc(v.fmt)} · ${v.dur} мин${v.gid?'':' · встреча № '+sessNum(v)}${tz}</div>
-      ${v.fmt==='онлайн'&&v.sent?`<div class="d" style="color:var(--good)">${esc(sentLabel(v))}</div>`:''}
-      ${v.fmt==='онлайн'&&sentStale(v)?`<div class="d" style="color:var(--warn)">${esc(sentStale(v))}</div>`:''}
-      ${v.fmt==='онлайн'?`<div class="row" style="margin-top:6px;gap:6px">${meetBtns(v,true)}</div>`:''}</div>
-    <div style="text-align:right">
-      <div class="mono" style="color:var(--ochre);font-weight:600">${rub(v.price)}</div>
-      ${meetOn(v)?'<div><span class="chip" style="background:#C08463;color:#fff;border-color:transparent">идёт</span></div>':''}
-      <span class="chip ${v.status==='состоялась'?'g':v.status==='неявка'?'r':v.status==='подтверждена'?'b':'o'}">${esc(v.status)}</span>
-      ${v.pay?'<div class="sub">'+esc(v.pay)+'</div>':''}</div></div></div>`;
+      <div class="n">${v.time} · ${esc(title(v))}${meetOn(v)?' <span class="chip" style="background:#C08463;color:#fff;border-color:transparent">идёт</span>':''}</div>
+      <div class="d">${esc(v.fmt)} · ${v.dur} мин · ${esc(v.status)}${v.price?' · '+rub(v.price):''}${v.pay?' · '+esc(v.pay):''}${tz}</div>
+      ${btn?`<div class="row" style="margin-top:6px">${btn}</div>`:''}</div>`;
 }
 function dayRail(date){
   const st=parseInt(S.settings.start),en=parseInt(S.settings.end);
@@ -1581,8 +1599,7 @@ function dayRail(date){
     const ongoing=list.find(v=>{const m=toMin(v.time);return m<from&&m+v.dur>from});
     if(!evs.length)inner=busyHere
       ? `<div class="free">продолжается встреча${ongoing?' · '+esc(title(ongoing)):''}</div>`
-      : `<div class="free">свободно · <button class="btn mini ghost" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">записать</button>
-         <button class="btn mini ghost" data-act="wait" data-date="${date}" data-time="${fmt(from)}">предложить листу ожидания</button></div>`;
+      : (past?`<div class="free">свободно</div>`:`<div class="free"><button class="freebtn" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">свободно — записать</button></div>`);
     html+=`<div class="hr ${evs.length?'has':''} ${past?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${nowline}${inner}</div>`;
   }
   return html;
@@ -1636,7 +1653,8 @@ function dayModal(ds){
   modal(`${dow(ds)}, ${ru(ds)}`,`
     <div class="list">${list.map(v=>`<div class="item" style="cursor:pointer" data-act="openSess" data-id="${v.id}">
       <div><span class="mono">${v.time}</span> <b>${esc(title(v))}</b><div class="sub">${esc(v.fmt)} · ${esc(v.status)}</div></div></div>`).join('')||'<p class="sub">Встреч нет.</p>'}</div>
-    ${ds>=D(0)&&free.length?`<h3 style="margin-top:14px">Свободно</h3><div class="freegrid">${free.map(t=>`<button class="btn mini ghost" data-act="newSess" data-date="${ds}" data-time="${t}">${t}</button>`).join('')}</div>`:''}`,
+    ${ds>=D(0)&&free.length?`<h3 style="margin-top:14px">Свободно</h3><div class="freegrid">${free.map(t=>`<button class="btn mini ghost" data-act="newSess" data-date="${ds}" data-time="${t}">${t}</button>`).join('')}</div>
+      ${S.wait.length?`<div class="row" style="margin-top:10px"><button class="btn mini ghost" data-act="wait" data-date="${ds}" data-time="${free[0]}">Предложить окно листу ожидания</button></div>`:''}`:''}`,
     `<button class="btn ghost" data-act="closeModal">Закрыть</button>${ds>=D(0)?`<button class="btn" data-act="newSess" data-date="${ds}">Новая встреча</button>`:''}`);
 }
 
@@ -1700,8 +1718,7 @@ function clientCard(id){
     </div>
     <div class="item" style="margin-top:12px;align-items:flex-start">
       <div style="flex:1;min-width:220px">Ссылка на встречу
-        <div class="sub mono" style="word-break:break-all">${esc(roomUrl(c))}</div>
-        <div class="sub">${c.link&&c.link.trim()?'Указан собственный адрес площадки.':'Постоянная персональная комната кабинета. Адрес не меняется от встречи к встрече.'}</div></div>
+        <div class="sub">${c.link&&c.link.trim()?'своя площадка':'постоянная комната клиента'}</div></div>
       <div style="text-align:right"><div class="sub">Способ связи</div><span class="chip b">${esc(contactOf(c))}</span>
         ${c.email?'<div class="sub">'+esc(S.ui.anon?'адрес скрыт':c.email)+'</div>':'<div class="sub">адрес почты не указан</div>'}</div>
     </div>
@@ -1709,7 +1726,7 @@ function clientCard(id){
     ${c.minor?`<div class="note" style="margin-top:12px"><b>Несовершеннолетний клиент.</b> Законный представитель: ${c.guardian.name?`${esc(S.ui.anon?'имя скрыто':c.guardian.name)}${c.guardian.rel?' ('+esc(c.guardian.rel)+')':''}${c.guardian.phone?', '+esc(S.ui.anon?'номер скрыт':c.guardian.phone):''}.`:'сведения удалены при обезличивании.'}
       Согласие представителя: ${hasDoc(c.id,'t8')?'подписано':'<b>не подписано</b>'}.</div>`:''}
 
-    <h3>Документы и согласия</h3>
+    <details class="sec"><summary>Документы и согласия</summary>
     <div class="tw"><table><thead><tr><th>Документ</th><th>Версия</th><th>Подписан</th><th>Способ</th><th>Статус</th></tr></thead>
       <tbody>${clientDocs(id).map(d=>`<tr><td>${esc(tpl(d.tid).name)}</td>
         <td class="sub">${esc(tpl(d.tid).ver)} от ${ru(tpl(d.tid).verDate)}</td>
@@ -1717,7 +1734,8 @@ function clientCard(id){
         <td><span class="chip ${d.st==='действует'?'g':'r'}">${esc(d.st)}</span></td></tr>`).join('')||'<tr><td colspan="5" class="sub">Документов нет</td></tr>'}</tbody></table></div>
     ${!hasDoc(id,'t4')?'<div class="alertbox">Нет согласия на обработку данных о здоровье. Сначала оформите его в разделе «Документы».</div>':''}
 
-    <h3>История встреч</h3>
+    </details>
+    <details class="sec"><summary>История встреч</summary>
     <div class="tw"><table><thead><tr><th>Дата</th><th>№</th><th>Тип</th><th>Формат</th><th>Статус</th><th class="num">Стоимость</th><th>Оплата</th><th>Запись</th></tr></thead>
       <tbody>${vs.map(v=>`<tr class="click" data-act="openSess" data-id="${v.id}">
         <td class="mono">${ru(v.date)} ${v.time}</td><td class="num">${v.status==='состоялась'?sessNum(v):'—'}</td>
@@ -1726,7 +1744,8 @@ function clientCard(id){
         <td class="num">${v.price?v.price.toLocaleString('ru-RU'):'—'}</td><td class="sub">${esc(v.pay||'—')}</td>
         <td class="sub">${v.note?esc(v.note.tpl)+(v.done?'':' · черновик'):'<span style="color:var(--warn)">не заполнена</span>'}</td></tr>`).join('')||'<tr><td colspan="8" class="sub">Встреч не было</td></tr>'}</tbody></table></div>
 
-    <h3>Клиническая часть</h3>
+    </details>
+    <details class="sec" open><summary>Клиническая часть</summary>
     <div class="stack">
       <div><div class="sub">Запрос словами клиента</div><p class="lead" style="margin:2px 0 0">${esc(c.req||'не зафиксирован')}</p></div>
       <div><div class="sub">Рабочая формулировка случая</div><p class="lead" style="margin:2px 0 0">${esc(c.form||'—')}</p></div>
@@ -1742,7 +1761,8 @@ function clientCard(id){
       ||'<p class="sub">Флагов не выставлено. Отсутствие флага не равно отсутствию риска — оценка делается на каждой встрече.</p>'}</div>
     ${c.contra?`<div class="alertbox" style="margin-top:10px"><b>Противопоказания по методам:</b> ${esc(c.contra)}</div>`:''}
     ${c.minor?`<div class="note" style="margin-top:10px"><b>Что сообщается родителю:</b> ${esc(c.toParent)}</div>`:''}
-    <h3>План работы</h3>
+    </details>
+    <details class="sec"><summary>План работы</summary>
     <div class="tline">${(c.plan||[]).slice().reverse().map(p=>`<div class="tl">
       <div class="sub mono">в. ${p.v} · ${ru(p.d)}</div><div class="lead">${esc(p.t)}</div></div>`).join('')||'<p class="sub">План не зафиксирован.</p>'}</div>
     <div class="row"><button class="btn mini ghost" data-act="addPlan" data-id="${c.id}">Добавить версию плана</button></div>
@@ -1751,7 +1771,8 @@ function clientCard(id){
       return `<div class="item"><div><span class="chip b">${esc(l.k)}</span> ${esc(l.k==='пара'?nm(t):(t?t.name:'—'))}
         ${l.k==='группа'&&t?'<div class="sub">'+t.members.length+' участника · '+esc(t.slot)+'</div>':''}</div>
         ${l.k==='пара'?`<button class="btn mini ghost" data-act="client" data-id="${l.id}">Открыть</button>`:''}</div>`}).join('')}</div>`:''}
-    ${useScales()?`<h3>Шкалы</h3>${scaleBlock(id)}`:''}
+    </details>
+    ${useScales()?`<details class="sec"><summary>Шкалы</summary>${scaleBlock(id)}</details>`:''}
   </div>`;
 }
 function scaleBlock(id){
@@ -1787,7 +1808,7 @@ function vScales(){
         <div class="k">${esc(k)}</div><div style="font-weight:600;margin:2px 0 4px">${esc(s.title.split('· ')[1]||s.title)}</div>
         <div class="sub">${s.items.length} ${s.items.length<5?'пункта':'пунктов'} · ${s.kind==='0-3'?'ответы 0–3':'шкала 0–10'} · сумма 0–${s.max}</div>
         <div class="sub" style="margin-top:4px">пороги: ${s.thr.join(' / ')}</div>
-        <div class="sub" style="margin-top:6px">${esc(s.note)}</div>
+
         <button class="btn mini" style="margin-top:8px" data-act="fillScale" data-kind="${k}">Заполнить</button>
       </div>`}).join('')}
     </div>
@@ -1795,7 +1816,7 @@ function vScales(){
   </div>
 
   <div class="card">
-    <div class="spread"><div><h2>Динамика</h2><p class="sub">Линия строится из замеров, пороги и события — из карточки клиента.</p></div>
+    <div class="spread"><div><h2>Динамика</h2></div>
     <select data-setui="chartC" style="max-width:260px">${withData.map(x=>`<option value="${x.id}" ${cid===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></div>
     ${kinds.length?kinds.map(k=>{
       const pts=ms.filter(m=>m.kind===k),last=pts[pts.length-1];
@@ -1812,13 +1833,13 @@ function vScales(){
   </div>
 
   <div class="card">
-    <h2>Журнал замеров</h2>
-    <p class="sub">Все замеры кабинета в хронологическом порядке.</p>
-    <div class="tw" style="margin-top:10px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Шкала</th><th class="num">Сумма</th><th>Диапазон</th></tr></thead>
+    <details class="sec" style="border-top:0;margin-top:0"><summary>Журнал замеров</summary>
+    <div class="tw" style="margin-top:6px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Шкала</th><th class="num">Сумма</th><th>Диапазон</th></tr></thead>
       <tbody>${S.scales.slice().sort((a,b)=>a.date<b.date?1:-1).map(m=>`<tr>
         <td class="mono">${ru(m.date)}</td><td>${esc(nm(cl(m.cid)))}</td><td>${esc(m.kind)}</td>
         <td class="num"><b>${m.score}</b> <span class="sub">/ ${SCALES[m.kind].max}</span></td>
         <td class="sub">${esc(band(m.kind,m.score))}</td></tr>`).join('')}</tbody></table></div>
+    </details>
   </div>`;
 }
 
@@ -1830,22 +1851,21 @@ function vDocs(){
     <div class="spread"><div><h2>Документы и согласия</h2>
     </div>
     <button class="btn" data-act="newDoc">Отметить подписание</button></div>
-    <div class="grid g4" style="margin-top:12px">
-      <div class="kpi"><div class="k">Шаблонов</div><div class="v">${tpls.length}</div><div class="s">в библиотеке кабинета</div></div>
+    <div class="grid g3" style="margin-top:12px">
       <div class="kpi"><div class="k">Подписано</div><div class="v">${S.docs.filter(d=>d.st==='действует').length}</div><div class="s">действующих документов</div></div>
-      <div class="kpi ${need.length?'alert':'ok'}"><div class="k">Без согласия о здоровье</div><div class="v">${need.length}</div><div class="s">специальная категория 152-ФЗ</div></div>
+      <div class="kpi ${need.length?'alert':'ok'}"><div class="k">Без согласия о здоровье</div><div class="v">${need.length}</div><div class="s">клиентов</div></div>
       <div class="kpi"><div class="k">Раскрытий сведений</div><div class="v">${S.disc.length}</div><div class="s">записей в журнале</div></div>
     </div>
     ${need.length?`<div class="alertbox" style="margin-top:12px"><b>Нет действующего согласия на обработку данных о здоровье:</b> ${need.map(c=>esc(nm(c))).join(', ')}.</div>`:''}
 
-    <h3>Шаблоны и версии</h3>
+    <details class="sec"><summary>Шаблоны документов</summary>
     <div class="tw"><table><thead><tr><th>Документ</th><th>Версия</th><th>Редакция</th><th>Срок действия</th><th class="num">Подписан</th></tr></thead>
       <tbody>${tpls.map(t=>`<tr><td><b>${esc(t.name)}</b></td>
         <td class="mono">${esc(t.ver)}</td><td class="mono">${ru(t.verDate)}</td><td class="sub">${esc(t.term)}</td>
         <td class="num">${S.docs.filter(d=>d.tid===t.id&&d.st==='действует').length}</td></tr>`).join('')}</tbody></table></div>
-    
-
-    <div class="spread" style="margin:20px 0 8px;align-items:center"><h3 style="margin:0">Подписанные документы</h3>
+    </details>
+    <details class="sec" ${S.ui.docC?'open':''}><summary>Подписанные документы</summary>
+    <div class="spread" style="margin:0 0 8px;align-items:center">
       <select data-setui="docC" style="max-width:240px"><option value="">все клиенты</option>${S.clients.map(c=>
         `<option value="${c.id}" ${S.ui.docC===c.id?'selected':''}>${esc(nm(c))}</option>`).join('')}</select></div>
     <div class="tw"><table><thead><tr><th>Клиент</th><th>Документ</th><th>Версия</th><th>Подписан</th><th>Способ</th><th>Действует до</th><th>Статус</th><th></th></tr></thead>
@@ -1855,15 +1875,15 @@ function vDocs(){
         <td class="sub">${d.till?ru(d.till):esc(tpl(d.tid).term)}</td>
         <td><span class="chip ${d.st==='действует'?'g':'r'}">${esc(d.st)}</span></td>
         <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')}</tbody></table></div>
-    <p class="sub" style="margin-top:8px">Отзыв согласия оформляется одним действием и вступает в силу немедленно. Отозванное согласие остаётся в журнале — удалить след нельзя.</p>
 
-    <h3>Журнал раскрытия сведений</h3>
-    <p class="sub">Кому, когда, на каком основании и в каком объёме передавались сведения. Заполняется вручную и не редактируется задним числом.</p>
+    </details>
+    <details class="sec"><summary>Журнал раскрытия сведений</summary>
     <div class="tw" style="margin-top:8px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Кому</th><th>Основание</th><th>Объём</th></tr></thead>
       <tbody>${S.disc.slice().sort((a,b)=>a.date<b.date?1:-1).map(j=>`<tr>
         <td class="mono">${ru(j.date)}</td><td>${esc(nm(cl(j.cid)))}</td><td>${esc(j.who)}</td>
         <td class="sub">${esc(j.base)}</td><td class="sub">${esc(j.vol)}</td></tr>`).join('')}</tbody></table></div>
     <div class="row" style="margin-top:10px"><button class="btn ghost mini" data-act="addDisc">Записать раскрытие</button></div>
+    </details>
   </div>`;
 }
 
@@ -1884,7 +1904,6 @@ function vPay(){
       <div class="kpi"><div class="k">Обязательства по пакетам</div><div class="v">${oblig.toLocaleString('ru-RU')}</div><div class="s">₽ уже оплачено, но не отработано</div></div>
       <div class="kpi ${noCheck.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noCheck.length}</div><div class="s">платежей</div></div>
     </div>
-    <div class="note" style="margin-top:12px">Обязательства по пакетам — это не выручка. Пока встречи не проведены, деньги остаются обязательством перед клиентом: ${S.packs.filter(p=>p.n>p.used).map(p=>esc(nm(cl(p.cid)))+' — '+(p.n-p.used)+'×'+rub(p.price)).join('; ')||'нет'}.</div>
 
     <h3>Пакеты</h3>
     <div class="list">${S.packs.map(p=>{
@@ -1893,7 +1912,7 @@ function vPay(){
         <div style="flex:1;min-width:200px"><b>${esc(nm(cl(p.cid)))}</b> — ${p.n} встреч по ${rub(p.price)}
         <div class="sub">куплен ${ru(p.buy)} · срок до ${ru(p.exp)}${exp<=14?' · <b style="color:var(--warn)">истекает через '+exp+' дн.</b>':''}</div>
         <div class="bar" style="margin-top:6px"><i class="${exp<=14?'r':'o'}" style="width:${Math.round(p.used/p.n*100)}%"></i></div>
-        <div class="sub" style="margin-top:4px">Использовано ${p.used} из ${p.n}, остаток <b>${left}</b>. ${esc(p.refund)}</div></div>
+        <div class="sub" style="margin-top:4px">Использовано ${p.used} из ${p.n}, остаток <b>${left}</b></div></div>
         <div class="row"><span class="mono" style="color:var(--ochre)">${rub(left*p.price)}</span>
         <button class="btn mini ghost" data-act="usePack" data-id="${p.id}">Списать встречу</button></div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div>
 
@@ -1931,7 +1950,6 @@ function vSuperv(){
       <div class="kpi ${noCons.length?'alert':'ok'}"><div class="k">Без согласия клиента</div><div class="v">${noCons.length}</div><div class="s">обсуждение недопустимо</div></div>
       <div class="kpi"><div class="k">Внедрено изменений</div><div class="v">${S.superv.filter(x=>x.chg).length}</div><div class="s">из рекомендаций</div></div>
     </div>
-    ${noCons.length?`<div class="alertbox" style="margin-top:12px">По случаям ${noCons.map(x=>esc(x.code)).join(', ')} нет отметки о согласии клиента на обсуждение. До получения согласия случай не выносится — даже в обезличенном виде.</div>`:''}
     <div class="list" style="margin-top:14px">
     ${S.superv.slice().sort((a,b)=>a.date<b.date?1:-1).map(x=>`<div class="item" style="align-items:flex-start;flex-direction:column">
       <div class="spread" style="width:100%"><div><b class="mono">${esc(x.code)}</b> · ${ru(x.date)} · супервизор ${esc(x.sup)} · ${x.hours} ч</div>
@@ -1993,7 +2011,7 @@ function vRep(){
       <div class="kpi"><div class="k">Отмены заранее</div><div class="v">${pct(r.cancEarly.length)}%</div><div class="s">более ${S.settings.cancelH} ч · ${r.cancEarly.length} шт.</div></div>
       <div class="kpi"><div class="k">Отменил специалист</div><div class="v">${pct(r.cancSpec.length)}%</div><div class="s">${r.cancSpec.length} шт.</div></div>
       <div class="kpi ${nsPct>=10?'alert':'ok'}"><div class="k">Неявки</div><div class="v">${nsPct}%</div><div class="s">${nsPct>=10?"10 % и выше — правило отмены не работает":"ниже 10 % — правило отмены работает"}</div></div>
-      <div class="kpi ${r.lost>0?'alert':''}"><div class="k">Потери от отмен</div><div class="v">${r.lost.toLocaleString('ru-RU')}</div><div class="s">Σ пропущенных − Σ удержанного</div></div>
+      <div class="kpi ${r.lost>0?'alert':''}"><div class="k">Потери от отмен</div><div class="v">${r.lost.toLocaleString('ru-RU')}</div><div class="s">за 90 дней</div></div>
       <div class="kpi"><div class="k">Конверсия первичной</div><div class="v">${conv}%</div><div class="s">${r.second.length} из ${r.firsts.length} дошли до второй</div></div>
       <div class="kpi"><div class="k">Удержание</div><div class="v">${ret}%</div><div class="s">${r.keep.length} из ${r.started.length} дошли до 5 встреч</div></div>
       <div class="kpi"><div class="k">Средняя пауза</div><div class="v">${r.gap}</div><div class="s">дней между встречами; рост — ранний признак ухода</div></div>
@@ -2007,7 +2025,6 @@ function vRep(){
        ['Отменил специалист',r.cancSpec.length,'o'],['Неявки',r.noShow.length,'r']].map(([n,v,c])=>`
       <div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v} · ${pct(v)}%</span></div>
       <div class="bar"><i class="${c}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}
-    <p class="sub">Всего встреч в периоде: ${r.all.length}, из них состоялось ${r.done.length}. Потери считаются как Σ стоимости пропущенных (${r.missed.reduce((s,v)=>s+v.price,0).toLocaleString('ru-RU')} ₽) минус Σ фактически удержанного (${r.missed.reduce((s,v)=>s+(v.charged||0),0).toLocaleString('ru-RU')} ₽).</p>
 
     <h3>Длительность работы по причине завершения</h3>
     <div class="tw"><table><thead><tr><th>Причина</th><th class="num">Клиентов</th><th class="num">Средняя длительность, дней</th></tr></thead>
@@ -2018,9 +2035,9 @@ function vRep(){
     <div class="list">
       <div class="item"><div>${nsPct>=10?'<b>Неявки на уровне '+nsPct+'%</b> — правило отмены не работает или не проговаривается на первой встрече.':'Неявки ниже 10% — правило отмены работает.'}</div>
         <button class="btn mini ghost" data-act="tab" data-t="help">Настройки правила</button></div>
-      <div class="item"><div>Конверсия первичной во вторую — <b>${conv}%</b>. Ниже 60% обычно означает, что на первой встрече не проговорены формат, сроки и деньги.</div>
+      <div class="item"><div>Конверсия первичной во вторую — <b>${conv}%</b>. </div>
         <button class="btn mini ghost" data-act="tab" data-t="clients">Клиенты</button></div>
-      <div class="item"><div>Обязательства по пакетам — <b>${rub(r.oblig)}</b>. Эти деньги нельзя считать заработанными.</div>
+      <div class="item"><div>Обязательства по пакетам — <b>${rub(r.oblig)}</b>. </div>
         <button class="btn mini ghost" data-act="tab" data-t="pay">Оплаты</button></div>
     </div>
   </div>`;
@@ -2359,7 +2376,7 @@ function scaleModal(cid,kind){
       <label class="f"><span>Шкала</span><select id="sc-k" data-reopen="1">${Object.keys(SCALES).map(x=>`<option ${k===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Дата замера</span><input id="sc-d" type="date" value="${D(0)}"></label>
     </div>
-    <div class="note"><b>${esc(cfg.title)}</b> — ${esc(cfg.note)} Инструкция: ${esc(cfg.period)}.
+    <div class="note"><b>${esc(cfg.title)}</b>. ${esc(cfg.period)}.
     ${cfg.kind==='0-3'?'Как часто вас беспокоили следующие проблемы?':'Отметьте значение от 0 до 10, где 10 — лучше всего.'}</div>
     <div style="margin-top:12px">
     ${cfg.items.map((q,i)=>`<div class="q ${k==='PHQ-9'&&i===8?'hl':''}">
@@ -2412,7 +2429,6 @@ function clientModal(id){
     </div>
     <label class="f"><span>Ссылка на встречу — оставьте пустой, чтобы использовать постоянную комнату кабинета</span>
       <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc(id?roomOf(c.id):meetBase()+'tochka-opory-'+S.settings.room+'-…')}"></label>
-    <p class="sub" style="margin:-4px 0 10px">Своя ссылка нужна, если вы работаете на другой площадке: Zoom, «Контур.Толк», иной сервис. Кабинет её только хранит.</p>
     <label class="chip" style="cursor:pointer"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент</label>
     ${c.minor?`<div class="fgrid" style="margin-top:10px">
       <label class="f"><span>Законный представитель</span><input id="c-gname" value="${esc(c.guardian.name)}"></label>
@@ -2535,7 +2551,7 @@ document.addEventListener('click',e=>{
     editClient:()=>clientModal(id),
     tplSet:()=>{const v=sess(id);readSess(v);v.note=Object.assign({},v.note||{},{tpl:el.dataset.tpl});save();sessModal(id)},
     saveSess:()=>{const v=sess(id);if(!okTime(val('v-time'))){toast('Укажите время часами и минутами, например 10:00');return}PAY_NOTE='';readSess(v);save();closeModal();render();toast(PAY_NOTE||'Запись о встрече сохранена');PAY_NOTE=''},
-    cancelSess:()=>{const v=sess(id);readSess(v);save();cancelModal(id)},
+    cancelSess:()=>{const v=sess(id);if(document.getElementById('v-date'))readSess(v);save();cancelModal(id)},
     doCancel:()=>{
       const v=sess(id),rule=el.dataset.rule;
       v.status=val('x-who')||'отменена клиентом';v.reason=val('x-why');
@@ -2568,8 +2584,7 @@ document.addEventListener('click',e=>{
         +'Нужно: два-три варианта короткого выполнимого задания на неделю, каждое — одно действие и способ его отметить. '
         +'Формулировки — нейтральные, без оценок и без обещаний результата. Не предлагай диагнозов и методов лечения.';
       aiModal('Домашнее задание — запрос для ИИ',mk(''),
-        `<label class="f"><span>Тема встречи одной фразой — подставится в запрос</span><input id="ai-theme" placeholder="например: границы в разговоре с руководителем"></label>
-         <p class="sub" style="margin:-4px 0 8px">Тему вписывает специалист. Кабинет не берёт её из записи о встрече — содержание записей в запрос не попадает.</p>`);
+        `<label class="f"><span>Тема встречи одной фразой — подставится в запрос</span><input id="ai-theme" placeholder="например: границы в разговоре с руководителем"></label>`);
       const box=document.getElementById('ai-t'),th=document.getElementById('ai-theme');
       if(th)th.addEventListener('input',()=>{box.value=anon(mk(th.value))});},
     aiLetter:()=>{
@@ -2601,8 +2616,7 @@ document.addEventListener('click',e=>{
         +'Вопрос должен касаться работы специалиста, а не оценки клиента. Диагнозы, методы лечения и трактовки состояния не предлагаются.';
       aiModal('Вопрос супервизору — текст запроса',mk('',''),
         `<label class="f"><span>Обезличенное описание случая — вводится вручную</span><textarea id="ai-case" style="min-height:90px" placeholder="например: работа десять встреч, альянс сохранён, динамики нет, клиент говорит об этом прямо"></textarea></label>
-         <label class="f"><span>О чём хочу спросить</span><input id="ai-q" placeholder="например: менять фокус работы или завершать и рекомендовать другого специалиста"></label>
-         <p class="sub" style="margin:-4px 0 8px">Описание не извлекается из карточки клиента и записей о встречах: текст вводится специалистом.</p>`);
+         <label class="f"><span>О чём хочу спросить</span><input id="ai-q" placeholder="например: менять фокус работы или завершать и рекомендовать другого специалиста"></label>`);
       const box=document.getElementById('ai-t'),t1=document.getElementById('ai-case'),t2=document.getElementById('ai-q');
       const upd=()=>{box.value=anon(mk(t1?t1.value:'',t2?t2.value:''))};
       if(t1)t1.addEventListener('input',upd);if(t2)t2.addEventListener('input',upd);},
@@ -2865,8 +2879,7 @@ document.addEventListener('click',e=>{
       <label class="f"><span>Клиент</span><select id="ex-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
       <div class="note">Войдут всегда: административная карточка, документы и согласия, оплаты, даты и статусы встреч, замеры по шкалам — это ответы самого клиента.
       Не войдут никогда: поле «заметка для себя», отметки о риске и совместные записи парной работы — записи о встрече с двумя участниками принадлежат обоим, и передать их одному без согласия второго нельзя.</div>
-      <label class="chip" style="cursor:pointer;margin:8px 0"><input type="checkbox" id="ex-clin" style="width:auto;margin-right:6px">Добавить клиническую часть карточки и тексты записей о встречах</label>
-      <p class="sub" style="margin:-2px 0 0">Формулировка случая, план работы и записи о встречах написаны специалистом для работы и супервизии. Решение о том, передавать ли их клиенту на руки, принимает специалист, а не кабинет: по умолчанию они в файл не включаются.</p>`,
+      <label class="chip" style="cursor:pointer;margin:8px 0"><input type="checkbox" id="ex-clin" style="width:auto;margin-right:6px">Добавить клиническую часть карточки и тексты записей о встречах</label>`,
       `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="doExportClient">Сформировать файл</button>`),
     doExportClient:()=>{
       const cid=val('ex-c'),c=cl(cid);
@@ -3378,9 +3391,25 @@ function mountMics(){
   micPaint();
 }
 /* Значки навешиваются после каждой отрисовки страницы и после открытия окна. */
-const _render=render;render=function(){_render.apply(this,arguments);mountMics()};
-const _modal=modal;modal=function(){const r=_modal.apply(this,arguments);mountMics();return r};
+/* Подписи столбцов для таблиц, которые на телефоне показываются строками. */
+function tableLabels(){document.querySelectorAll('.tw table').forEach(t=>{const h=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());
+  t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((td,i)=>{if(h[i]&&!td.dataset.l)td.dataset.l=h[i]}))})}
+const _render=render;render=function(){_render.apply(this,arguments);mountMics();tableLabels()};
+const _modal=modal;modal=function(){const r=_modal.apply(this,arguments);mountMics();tableLabels();return r};
 mountMics();
+/* Меню на телефоне: то, что на компьютере стоит в боковой панели. */
+document.getElementById('mmenu').addEventListener('click',()=>{
+  const dis=id=>document.getElementById(id).disabled?'disabled':'';
+  modal('Меню',`<div class="list">
+    <button class="btn ghost" ${dis('back')} data-mm="back">← Назад</button>
+    <button class="btn ghost" ${dis('undo')} data-mm="undo">↶ Отменить последнее действие</button>
+    <button class="btn ghost" ${dis('redo')} data-mm="redo">↷ Вернуть отменённое</button>
+    <button class="btn ghost" data-mm="anon">${S.ui.anon?'Показать имена':'Скрыть имена'}</button>
+    <button class="btn ghost" data-mm="theme">Светлая или тёмная тема</button></div>`);
+  document.querySelectorAll('#modal [data-mm]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.mm;closeModal();
+    if(k==='anon'){const x=document.createElement('button');x.dataset.act='anon';x.hidden=true;document.body.appendChild(x);x.click();x.remove()}
+    else document.getElementById(k).click()}));
+});
 document.getElementById('theme').addEventListener('click',()=>{
   const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',cur);try{localStorage.setItem(KEY+'-theme',cur)}catch(e){}});
