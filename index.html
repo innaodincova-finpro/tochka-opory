@@ -247,6 +247,24 @@ textarea{min-height:70px;resize:vertical}
 .locklink[hidden]{display:none}
 #robar{position:relative;z-index:60;background:var(--ochre);color:#1d1d1d;padding:9px 16px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
 #robar button{background:#1d1d1d;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.cstream{display:grid;gap:14px}
+.mcard{border:1px solid var(--line);border-radius:16px;padding:12px 8px;background:var(--card)}
+.mtitle{font-family:'Spectral',Georgia,serif;font-size:18px;font-weight:600;margin:0 4px 10px;color:var(--ink)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cal .dw{font-size:10.5px;color:var(--ink3);text-align:center;padding-bottom:3px}
+.cal .d{min-height:74px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);padding:5px 4px;display:flex;flex-direction:column;gap:2px;text-align:left;overflow:hidden;cursor:pointer;font:inherit}
+.cal .d:hover{border-color:var(--accent)}
+.cal .d.out{border-color:transparent;background:transparent;cursor:default}
+.cal .d.past{opacity:.6}
+.cal .d.today{background:var(--panel);border-color:var(--panel);color:#fff;opacity:1}
+.cal .dn{font:500 12px/1.2 ui-monospace,Menlo,Consolas,monospace;text-align:right}
+.cal .dp{font-size:10.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--soft);border-radius:4px;padding:1px 3px;color:var(--ink2)}
+.cal .d.today .dp{background:rgba(255,255,255,.16);color:#fff}
+.cal .dp.more{background:none;padding:0 3px;color:var(--ink3)}
+.cal .d.today .dp.more{color:#D7E3EE}
+@media(min-width:900px){.cal .d{min-height:92px}.cal .dp{font-size:11.5px}}
+@media(max-width:599px){.cal .dnm{display:none}.cal .dp{text-align:center;padding:1px 0}.cal .d{min-height:66px;padding:4px 2px}}
+.freegrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .hlp{border-top:1px solid var(--line);padding:10px 0}
 .hlp summary{cursor:pointer;font-weight:600;color:var(--ink);list-style-position:inside}
 .hlp p{margin:8px 0 0;color:var(--ink2);line-height:1.5}
@@ -345,7 +363,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в13</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в14</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1568,45 +1586,55 @@ function dayRail(date){
 }
 
 /* ═══════════════ Расписание ═══════════════ */
+const MONTHS_N=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+/* Встречи дня без отменённых и перенесённых — то, что занимает время. */
+const daySess=d=>S.sessions.filter(v=>v.date===d&&!v.status.startsWith('отменена')&&v.status!=='перенесена').sort((a,b)=>a.time<b.time?-1:1);
+/* Короткая подпись в клетке: время и фамилия (или код при скрытых именах). */
+function calLabel(v){
+  if(v.gid)return (gr(v.gid)?gr(v.gid).name:'Группа').replace(/^Группа:\s*/,'');
+  const c=cl(v.cid);if(!c)return '—';
+  if(S.ui.anon)return c.code;
+  const p=String(c.name).trim().split(/\s+/);return p.length>1?p[p.length-1]:p[0];
+}
+function monthCard(y,m){
+  const key=y+'-'+p2(m+1);
+  const heads=['пн','вт','ср','чт','пт','сб','вс'].map(x=>`<div class="dw">${x}</div>`).join('');
+  let cells='';const shift=(new Date(y,m,1).getDay()+6)%7,dim=new Date(y,m+1,0).getDate();
+  for(let i=0;i<shift;i++)cells+='<div class="d out"></div>';
+  for(let i=1;i<=dim;i++){
+    const ds=key+'-'+p2(i),list=daySess(ds);
+    const prev=list.slice(0,2).map(v=>`<span class="dp">${v.time}<span class="dnm"> ${esc(calLabel(v))}</span></span>`).join('')+(list.length>2?`<span class="dp more">ещё ${list.length-2}</span>`:'');
+    cells+=`<button type="button" class="d${ds===D(0)?' today':''}${ds<D(0)?' past':''}" data-act="calDay" data-date="${ds}" aria-label="${ru(ds)}, встреч: ${list.length}"><span class="dn">${i}</span>${prev}</button>`;
+  }
+  return `<div class="mcard"><div class="mtitle">${MONTHS_N[m]} ${y}</div><div class="cal">${heads}${cells}</div></div>`;
+}
 function vSched(){
-  const base=S.ui.day;
-  const week=[...Array(7)].map((_,i)=>{const d=pd(base);d.setDate(d.getDate()+i);return isoL(d)});
-  const rec=S.clients.filter(c=>c.slot);
+  const back=+S.ui.calPast||0,t=pd(D(0));let months='';
+  for(let k=-back;k<3;k++){const d=new Date(t.getFullYear(),t.getMonth()+k,1);months+=monthCard(d.getFullYear(),d.getMonth())}
   return `<div class="card">
-    <div class="spread"><div><h2>Расписание</h2><p class="lead">Неделя с ${ru(week[0])}.</p></div>
-    <div class="row"><button class="btn ghost mini" data-act="shift" data-n="-7">← Раньше</button>
-    <button class="btn ghost mini" data-act="shift" data-n="0">Сегодня</button>
-    <button class="btn ghost mini" data-act="shift" data-n="7">Позже →</button>
-    <button class="btn" data-act="newSess">Новая встреча</button></div></div>
-    <div class="grid g3" style="margin-top:14px">
-    ${week.map(d=>{
-      const list=S.sessions.filter(v=>v.date===d).sort((a,b)=>a.time<b.time?-1:1);
-      const h=list.filter(v=>!v.status.startsWith('отменена')).reduce((s,v)=>s+v.dur,0)/60;
-      return `<div class="kpi" style="padding:12px">
-        <div class="spread"><div><b>${dow(d)}, ${ru(d).slice(0,5)}</b>${d===D(0)?' <span class="chip b">сегодня</span>':''}</div>
-        <span class="sub">${Math.round(h*10)/10} ч</span></div>
-        <div class="list" style="margin-top:8px">
-        ${list.length?list.map(v=>`<div class="item" style="padding:8px 10px;cursor:pointer" data-act="openSess" data-id="${v.id}">
-          <div><span class="mono">${v.time}</span> ${esc(title(v))}<div class="sub">${esc(v.type)} · ${esc(v.fmt)}</div></div>
-          <span class="chip ${v.status==='состоялась'?'g':(v.status==='неявка'||v.status.startsWith('отменена'))?'r':v.status==='подтверждена'?'b':'o'}">${esc(v.status==='отменена клиентом'?'отм. клиентом':v.status==='отменена специалистом'?'отм. специалистом':v.status)}</span></div>`).join('')
-          :'<div class="sub">свободный день</div>'}
-        </div>
-        <button class="btn mini ghost" style="margin-top:8px;width:100%" data-act="newSess" data-date="${d}">Записать</button>
-      </div>`}).join('')}
-    </div>
-    <h3>Повторяющиеся встречи</h3>
-    <div class="list">${rec.map(c=>`<div class="item">
-      <div><b>${esc(nm(c))}</b> — еженедельно ${['вс','пн','вт','ср','чт','пт','сб'][c.slot.d]} в ${esc(c.slot.time)}
-      <div class="sub">${esc(c.fmt)}${c.tzOff?' · часовой пояс клиента '+esc(c.tz)+' (+'+c.tzOff+' ч к вашему)':''}</div></div>
-      <button class="btn mini ghost" data-act="client" data-id="${c.id}">Карточка</button></div>`).join('')||'<p class="sub">Постоянных слотов нет.</p>'}</div>
+    <div class="spread"><h2>Расписание</h2><button class="btn" data-act="newSess">Новая встреча</button></div>
+    ${back<12?`<button class="btn ghost mini" style="margin:6px 0 10px" data-act="calPast">Показать прошлый месяц</button>`:''}
+    <div class="cstream">${months}</div>
     <h3>Лист ожидания</h3>
     <div class="list">${S.wait.map(w=>`<div class="item">
-      <div><b>${esc(nm(cl(w.cid)))}</b><div class="sub">${esc(w.want)} · в листе с ${ru(w.added)}</div></div>
+      <div><b>${esc(nm(cl(w.cid)))}</b><div class="sub">${esc(w.want)}</div></div>
       <div class="row"><button class="btn mini" data-act="newSess" data-cid="${w.cid}">Записать</button>
       <button class="btn mini ghost" data-act="delWait" data-id="${w.id}">Убрать</button></div></div>`).join('')||'<p class="sub">Лист пуст.</p>'}</div>
     <div class="row" style="margin-top:10px"><button class="btn ghost mini" data-act="addWait">Добавить в лист ожидания</button></div>
-    
   </div>`;
+}
+/* День: встречи и свободные часы в рабочем времени. */
+function dayModal(ds){
+  const list=daySess(ds),st=parseInt(S.settings.start),en=parseInt(S.settings.end);
+  const free=[];
+  for(let h=st;h<en;h++){const from=h*60,to=from+60;
+    if(ds===D(0)&&to<=nowMin())continue;
+    if(!list.some(v=>{const m=toMin(v.time);return m<to&&m+v.dur>from}))free.push(fmt(from))}
+  modal(`${dow(ds)}, ${ru(ds)}`,`
+    <div class="list">${list.map(v=>`<div class="item" style="cursor:pointer" data-act="openSess" data-id="${v.id}">
+      <div><span class="mono">${v.time}</span> <b>${esc(title(v))}</b><div class="sub">${esc(v.fmt)} · ${esc(v.status)}</div></div></div>`).join('')||'<p class="sub">Встреч нет.</p>'}</div>
+    ${ds>=D(0)&&free.length?`<h3 style="margin-top:14px">Свободно</h3><div class="freegrid">${free.map(t=>`<button class="btn mini ghost" data-act="newSess" data-date="${ds}" data-time="${t}">${t}</button>`).join('')}</div>`:''}`,
+    `<button class="btn ghost" data-act="closeModal">Закрыть</button>${ds>=D(0)?`<button class="btn" data-act="newSess" data-date="${ds}">Новая встреча</button>`:''}`);
 }
 
 /* ═══════════════ Клиенты ═══════════════ */
@@ -2433,10 +2461,12 @@ document.addEventListener('click',e=>{
     client:()=>{pushHist();S.ui.tab='clients';S.ui.client=id;closeModal();save();render();syncRail()},
     backClients:()=>{pushHist();S.ui.client=null;save();render();syncRail()},
     filter:()=>{S.ui.filter=el.dataset.f;save();render()},
+    calDay:()=>dayModal(el.dataset.date),
+    calPast:()=>{S.ui.calPast=(+S.ui.calPast||0)+1;save();render()},
     shift:()=>{const n=+el.dataset.n;S.ui.day=n?D(days(D(0),S.ui.day)+n):D(0);save();render()},
     openSess:()=>sessModal(id),
     prevNote:()=>sessModal(id),
-    newSess:()=>newSessModal(el.dataset.date,el.dataset.cid,el.dataset.time),
+    newSess:()=>{closeModal();newSessModal(el.dataset.date,el.dataset.cid,el.dataset.time)},
     openMeet:()=>{const v=sess(id);const u=meetUrl(v);if(!u){toast('Адрес комнаты не задан');return}
       /* Если идёт другая встреча, startMeet открывает вопрос и возвращает false — комнату не открываем. */
       if(!startMeet(v))return;
