@@ -1,0 +1,27 @@
+from playwright.sync_api import sync_playwright
+R=[]
+def ok(n,c,i=''): R.append(c); print(('OK  ' if c else 'FAIL'),n,i)
+O='/tmp/claude-0/-home-claude/871422d8-68b2-5fc8-b99e-a6edeea11466/scratchpad/stage1/aud/'
+with sync_playwright() as p:
+    b=p.chromium.launch(args=['--no-proxy-server']); pg=b.new_page(viewport={'width':1440,'height':900}); e=[]; pg.on('pageerror',lambda x:e.append(str(x))); pg.on('dialog',lambda d:d.accept())
+    pg.clock.install(time="2026-10-21T16:45:00")
+    pg.goto('http://127.0.0.1:8765/v11/index.html'); pg.wait_for_timeout(900); pg.get_by_role('button',name='Выбрать').first.click(); pg.wait_for_timeout(300)
+    pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(600)
+    pg.evaluate("S.settings.spec.name='';save();renderHead();go('today')"); pg.wait_for_timeout(300)
+    pg.screenshot(path=O+'today-mark.png')
+    n=pg.evaluate("S.sessions.filter(needMark).length")
+    ok('есть встречи для отметки',n>=2,str(n))
+    ok('в «Сделать сегодня» пункт об отметке',pg.locator('.todo .t:has-text("Отметьте, состоялась ли")').count()==n)
+    ok('нет «не подтверждена» для начавшейся в 16:00',pg.locator('.todo .t:has-text("Встреча в 16:00 не подтверждена")').count()==0)
+    vid=pg.evaluate("S.sessions.filter(needMark)[0].id"); used0=pg.evaluate("pack('c1')[0].used")
+    pg.locator(f'.line [data-act=markDone][data-id="{vid}"]').click(); pg.wait_for_timeout(300)
+    ok('отмечена «состоялась»',pg.evaluate(f"sess('{vid}').status")=='состоялась')
+    ok('пакет списан, если оплата пакетом',pg.evaluate(f"sess('{vid}').pay!=='пакет'||pack('c1')[0].used==={used0}+1"))
+    vid2=pg.evaluate("S.sessions.filter(needMark)[0].id"); pg.locator(f'.line [data-act=markNo][data-id="{vid2}"]').click(); pg.wait_for_timeout(300)
+    ok('окно «Клиент не пришёл»','не пришёл' in (pg.text_content('#modal h3') or '') and pg.input_value('#x-who')=='неявка')
+    pg.evaluate("closeModal()")
+    ok('подсказка указать имя',pg.locator('.who [data-act=goSpec]').count()==1)
+    pg.click('.who [data-act=goSpec]'); pg.wait_for_timeout(300)
+    ok('открыт раздел «Специалист»',pg.evaluate("document.activeElement&&document.activeElement.dataset.setspec==='name'"))
+    ok('ошибок нет',not e,str(e)); b.close()
+print('ИТОГ',sum(R),'из',len(R))
