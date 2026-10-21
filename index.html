@@ -247,6 +247,7 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+.lnk{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:600;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}.lnk:hover{color:var(--accent,#3b6188)}
 .dict{margin-bottom:12px}.dict>summary{list-style:none;display:inline-block}.dict>summary::-webkit-details-marker{display:none}.dict[open]>summary{margin-bottom:0}
 .todo-top{margin-bottom:18px}
 @media(min-width:901px){.todo-top .todo{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}}
@@ -424,7 +425,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в30</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в31</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1624,7 +1625,7 @@ function stepBack(from,to,verb){
 }
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
-const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
+const RO_OK=new Set(['repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
   'wordReport','wordClient','exportClient','icsModal','icsGet','taxModal','taxGet','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
@@ -2452,41 +2453,67 @@ function repData(){
   return {income,paid,win,all,done,cancEarly,cancLate,cancSpec,noShow,missed,lost,m30,doneH,openH,started,firsts,second,keep,byWhy,
     gap:gapN?Math.round(gapSum/gapN):0,oblig};
 }
+/* Отчёт за месяц для психолога: не проценты, а список дел. Каждое число раскрывается списком, из которого сложилось. */
+function repMonth(m){
+  const inM=d=>String(d||'').slice(0,7)===m;
+  const vs=S.sessions.filter(v=>inM(v.date)).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1);
+  const done=vs.filter(v=>v.status==='состоялась');
+  const miss=vs.filter(v=>v.status==='неявка'||v.status==='отменена клиентом');
+  const pays=S.pays.filter(p=>inM(p.date)&&(+p.sum||0)>0).sort((a,b)=>a.date<b.date?-1:1);
+  const got=pays.reduce((s,p)=>s+(+p.sum||0),0);
+  const lost=miss.reduce((s,v)=>s+Math.max(0,(+v.price||0)-(+v.charged||0)),0);
+  const byC={};miss.forEach(v=>{if(v.cid)(byC[v.cid]=byC[v.cid]||[]).push(v)});
+  const often=Object.keys(byC).filter(k=>byC[k].length>=2).map(k=>({c:cl(k),list:byC[k]}));
+  const debt=S.clients.filter(c=>c.debt>0);
+  const gone=S.clients.filter(c=>c.status==='в работе').map(c=>{const d=doneSess(c.id),last=d.length?d[d.length-1].date:'';
+    const fut=cSess(c.id).some(v=>v.date>=D(0)&&(v.status==='запланирована'||v.status==='подтверждена'));
+    return {c,last,fut}}).filter(x=>!x.fut&&x.last&&days(x.last,D(0))>21);
+  const packs=S.packs.filter(p=>p.used<p.n&&(p.n-p.used<=1||days(D(0),p.exp)<=14));
+  const docs=flagDocsExp();
+  const noCheck=S.pays.filter(p=>!p.check&&(+p.sum||0)>0).sort((a,b)=>a.date<b.date?-1:1);
+  return {m,vs,done,miss,pays,got,lost,often,debt,gone,packs,docs,noCheck};
+}
+const missWhy=v=>v.status==='неявка'?'не пришёл':(+v.before||0)<S.settings.cancelH?'отмена менее чем за '+S.settings.cancelH+' ч':'отмена заранее';
+const shortD=d=>ru(d).slice(0,5);
 function vRep(){
-  const r=repData();
-  /* Пока нет проведённых встреч, отчёт не показывает нули и не делает выводов. */
-  if(!r.done.length)return `<div class="card"><h2>Отчёты</h2>
-    <p class="lead" style="margin-top:10px">Отчёты появятся после первых проведённых встреч: доход, оплаты, отмены и неявки, загрузка приёма.</p></div>`;
-  const fill=r.openH?Math.round(r.doneH/r.openH*100):0;
-  const pct=n=>r.all.length?Math.round(n/r.all.length*100):0;
-  const miss=r.cancLate.length+r.noShow.length,missPct=pct(miss);
-  const conv=r.firsts.length?Math.round(r.second.length/r.firsts.length*100):0;
-  const canc=[['Отменили заранее',r.cancEarly.length],['Отменили поздно (менее '+S.settings.cancelH+' ч)',r.cancLate.length],['Не пришли',r.noShow.length],['Отменили вы',r.cancSpec.length]].filter(x=>x[1]);
-  /* Выводы — только когда данных достаточно, иначе процент ничего не значит. */
-  const tips=[];
-  if(r.all.length>=10&&missPct>=10)tips.push(['Поздние отмены и неявки — '+missPct+'% встреч. Проговорите правило отмены на первой встрече.','help','Правило отмены']);
-  if(r.firsts.length>=3&&conv<60)tips.push(['До второй встречи дошли '+r.second.length+' из '+r.firsts.length+' новых клиентов.','clients','Клиенты']);
+  if(!S.sessions.some(v=>v.status==='состоялась'))return `<div class="card"><h2>Отчёты</h2>
+    <p class="lead" style="margin-top:10px">Отчёт появится после первых проведённых встреч.</p></div>`;
+  const m=S.ui.repM||D(0).slice(0,7),r=repMonth(m),L=(k,t)=>`<button type="button" class="lnk" data-act="repList" data-k="${k}" data-m="${m}">${t}</button>`;
+  const sec=(t,n,how,body)=>`<details class="sec"><summary>${t} <span class="sumv ${n?'warn':''}">${n||'нет'}</span></summary>
+    <p class="sub" style="margin:0 0 8px">${how}</p>${n?body:''}</details>`;
+  const row=(cid,main,sub,btn)=>`<div class="item" style="cursor:pointer" data-act="client" data-id="${cid}"><div><b>${main}</b>${sub?`<div class="sub">${sub}</div>`:''}</div>${btn||''}</div>`;
   return `<div class="card">
-    <div class="spread"><div><h2>Отчёты</h2><p class="lead">За последние ${r.win} дней.</p></div>
-    <button class="btn ghost" data-act="wordReport">Отчёт за месяц в Word</button></div>
-    <div class="grid g3" style="margin-top:14px">
-      <div class="kpi"><div class="k">Заработано</div><div class="v">${r.income.toLocaleString('ru-RU')}</div><div class="s">₽ за ${r.done.length} ${plN(r.done.length,'проведённую встречу','проведённые встречи','проведённых встреч')}</div></div>
-      <div class="kpi"><div class="k">Поступило оплат</div><div class="v">${r.paid.toLocaleString('ru-RU')}</div><div class="s">₽ получено от клиентов, включая пакеты</div></div>
-      <div class="kpi"><div class="k">Загрузка приёма</div><div class="v">${fill}%</div><div class="s">за 30 дней проведено ${String(Math.round(r.doneH*10)/10).replace('.',',')} ч из ${r.openH} ч, открытых для приёма (задаётся в Настройках)</div></div>
-      <div class="kpi ${missPct>=10&&r.all.length>=10?'alert':''}"><div class="k">Поздние отмены и неявки</div><div class="v">${missPct}%</div><div class="s">${miss} из ${r.all.length} назначенных встреч</div></div>
-      ${r.firsts.length?`<div class="kpi"><div class="k">Дошли до второй встречи</div><div class="v">${r.second.length} из ${r.firsts.length}</div><div class="s">новых клиентов пришли повторно</div></div>`:''}
-      ${r.gap?`<div class="kpi"><div class="k">Пауза между встречами</div><div class="v">${r.gap}</div><div class="s">дней в среднем</div></div>`:''}
-    </div>
-    ${canc.length?`<details class="sec"><summary>Отмены и неявки</summary>${canc.map(([n,v])=>`<div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v}</span></div>
-      <div class="bar"><i class="${/поздно|Не пришли/.test(n)?'r':''}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}</details>`:''}
-    ${tips.length?`<details class="sec" open><summary>На что обратить внимание <span class="sumv warn">${tips.length}</span></summary><div class="list">${tips.map(([t,tab,btn])=>`<div class="item"><div>${t}</div><button class="btn mini ghost" data-act="tab" data-t="${tab}">${btn}</button></div>`).join('')}</div></details>`:''}
-    ${Object.keys(r.byWhy).length?`<details class="sec"><summary>Завершённые и приостановленные работы</summary>
-    <div class="tw"><table><thead><tr><th>Чем закончилась работа</th><th class="num">Клиентов</th><th class="num">Длилась, дней в среднем</th></tr></thead>
-      <tbody>${Object.keys(r.byWhy).map(k=>`<tr><td>${esc(k)}</td><td class="num">${r.byWhy[k].length}</td>
-        <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')}</tbody></table></div></details>`:''}
+    <div class="spread"><h2>Отчёт за месяц</h2><button class="btn ghost" data-act="wordReport" data-m="${m}">Скачать в Word</button></div>
+    <label class="f" style="max-width:260px;margin-top:10px"><span>Месяц</span><select id="rep-m">${monthList().map(x=>`<option value="${x}" ${x===m?'selected':''}>${monthName(x)}</option>`).join('')}</select></label>
+    <p class="lead" style="margin-top:6px">Проведено ${L('done',r.done.length+' '+plN(r.done.length,'встреча','встречи','встреч'))}, получено ${L('pays',rub(r.got))}.
+      ${r.miss.length?`Отменено и пропущено ${L('miss',r.miss.length+' '+plN(r.miss.length,'встреча','встречи','встреч'))} — не получено ${rub(r.lost)}.`:'Отмен и неявок не было.'}</p>
+    <p class="sub">Нажмите на подчёркнутое — откроется список, из которого сложилось число. Нажмите на клиента — откроется его карточка.</p>
+    ${sec('Кто должен',r.debt.length,'Клиенты с долгом на сегодня. Долг появляется при поздней отмене или неявке, если встреча выставлена к оплате.',
+      `<div class="list">${r.debt.map(c=>row(c.id,esc(nm(c))+' — '+rub(c.debt),'',`<button class="btn mini" data-act="payDebt" data-id="${c.id}">Погасить</button>`)).join('')}</div>`)}
+    ${sec('Кто часто отменяет',r.often.length,'Клиенты, у которых за месяц две и больше отмены или неявки. Повод обсудить с клиентом правила.',
+      `<div class="list">${r.often.map(x=>row(x.c.id,esc(nm(x.c))+' — '+x.list.length+' '+plN(x.list.length,'раз','раза','раз'),
+        x.list.map(v=>`<button type="button" class="lnk" data-act="openSess" data-id="${v.id}">${shortD(v.date)}</button> ${missWhy(v)}`).join(', '))).join('')}</div>`)}
+    ${sec('Кто пропал',r.gone.length,'Клиенты в работе, которые не приходили больше трёх недель и не записаны на следующую встречу. Им стоит написать.',
+      `<div class="list">${r.gone.map(x=>row(x.c.id,esc(nm(x.c)),'последняя встреча '+ru(x.last)+' — '+days(x.last,D(0))+' дн. назад',
+        `<button class="btn mini ghost" data-act="newSess" data-cid="${x.c.id}">Записать</button>`)).join('')}</div>`)}
+    ${sec('Что заканчивается',r.packs.length+r.docs.length,'Пакеты, в которых осталась одна встреча или срок истекает в ближайшие 14 дней, и согласия, которые истекают в ближайшие 30 дней.',
+      `<div class="list">${r.packs.map(p=>row(p.cid,esc(nm(cl(p.cid))),'пакет: осталось '+(p.n-p.used)+' из '+p.n+', срок до '+ru(p.exp))).join('')}
+        ${r.docs.map(d=>row(d.cid,esc(nm(cl(d.cid))),esc(tpl(d.tid).name)+' — действует до '+ru(d.till))).join('')}</div>`)}
+    ${sec('Чек не отмечен',r.noCheck.length,'Платежи, по которым не отмечено, что чек выдан в «Мой налог». Выдайте чек и нажмите «Отметить».',
+      `<div class="list">${r.noCheck.map(p=>row(p.cid,esc(nm(cl(p.cid)))+' — '+rub(p.sum),ru(p.date)+' · '+esc(p.method||''),`<button class="btn mini" data-act="check" data-id="${p.id}">Отметить</button>`)).join('')}</div>`)}
   </div>`;
 }
-
+function repList(k,m){
+  const r=repMonth(m),t={done:'Проведённые встречи',pays:'Полученные оплаты',miss:'Отменённые и пропущенные встречи'}[k];
+  const vrow=v=>`<div class="item" style="cursor:pointer" data-act="openSess" data-id="${v.id}"><div><span class="mono">${shortD(v.date)} ${v.time}</span> <b>${esc(title(v))}</b>
+    <div class="sub">${k==='miss'?missWhy(v)+(v.charged?' · удержано '+rub(v.charged):''):esc(v.fmt)+' · '+rub(v.price||0)}</div></div></div>`;
+  const body=k==='pays'?r.pays.map(p=>`<div class="item" style="cursor:pointer" data-act="client" data-id="${p.cid}"><div><span class="mono">${shortD(p.date)}</span> <b>${esc(nm(cl(p.cid)))}</b>
+    <div class="sub">${esc(p.method||'')} · ${esc(p.comment||p.purpose||'')}</div></div><span class="mono">${rub(p.sum)}</span></div>`).join('')
+    :(k==='done'?r.done:r.miss).map(vrow).join('');
+  const sum=k==='pays'?'Итого: '+rub(r.got):k==='done'?'Встреч: '+r.done.length+' · стоимость '+rub(r.done.reduce((s,v)=>s+(+v.price||0),0)):'Не получено: '+rub(r.lost);
+  modal(t+' · '+monthName(m),`<div class="list">${body||'<p class="sub">Нет.</p>'}</div><p class="lead" style="margin-top:12px">${sum}</p>
+    <p class="sub">${k==='pays'?'Нажмите на строку — откроется карточка клиента.':'Нажмите на строку — откроется встреча.'}</p>`);
+}
 /* ── Пустые разделы ──
    Пока данных нет, раздел показывает одну строку и одну кнопку, а не плитки с нулями и пустые таблицы. */
 function emptyCard(h,text,act,btn){return `<div class="card"><div class="spread"><h2>${h}</h2>${act?`<button class="btn" data-act="${act}">${btn}</button>`:''}</div>
@@ -3177,35 +3204,21 @@ document.addEventListener('click',e=>{
       const upd=()=>{box.value=anon(mk(t1?t1.value:'',t2?t2.value:''))};
       if(t1)t1.addEventListener('input',upd);if(t2)t2.addEventListener('input',upd);},
     wordReport:()=>{
-      const r=repData();
-      const fill=r.openH?Math.round(r.doneH/r.openH*100):0;
-      const pc=n=>r.all.length?Math.round(n/r.all.length*100):0;
-      const conv=r.firsts.length?Math.round(r.second.length/r.firsts.length*100):0;
-      const keep=r.started.length?Math.round(r.keep.length/r.started.length*100):0;
-      let h='<h1>Отчёт кабинета за месяц</h1>';
-      h+='<p class="muted">Кабинет «'+esc(S.settings.name)+'». Сформировано '+ru(D(0))+'. Период операционных показателей — последние '+r.win+' дней, заполняемость — последние 30 дней.</p>';
-      h+='<p class="muted">В отчёте нет ни одного имени клиента и ни одной клинической записи: только агрегированные числа.</p>';
-      h+='<h2>Заполняемость и объём</h2><table>'
-        +'<tr><th>Заполняемость</th><td>'+fill+' % ('+String(Math.round(r.doneH*10)/10).replace('.',',')+' состоявшихся часов ÷ '+r.openH+' открытых часов)</td></tr>'
-        +'<tr><th>Встреч в периоде</th><td>'+r.all.length+', из них состоялось '+r.done.length+'</td></tr>'
-        +'<tr><th>Средняя пауза между встречами</th><td>'+r.gap+' дней</td></tr></table>';
-      h+='<h2>Отмены и неявки</h2><table><tr><th>Показатель</th><th>Штук</th><th>Доля</th></tr>'
-        +'<tr><td>Отмены заранее (более '+S.settings.cancelH+' ч)</td><td>'+r.cancEarly.length+'</td><td>'+pc(r.cancEarly.length)+' %</td></tr>'
-        +'<tr><td>Поздние отмены (менее '+S.settings.cancelH+' ч)</td><td>'+r.cancLate.length+'</td><td>'+pc(r.cancLate.length)+' %</td></tr>'
-        +'<tr><td>Отменил специалист</td><td>'+r.cancSpec.length+'</td><td>'+pc(r.cancSpec.length)+' %</td></tr>'
-        +'<tr><td>Неявки</td><td>'+r.noShow.length+'</td><td>'+pc(r.noShow.length)+' %</td></tr></table>';
-      h+='<p>Потери от отмен: <b>'+r.lost.toLocaleString('ru-RU')+' ₽</b> — сумма стоимости пропущенных встреч ('
-        +r.missed.reduce((a,v)=>a+v.price,0).toLocaleString('ru-RU')+' ₽) за вычетом фактически удержанного ('
-        +r.missed.reduce((a,v)=>a+(v.charged||0),0).toLocaleString('ru-RU')+' ₽).</p>';
-      h+='<h2>Удержание</h2><table>'
-        +'<tr><th>Конверсия первичной во вторую</th><td>'+conv+' % ('+r.second.length+' из '+r.firsts.length+')</td></tr>'
-        +'<tr><th>Удержание (5 и более встреч)</th><td>'+keep+' % ('+r.keep.length+' из '+r.started.length+')</td></tr>'
-        +'<tr><th>Обязательства по неиспользованным пакетам</th><td>'+r.oblig.toLocaleString('ru-RU')+' ₽</td></tr></table>';
-      h+='<h2>Деньги</h2><table>'
-        +'<tr><th>Доход за период по состоявшимся встречам</th><td>'+r.income.toLocaleString('ru-RU')+' \u20BD</td></tr>'
-        +'<tr><th>Поступило платежей за период</th><td>'+r.paid.toLocaleString('ru-RU')+' \u20BD</td></tr>'
-        +'<tr><th>Обязательства по неиспользованным пакетам</th><td>'+r.oblig.toLocaleString('ru-RU')+' \u20BD</td></tr></table>';
-      toWord('otchet-kabineta-'+D(0),h)},
+      const m=el.dataset.m||S.ui.repM||D(0).slice(0,7),r=repMonth(m),t=x=>esc(String(x==null?'':x));
+      const list=(head,rows)=>rows.length?'<h2>'+head+'</h2><ul>'+rows.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'';
+      let h='<h1>Отчёт за месяц: '+monthName(m)+'</h1><p class="muted">Кабинет «'+t(S.settings.name)+'». Сформировано '+ru(D(0))+'. В файле есть имена клиентов — храните его у себя.</p>';
+      h+='<p>Проведено встреч: <b>'+r.done.length+'</b>. Получено: <b>'+rub(r.got)+'</b>. '+(r.miss.length?'Отменено и пропущено: <b>'+r.miss.length+'</b>, не получено '+rub(r.lost)+'.':'Отмен и неявок не было.')+'</p>';
+      h+=list('Кто должен',r.debt.map(c=>t(nm(c))+' — '+rub(c.debt)));
+      h+=list('Кто часто отменяет',r.often.map(x=>t(nm(x.c))+': '+x.list.map(v=>shortD(v.date)+' — '+missWhy(v)).join('; ')));
+      h+=list('Кто пропал — стоит написать',r.gone.map(x=>t(nm(x.c))+' — последняя встреча '+ru(x.last)));
+      h+=list('Что заканчивается',r.packs.map(p=>t(nm(cl(p.cid)))+' — в пакете осталось '+(p.n-p.used)+', срок до '+ru(p.exp)).concat(r.docs.map(d=>t(nm(cl(d.cid)))+' — '+t(tpl(d.tid).name)+' до '+ru(d.till))));
+      h+=list('Чек не отмечен',r.noCheck.map(p=>ru(p.date)+' — '+t(nm(cl(p.cid)))+', '+rub(p.sum)));
+      h+='<h2>Встречи месяца — из них сложились цифры</h2><table><tr><th>Дата</th><th>Время</th><th>Клиент</th><th>Статус</th><th>Стоимость</th></tr>'
+        +r.vs.map(v=>'<tr><td>'+ru(v.date)+'</td><td>'+t(v.time)+'</td><td>'+t(title(v))+'</td><td>'+t(v.status)+'</td><td>'+rub(v.price||0)+'</td></tr>').join('')+'</table>';
+      h+='<h2>Оплаты месяца</h2><table><tr><th>Дата</th><th>Клиент</th><th>Способ</th><th>Сумма</th></tr>'
+        +r.pays.map(p=>'<tr><td>'+ru(p.date)+'</td><td>'+t(nm(cl(p.cid)))+'</td><td>'+t(p.method)+'</td><td>'+rub(p.sum)+'</td></tr>').join('')+'</table>';
+      toWord('otchet-'+m,h)},
+    repList:()=>repList(el.dataset.k,el.dataset.m),
     wordClient:()=>dataReqModal(id),
     voiceParse:()=>{
       const v=sess(id);if(!v)return;
@@ -3511,6 +3524,7 @@ document.addEventListener('change',e=>{
     else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
   if(t.id==='tx-m'){taxModal(t.value);return}
+  if(t.id==='rep-m'){S.ui.repM=t.value;render();return}
   if(t.id==='ics-n'){if(RO){toast('Здесь только просмотр — настройка не сохранена');icsModal();return}S.settings.icsName=t.value;save();icsModal();return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
