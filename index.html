@@ -419,7 +419,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в23</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в24</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2446,7 +2446,7 @@ function vHelp(){
       ${useScales()?`<label class="f"><span>Срок повторного замера по шкалам, дней</span><input data-set="retest" type="number" value="${S.settings.retest}"></label>`:''}
       <label class="f"><span>Блокировка кабинета при бездействии, мин</span><input data-set="lock" type="number" value="${S.settings.lock}"></label>
     </div></details>
-    <details class="sec" ${pinOn()?'':'open'}><summary>Вход по коду <span class="sumv ${pinOn()?'':'warn'}">${pinOn()?'задан':'не задан'}</span></summary>
+    <details class="sec"><summary>Вход по коду <span class="sumv ${pinOn()?'':'warn'}">${pinOn()?'задан':'не задан'}</span></summary>
     <div class="note">${pinOn()
       ? (LEGACY?'Код задан в прежней редакции кабинета. При следующем входе записи будут закрыты этим кодом.':'Код задан, записи в браузере закрыты. Кабинет закрывается при бездействии через '+S.settings.lock+' мин и при каждом открытии.'+(ENC&&ENC.meta.pinLen<6?' <b>В коде четыре цифры — задайте новый код из шести цифр.</b>':''))
       : '<b>Код не задан.</b> Кабинет открывается сразу — записи о встречах увидит любой, кто возьмёт устройство. На телефоне это особенно важно.'}
@@ -2469,7 +2469,7 @@ function vHelp(){
     ${meetBase()?'<div class="alertbox">meet.jit.si — зарубежный сервис, комнаты в нём открываются без пароля. Для работы с клиентами лучше российский сервис: выберите «в моей постоянной комнате».</div>'
       :'<p class="sub" style="margin:8px 0 0">Создайте постоянную комнату в российском сервисе видеосвязи — Контур.Толк, Яндекс Телемост или СберДжаз — и вставьте сюда ссылку. Её получат клиенты в приглашениях. Отдельному клиенту ссылку можно задать в его карточке.</p>'}
     </details>
-    <details class="sec" ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'open':''}><summary>Копия записей <span class="sumv ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'warn':''}">${S.settings.lastBackup?'последняя '+ru(S.settings.lastBackup):'ещё не сохранялась'}</span></summary>
+    <details class="sec"><summary>Копия записей <span class="sumv ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'warn':''}">${S.settings.lastBackup?'последняя '+ru(S.settings.lastBackup):'ещё не сохранялась'}</span></summary>
     <p class="sub" id="auto-st" style="margin:0 0 8px">${autoLine()}</p>
     ${canAuto()?`<div class="row" style="margin-bottom:10px">${!AUTO?'<button class="btn mini" data-act="autoSet">Включить автокопию в файл</button>':AUTO_ST==='perm'?'<button class="btn mini" data-act="autoResume">Возобновить автокопию</button> <button class="btn mini ghost" data-act="autoOff">Выключить</button>':'<button class="btn mini ghost" data-act="autoOff">Выключить автокопию</button>'}</div>`:''}
     <p class="lead">Последняя копия: <b>${S.settings.lastBackup?ru(S.settings.lastBackup):'ещё не сохранялась'}</b>${S.settings.lastBackup&&days(S.settings.lastBackup,D(0))>=7?' — '+days(S.settings.lastBackup,D(0))+' дн. назад':''}. Сохраняйте копию раз в неделю на компьютер или в российское облако (Яндекс Диск).</p>
