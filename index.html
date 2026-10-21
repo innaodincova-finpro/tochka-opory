@@ -1047,7 +1047,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в40';
+const APP_VER='редакция от 21.10.2026 · в41';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1345,8 +1345,7 @@ function roomUrl(c){
 }
 function roomModal(){
   modal('Ссылка на комнату не задана',`<p class="lead">Укажите ссылку на вашу постоянную комнату в российском сервисе видеосвязи — например, Контур.Толк, Яндекс Телемост или СберДжаз. Клиенты получат её в приглашениях.</p>
-    <label class="f"><span>Ссылка на вашу комнату</span><input id="room-l" placeholder="https://…" inputmode="url"></label>
-    <p class="sub">Позже её можно поменять в Настройках, раздел «Видеовстречи». Для отдельного клиента ссылку задают в его карточке.</p>`,
+    <label class="f"><span>Ссылка на вашу комнату</span><input id="room-l" placeholder="https://…" inputmode="url"></label>`,
     `<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="roomSave">Сохранить</button>`);
 }
 function meetUrl(v){
@@ -1448,8 +1447,7 @@ function meetBusyModal(cur,next){
   modal('Идёт другая встреча',`
     <p class="lead">Начата встреча: <b>${esc(title(cur))}</b> · ${ru(cur.date)} в ${cur.time} · идёт ${mins} мин.
     Кабинет ведёт одну встречу за раз.</p>
-    <div class="alertbox">Если не завершить текущую встречу, её продолжительность не запишется.</div>
-    <p class="sub">Завершение проставит предыдущей встрече статус «состоялась» и продолжительность ${mins} мин. Исправить продолжительность можно в её карточке.</p>`,
+    <div class="alertbox">Если не завершить текущую встречу, её продолжительность не запишется.</div>`,
     `<button class="btn ghost" data-act="closeModal">Оставить как есть</button>
      <button class="btn" data-act="meetSwitch" data-id="${next.id}">Завершить предыдущую и начать новую</button>`);
 }
@@ -1505,7 +1503,7 @@ function sendSheet(v,c){
       ${btn('WhatsApp','wa')}${btn('Telegram','tg')}${btn('электронная почта','mail')}
       <button class="btn ghost" data-act="sendVia" data-via="copy" ${v?`data-id="${v.id}"`:''} ${cc?`data-cid="${cc.id}"`:''}>Скопировать текст</button>
     </div>
-    <div class="note">Кабинет откроет приложение с готовым текстом. Отправляете вы.</div>
+    <div class="note">Выберите, куда отправить.</div>
     ${v&&v.sent?`<div class="okbox" style="margin-top:10px">Отметка в карточке встречи: ${esc(sentLabel(v))}.</div>`:''}
     ${v&&sentStale(v)?`<div class="alertbox" style="margin-top:10px">Прежняя отметка: ${esc(sentStale(v))}. Встреча перенесена, у клиента на руках прежнее время.</div>`:''}
   `,`<button class="btn ghost" data-act="closeModal">Закрыть</button>`);
@@ -1977,7 +1975,7 @@ function vToday(){
     <h2>С чего начать</h2>
     <div class="list" style="margin-top:10px">
       <div class="item"><div><b>1. Добавьте клиента</b><div class="sub">имя, телефон, тариф</div></div><button class="btn mini" data-act="newClient">Добавить</button></div>
-      <div class="item"><div><b>2. Запишите встречу</b><div class="sub">или задайте клиенту постоянное время</div></div><button class="btn mini ghost" data-act="newSess">Записать</button></div>
+      <div class="item"><div><b>2. Запишите встречу</b></div><button class="btn mini ghost" data-act="newSess">Записать</button></div>
       <div class="item"><div><b>3. Задайте код входа</b><div class="sub">записи будут закрыты кодом</div></div><button class="btn mini ghost" data-act="goTab" data-k="help">Настройки</button></div>
     </div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div></div>`:'';
@@ -2249,7 +2247,7 @@ function clientCard(id){
     <div class="list">${(c.risks||[]).map(r=>`<div class="item">
       <div>${esc(r.t)}<div class="sub">оценка от ${ru(r.d)}</div></div>
       <span class="chip ${r.st==='актуально'?'r':r.st==='в анамнезе'?'o':'g'}">${esc(r.st)}</span></div>`).join('')
-      ||'<p class="sub">Флагов не выставлено. Отсутствие флага не равно отсутствию риска — оценка делается на каждой встрече.</p>'}</div>
+      ||'<p class="sub">Флагов нет.</p>'}</div>
     ${c.contra?`<div class="alertbox" style="margin-top:10px"><b>Противопоказания по методам:</b> ${esc(c.contra)}</div>`:''}
     ${c.minor?`<div class="note" style="margin-top:10px"><b>Что сообщается родителю:</b> ${esc(c.toParent)}</div>`:''}
     </details>
@@ -2268,7 +2266,7 @@ function clientCard(id){
 }
 function scaleBlock(id){
   const c=cl(id);const ms=mScales(id);
-  if(!ms.length)return '<p class="sub">Замеров не было. Шкалы заполняются клиентом, а не специалистом за клиента.</p>';
+  if(!ms.length)return '<p class="sub">Замеров не было.</p>';
   const kinds=[...new Set(ms.map(m=>m.kind))];
   return kinds.map(k=>{
     const pts=ms.filter(m=>m.kind===k);
@@ -2351,14 +2349,14 @@ function vDocs(){
         <td class="mono sub">${esc(tpl(d.tid).ver)}</td><td class="mono">${ru(d.d)}</td><td class="sub">${esc(d.method)}</td>
         <td class="sub">${d.till?ru(d.till):esc(tpl(d.tid).term)}</td>
         <td><span class="chip ${d.st==='действует'?'g':'r'}">${esc(d.st)}</span></td>
-        <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="sub">Подписанных документов пока нет. Нажмите «Отметить подписание».</td></tr>'}</tbody></table></div>
+        <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="sub">Документов нет.</td></tr>'}</tbody></table></div>
 
     </details>
     <details class="sec"><summary>Кому и когда передавались сведения о клиентах</summary>
     <div class="tw" style="margin-top:8px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Кому</th><th>Основание</th><th>Объём</th></tr></thead>
       <tbody>${S.disc.slice().sort((a,b)=>a.date<b.date?1:-1).map(j=>`<tr>
         <td class="mono">${ru(j.date)}</td><td>${esc(nm(cl(j.cid)))}</td><td>${esc(j.who)}</td>
-        <td class="sub">${esc(j.base)}</td><td class="sub">${esc(j.vol)}</td></tr>`).join('')||'<tr><td colspan="5" class="sub">Записей нет. Сюда вносится каждая передача сведений о клиенте другим лицам.</td></tr>'}</tbody></table></div>
+        <td class="sub">${esc(j.base)}</td><td class="sub">${esc(j.vol)}</td></tr>`).join('')||'<tr><td colspan="5" class="sub">Записей нет.</td></tr>'}</tbody></table></div>
     <div class="row" style="margin-top:10px"><button class="btn ghost mini" data-act="addDisc">Записать раскрытие</button></div>
     </details>
   </div>`;
@@ -2377,7 +2375,7 @@ function taxModal(m){
       <div class="kpi"><div class="k">Налог 4 %</div><div class="v">${Math.round(sum*0.04).toLocaleString('ru-RU')}</div><div class="s">₽, ориентировочно</div></div>
       <div class="kpi ${noc.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noc.length}</div><div class="s">${plN(noc.length,'платёж','платежа','платежей')}</div></div>
     </div>
-    <p class="sub">Таблица для сверки с приложением «Мой налог»: дата, сумма, способ оплаты, отметка о чеке. Имён клиентов в ней нет. Точную сумму налога показывает «Мой налог» — в ней учтён налоговый вычет.</p>`,
+    <p class="sub">Оплаты за месяц для сверки с «Мой налог». Имён клиентов нет.</p>`,
     `<button class="btn ghost" data-act="closeModal">Закрыть</button><button class="btn" data-act="taxGet" ${rows.length?'':'disabled'}>Скачать таблицу</button>`);
 }
 function vPay(){
@@ -2443,7 +2441,7 @@ function vSuperv(){
       ${x.chg?`<div class="lead"><b>Что изменено в работе:</b> ${esc(x.chg)}</div>`:''}
       ${ok?'':`<div class="warnline" style="margin-top:8px">Нет согласия клиента на обсуждение случая. ${c?`<button class="btn mini" data-act="newDoc" data-cid="${c.id}" data-tid="t7">Оформить согласие</button>`:''}</div>`}
       ${x.rec?'':`<div class="row" style="margin-top:8px"><span class="sub">Рекомендаций пока нет</span> <button class="btn mini ghost" data-act="supEdit" data-id="${x.id}">Внести рекомендации</button></div>`}
-    </div>`}).join('')||'<p class="sub">Случаев пока нет. Нажмите «Внести случай» после встречи с супервизором.</p>'}</div>
+    </div>`}).join('')||'<p class="sub">Случаев пока нет.</p>'}</div>
   </div>`;
 }
 function supModal(id){
@@ -2503,7 +2501,6 @@ function vRep(){
     <label class="f" style="max-width:260px;margin-top:10px"><span>Месяц</span><select id="rep-m">${monthList().map(x=>`<option value="${x}" ${x===m?'selected':''}>${monthName(x)}</option>`).join('')}</select></label>
     <p class="lead" style="margin-top:6px">Проведено ${L('done',r.done.length+' '+plN(r.done.length,'встреча','встречи','встреч'))}, получено ${L('pays',rub(r.got))}.
       ${r.miss.length?`Отменено и пропущено ${L('miss',r.miss.length+' '+plN(r.miss.length,'встреча','встречи','встреч'))} — не получено ${rub(r.lost)}.`:'Отмен и неявок не было.'}</p>
-    <p class="sub">Нажмите на подчёркнутое — откроется список, из которого сложилось число. Нажмите на клиента — откроется его карточка.</p>
     ${sec('Запрос клиента о его данных',r.req.length,'Клиенты, которые запросили сведения о себе. Ответить нужно в течение 10 рабочих дней.',
       `<div class="list">${r.req.map(c=>row(c.id,esc(nm(c))+' — ответить до '+ru(c.dataReq.due),c.dataReq.made?'файл сформирован '+ru(c.dataReq.made):'файл ещё не сформирован',
         `<div class="row"><button class="btn mini ghost" data-act="wordClient" data-id="${c.id}">Сформировать файл</button><button class="btn mini" data-act="reqSent" data-id="${c.id}">Отправлено</button></div>`)).join('')}</div>`)}
@@ -4034,7 +4031,7 @@ function startHints(){
   const bd=S.settings.lastBackup,old=!bd||days(bd,day)>=7;
   if(old&&!canAuto()&&get('tochka-opory-hint-bk')!==day){put('tochka-opory-hint-bk',day);
     modal('Сохраните копию записей',`<p class="lead">${bd?'Последняя копия — '+ru(bd)+'.':'Копия ещё ни разу не сохранялась.'} Если телефон потеряется или сломается, записи без копии пропадут.</p>
-      <p class="sub">Сохраните файл копии в «Файлы» или на Яндекс Диск. Напоминание приходит раз в неделю, пока копия старше 7 дней.</p>`,
+      <p class="sub">Храните копию в «Файлах» или на Яндекс Диске.</p>`,
       '<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="export">Сохранить копию</button>')}
 }
 setTimeout(startHints,1500);
