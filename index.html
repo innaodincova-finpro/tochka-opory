@@ -425,7 +425,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в32</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в33</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1625,7 +1625,7 @@ function stepBack(from,to,verb){
 }
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
-const RO_OK=new Set(['repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
+const RO_OK=new Set(['repNow','repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
   'wordReport','wordClient','exportClient','icsModal','icsGet','taxModal','taxGet','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
@@ -1901,38 +1901,7 @@ function vToday(){
   ls.forEach(v=>items.push(`<div class="t">${v.sentOld?'Встреча перенесена, ссылка на новое время не отправлена':'Ссылка на онлайн-встречу не отправлена'}: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — до начала менее суток${v.sentOld?'. У клиента на руках прежнее время '+ru(v.sentOld.date).slice(0,5)+' в '+v.sentOld.time:''}
     <div><button class="btn mini" data-act="sendLink" data-id="${v.id}">Отправить ссылку клиенту</button></div></div>`));
 
-  ret.forEach(r=>items.push(`<div class="t">Подошёл срок повторного замера: <b>${esc(nm(r.c))}</b> — ${r.k}, последний ${ru(r.m.date)}
-    <div><button class="btn mini ghost" data-act="fillScale" data-id="${r.c.id}" data-kind="${r.k}">Заполнить ${r.k}</button></div></div>`));
-
-  nc.forEach(f=>items.push(`<div class="t"><b>${esc(nm(f.c))}</b> — показатели без изменений за ${f.n} встреч: ${f.flat.map(x=>x.k+' '+x.a+' → '+x.b).join(', ')}
-    <div><button class="btn mini ghost" data-act="client" data-id="${f.c.id}">Карточка</button></div></div>`));
-
-  can.forEach(x=>items.push(`<div class="t"><b>${esc(nm(x.c))}</b> — ${x.n} отмены подряд
-    <div><button class="btn mini ghost" data-act="client" data-id="${x.c.id}">Карточка</button></div></div>`));
-
-  pk.forEach(p=>items.push(`<div class="t">Пакет истекает: <b>${esc(nm(cl(p.cid)))}</b> — остаток ${p.n-p.used} из ${p.n}, срок до ${ru(p.exp)}
-    <div><button class="btn mini ghost" data-act="tab" data-t="pay">Оплаты</button></div></div>`));
-
-  debt.forEach(c=>items.push(`<div class="t">Задолженность: <b>${esc(nm(c))}</b> — ${rub(c.debt)}
-    <div><button class="btn mini ghost" data-act="tab" data-t="pay">Оплаты</button></div></div>`));
-
-  nh.forEach(c=>items.push(`<div class="t"><b>${esc(nm(c))}</b> — нет подписанного согласия на обработку данных о здоровье
-    <div><button class="btn mini" data-act="tab" data-t="docs">Документы</button></div></div>`));
-
-  dx.forEach(d=>items.push(`<div class="t">Истекает согласие: <b>${esc(nm(cl(d.cid)))}</b> — ${esc(tpl(d.tid).name)}, до ${ru(d.till)}
-    <div><button class="btn mini ghost" data-act="tab" data-t="docs">Документы</button></div></div>`));
-
-  S.clients.filter(c=>c.dataReq&&c.dataReq.got&&!c.dataReq.sent).forEach(c=>items.push(`<div class="t">Запрос клиента о его данных: <b>${esc(nm(c))}</b> — ответить до ${ru(c.dataReq.due)}${c.dataReq.due<D(0)?' <b style="color:var(--warn)">срок прошёл</b>':''}${c.dataReq.made?' · файл сформирован '+ru(c.dataReq.made):''}
-    <div><button class="btn mini ${c.dataReq.made?'ghost':''}" data-act="wordClient" data-id="${c.id}">Сформировать файл</button> <button class="btn mini ${c.dataReq.made?'':'ghost'}" data-act="reqSent" data-id="${c.id}">Отправлено</button></div></div>`));
-
-  S.clients.filter(c=>c.minor&&c.status!=='завершён'&&!hasDoc(c.id,'t8')).forEach(c=>items.push(`<div class="t"><b>${esc(nm(c))}</b> — несовершеннолетний, нет согласия законного представителя
-    <div><button class="btn mini" data-act="tab" data-t="docs">Документы</button></div></div>`));
-
-  S.clients.filter(c=>c.birth&&c.minor&&c.status!=='завершён'&&days(D(0),adultDay(c.birth))<=31).forEach(c=>items.push(`<div class="t"><b>${esc(nm(c))}</b> исполнится 18 лет ${ru(adultDay(c.birth))}. С этого дня согласие представителя перестаёт действовать — нужны согласия самого клиента
-    <div><button class="btn mini ghost" data-act="tab" data-t="docs">Документы</button></div></div>`));
-
-  if(backupOld)items.push(`<div class="t">Копия базы ${bd?'не сохранялась с '+ru(bd):'ещё ни разу не сохранялась'}
-    <div><button class="btn mini" data-act="export">Сохранить копию</button></div></div>`);
+  const restN=repCount(repMonth(D(0).slice(0,7)));
 
   const start=!S.clients.length?`<div class="card">
     <h2>С чего начать</h2>
@@ -1952,10 +1921,6 @@ function vToday(){
     </div>
   </div>
 
-  <div class="side-block todo-top">
-    ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Нужно отметить: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
-      :'<h3>Нужно отметить</h3><div class="okbox">Всё заполнено.</div>'}
-  </div>
   <div class="today">
     <div class="card" style="margin:0">
       <h2>Линия дня</h2>
@@ -1963,6 +1928,11 @@ function vToday(){
       <div class="line" style="margin-top:14px">${dayRail(today)}</div>
     </div>
     <div>
+      <div class="side-block">
+        ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Сделать сегодня: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
+          :'<h3>Сделать сегодня</h3><div class="okbox">Всё сделано.</div>'}
+        ${restN?`<button type="button" class="lnk" style="margin-top:10px;display:block" data-act="repNow">Ещё ${restN} ${plN(restN,'дело','дела','дел')} — в Отчётах</button>`:''}
+      </div>
       <div class="side-block stats">
         <h3>День в цифрах</h3>
         <div class="stat"><span class="k">Встреч сегодня</span><span class="v">${tv.length}</span></div>
@@ -2482,8 +2452,15 @@ function repMonth(m){
   const packs=S.packs.filter(p=>p.used<p.n&&(p.n-p.used<=1||days(D(0),p.exp)<=14));
   const docs=flagDocsExp();
   const noCheck=S.pays.filter(p=>!p.check&&(+p.sum||0)>0).sort((a,b)=>a.date<b.date?-1:1);
-  return {m,vs,done,miss,pays,got,lost,often,debt,gone,packs,docs,noCheck};
+  const req=S.clients.filter(c=>c.dataReq&&c.dataReq.got&&!c.dataReq.sent);
+  const cons=flagNoHealth().map(c=>({c,t:'нет согласия на обработку данных о здоровье',tid:'t4'}))
+    .concat(S.clients.filter(c=>c.minor&&c.status!=='завершён'&&!hasDoc(c.id,'t8')).map(c=>({c,t:'несовершеннолетний, нет согласия законного представителя',tid:'t8'})))
+    .concat(S.clients.filter(c=>c.birth&&c.minor&&c.status!=='завершён'&&days(D(0),adultDay(c.birth))<=31).map(c=>({c,t:'исполнится 18 лет '+ru(adultDay(c.birth))+' — нужны согласия самого клиента',tid:'t4'})));
+  const ret=useScales()?flagRetest():[],nc=useScales()?flagNoChange():[];
+  const bd=S.settings.lastBackup,backup=!bd||days(bd,D(0))>=7;
+  return {m,vs,done,miss,pays,got,lost,often,debt,gone,packs,docs,noCheck,req,cons,ret,nc,bd,backup};
 }
+const repCount=r=>r.debt.length+r.often.length+r.gone.length+r.packs.length+r.docs.length+r.noCheck.length+r.req.length+r.cons.length+r.ret.length+r.nc.length+(r.backup?1:0);
 const missWhy=v=>v.status==='неявка'?'не пришёл':(+v.before||0)<S.settings.cancelH?'отмена менее чем за '+S.settings.cancelH+' ч':'отмена заранее';
 const shortD=d=>ru(d).slice(0,5);
 function vRep(){
@@ -2499,6 +2476,11 @@ function vRep(){
     <p class="lead" style="margin-top:6px">Проведено ${L('done',r.done.length+' '+plN(r.done.length,'встреча','встречи','встреч'))}, получено ${L('pays',rub(r.got))}.
       ${r.miss.length?`Отменено и пропущено ${L('miss',r.miss.length+' '+plN(r.miss.length,'встреча','встречи','встреч'))} — не получено ${rub(r.lost)}.`:'Отмен и неявок не было.'}</p>
     <p class="sub">Нажмите на подчёркнутое — откроется список, из которого сложилось число. Нажмите на клиента — откроется его карточка.</p>
+    ${sec('Запрос клиента о его данных',r.req.length,'Клиенты, которые запросили сведения о себе. Ответить нужно в течение 10 рабочих дней.',
+      `<div class="list">${r.req.map(c=>row(c.id,esc(nm(c))+' — ответить до '+ru(c.dataReq.due),c.dataReq.made?'файл сформирован '+ru(c.dataReq.made):'файл ещё не сформирован',
+        `<div class="row"><button class="btn mini ghost" data-act="wordClient" data-id="${c.id}">Сформировать файл</button><button class="btn mini" data-act="reqSent" data-id="${c.id}">Отправлено</button></div>`)).join('')}</div>`)}
+    ${sec('Нет согласий',r.cons.length,'Клиенты в работе без нужного подписанного согласия.',
+      `<div class="list">${r.cons.map(x=>row(x.c.id,esc(nm(x.c)),x.t,`<button class="btn mini" data-act="newDoc" data-cid="${x.c.id}" data-tid="${x.tid}">Оформить</button>`)).join('')}</div>`)}
     ${sec('Кто должен',r.debt.length,'Клиенты с долгом на сегодня. Долг появляется при поздней отмене или неявке, если встреча выставлена к оплате.',
       `<div class="list">${r.debt.map(c=>row(c.id,esc(nm(c))+' — '+rub(c.debt),'',`<button class="btn mini" data-act="payDebt" data-id="${c.id}">Погасить</button>`)).join('')}</div>`)}
     ${sec('Кто часто отменяет',r.often.length,'Клиенты, у которых за месяц две и больше отмены или неявки. Повод обсудить с клиентом правила.',
@@ -2510,8 +2492,13 @@ function vRep(){
     ${sec('Что заканчивается',r.packs.length+r.docs.length,'Пакеты, в которых осталась одна встреча или срок истекает в ближайшие 14 дней, и согласия, которые истекают в ближайшие 30 дней.',
       `<div class="list">${r.packs.map(p=>row(p.cid,esc(nm(cl(p.cid))),'пакет: осталось '+(p.n-p.used)+' из '+p.n+', срок до '+ru(p.exp))).join('')}
         ${r.docs.map(d=>row(d.cid,esc(nm(cl(d.cid))),esc(tpl(d.tid).name)+' — действует до '+ru(d.till))).join('')}</div>`)}
+    ${useScales()?sec('Замеры',r.ret.length+r.nc.length,'Клиенты, у которых подошёл срок повторного опросника, и те, у кого показатели не меняются несколько встреч подряд.',
+      `<div class="list">${r.ret.map(x=>row(x.c.id,esc(nm(x.c))+' — пора повторить '+x.k,'последний замер '+ru(x.m.date),`<button class="btn mini ghost" data-act="fillScale" data-id="${x.c.id}" data-kind="${x.k}">Заполнить</button>`)).join('')}
+        ${r.nc.map(f=>row(f.c.id,esc(nm(f.c))+' — без изменений за '+f.n+' встреч',f.flat.map(x=>x.k+' '+x.a+' → '+x.b).join(', '))).join('')}</div>`):''}
     ${sec('Чек не отмечен',r.noCheck.length,'Платежи, по которым не отмечено, что чек выдан в «Мой налог». Выдайте чек и нажмите «Отметить».',
       `<div class="list">${r.noCheck.map(p=>row(p.cid,esc(nm(cl(p.cid)))+' — '+rub(p.sum),ru(p.date)+' · '+esc(p.method||''),`<button class="btn mini" data-act="check" data-id="${p.id}">Отметить</button>`)).join('')}</div>`)}
+    ${sec('Копия базы',r.backup?1:0,'Копию записей нужно сохранять раз в неделю, иначе при поломке устройства записи пропадут.',
+      `<div class="item"><div>${r.bd?'Последняя копия — '+ru(r.bd):'Копия ещё ни разу не сохранялась'}</div><button class="btn mini" data-act="export">Сохранить копию</button></div>`)}
   </div>`;
 }
 function repList(k,m){
@@ -3223,6 +3210,9 @@ document.addEventListener('click',e=>{
       h+=list('Кто часто отменяет',r.often.map(x=>t(nm(x.c))+': '+x.list.map(v=>shortD(v.date)+' — '+missWhy(v)).join('; ')));
       h+=list('Кто пропал — стоит написать',r.gone.map(x=>t(nm(x.c))+' — последняя встреча '+ru(x.last)));
       h+=list('Что заканчивается',r.packs.map(p=>t(nm(cl(p.cid)))+' — в пакете осталось '+(p.n-p.used)+', срок до '+ru(p.exp)).concat(r.docs.map(d=>t(nm(cl(d.cid)))+' — '+t(tpl(d.tid).name)+' до '+ru(d.till))));
+      h+=list('Запрос клиента о его данных',r.req.map(c=>t(nm(c))+' — ответить до '+ru(c.dataReq.due)));
+      h+=list('Нет согласий',r.cons.map(x=>t(nm(x.c))+' — '+x.t));
+      if(useScales())h+=list('Замеры',r.ret.map(x=>t(nm(x.c))+' — пора повторить '+x.k).concat(r.nc.map(f=>t(nm(f.c))+' — показатели без изменений за '+f.n+' встреч')));
       h+=list('Чек не отмечен',r.noCheck.map(p=>ru(p.date)+' — '+t(nm(cl(p.cid)))+', '+rub(p.sum)));
       h+='<h2>Встречи месяца — из них сложились цифры</h2><table><tr><th>Дата</th><th>Время</th><th>Клиент</th><th>Статус</th><th>Стоимость</th></tr>'
         +r.vs.map(v=>'<tr><td>'+ru(v.date)+'</td><td>'+t(v.time)+'</td><td>'+t(title(v))+'</td><td>'+t(v.status)+'</td><td>'+rub(v.price||0)+'</td></tr>').join('')+'</table>';
@@ -3230,6 +3220,7 @@ document.addEventListener('click',e=>{
         +r.pays.map(p=>'<tr><td>'+ru(p.date)+'</td><td>'+t(nm(cl(p.cid)))+'</td><td>'+t(p.method)+'</td><td>'+rub(p.sum)+'</td></tr>').join('')+'</table>';
       toWord('otchet-'+m,h)},
     repList:()=>repList(el.dataset.k,el.dataset.m),
+    repNow:()=>{S.ui.repM=D(0).slice(0,7);go('rep')},
     wordClient:()=>dataReqModal(id),
     voiceParse:()=>{
       const v=sess(id);if(!v)return;
