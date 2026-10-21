@@ -423,7 +423,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в26</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в27</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2344,13 +2344,13 @@ function vPay(){
     </div>
     <div class="row"><button class="btn ghost" data-act="taxModal">Для налога</button><button class="btn" data-act="newPay">Записать оплату</button></div></div>
     <div class="grid g4" style="margin-top:12px">
-      <div class="kpi"><div class="k">Поступило за 30 дней</div><div class="v">${sum30.toLocaleString('ru-RU')}</div><div class="s">${m30.length} платежей</div></div>
+      <div class="kpi"><div class="k">Поступило за 30 дней</div><div class="v">${sum30.toLocaleString('ru-RU')}</div><div class="s">${m30.length} ${plN(m30.length,'платёж','платежа','платежей')}</div></div>
       <div class="kpi ${debt?'alert':'ok'}"><div class="k">Задолженность</div><div class="v">${debt.toLocaleString('ru-RU')}</div><div class="s">₽ по клиентам</div></div>
       <div class="kpi"><div class="k">Обязательства по пакетам</div><div class="v">${oblig.toLocaleString('ru-RU')}</div><div class="s">₽ уже оплачено, но не отработано</div></div>
-      <div class="kpi ${noCheck.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noCheck.length}</div><div class="s">платежей</div></div>
+      <div class="kpi ${noCheck.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noCheck.length}</div><div class="s">${plN(noCheck.length,'платёж','платежа','платежей')}</div></div>
     </div>
 
-    <h3>Пакеты</h3>
+    <details class="sec"><summary>Пакеты <span class="sumv ${S.packs.some(p=>p.used<p.n&&days(D(0),p.exp)<=14)?'warn':''}">${S.packs.length?S.packs.length+' · остаток '+rub(oblig)+(S.packs.some(p=>p.used<p.n&&days(D(0),p.exp)<=14)?' · есть истекающие':''):'нет'}</span></summary>
     <div class="list">${S.packs.map(p=>{
       const left=p.n-p.used,exp=days(D(0),p.exp);
       return `<div class="item" style="align-items:flex-start">
@@ -2359,16 +2359,16 @@ function vPay(){
         <div class="bar" style="margin-top:6px"><i class="${exp<=14?'r':'o'}" style="width:${Math.round(p.used/p.n*100)}%"></i></div>
         <div class="sub" style="margin-top:4px">Использовано ${p.used} из ${p.n}, остаток <b>${left}</b></div></div>
         <div class="row"><span class="mono" style="color:var(--ochre)">${rub(left*p.price)}</span>
-        <button class="btn mini ghost" data-act="usePack" data-id="${p.id}">Списать встречу</button></div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div>
+        <button class="btn mini ghost" data-act="usePack" data-id="${p.id}">Списать встречу</button></div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div></details>
 
-    <h3>Задолженность</h3>
+    <details class="sec"><summary>Задолженность <span class="sumv ${debt?'warn':''}">${debt?rub(debt):'нет'}</span></summary>
     <div class="list">${S.clients.filter(c=>c.debt>0).map(c=>`<div class="item">
       <div><b>${esc(nm(c))}</b><div class="sub">${(()=>{const v=cSess(c.id).find(x=>x.charged>0);return v?'основание: '+esc(v.rule)+', встреча '+ru(v.date):'основание не указано'})()}</div></div>
       <div class="row"><span class="mono" style="color:var(--warn)">${rub(c.debt)}</span>
       <button class="btn mini" data-act="payDebt" data-id="${c.id}">Погасить</button>
-      <button class="btn mini ghost" data-act="forgiveDebt" data-id="${c.id}">Списать</button></div></div>`).join('')||'<p class="sub">Задолженности нет.</p>'}</div>
+      <button class="btn mini ghost" data-act="forgiveDebt" data-id="${c.id}">Списать</button></div></div>`).join('')||'<p class="sub">Задолженности нет.</p>'}</div></details>
 
-    <h3>Журнал платежей</h3>
+    <details class="sec" open><summary>Журнал платежей <span class="sumv">${S.pays.length} ${plN(S.pays.length,'платёж','платежа','платежей')}</span></summary>
     <div class="tw"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Способ</th><th>Назначение</th><th>Встреча</th><th class="num">Сумма</th><th>Чек</th></tr></thead>
       <tbody>${S.pays.slice().sort((a,b)=>a.date<b.date?1:-1).map(p=>{
         const v=p.sid?sess(p.sid):null;
@@ -2376,7 +2376,7 @@ function vPay(){
         <td>${esc(p.purpose)}${p.comment?'<div class="sub">'+esc(p.comment)+'</div>':''}</td>
         <td class="sub">${v?ru(v.date)+' '+v.time:'—'}</td>
         <td class="num">${p.sum.toLocaleString('ru-RU')}</td>
-        <td>${p.check?'<span class="chip g">выдан</span>':`<button class="btn mini ghost" data-act="check" data-id="${p.id}">Отметить</button>`} <button class="btn mini ghost" data-act="delPay" data-id="${p.id}" title="Удалить платёж">Удалить</button></td></tr>`}).join('')}</tbody></table></div>
+        <td>${p.check?'<span class="chip g">выдан</span>':`<button class="btn mini ghost" data-act="check" data-id="${p.id}">Отметить</button>`} <button class="btn mini ghost" data-act="delPay" data-id="${p.id}" title="Удалить платёж">Удалить</button></td></tr>`}).join('')}</tbody></table></div></details>
   </div>`;
 }
 
@@ -2464,13 +2464,13 @@ function vRep(){
       ${r.firsts.length?`<div class="kpi"><div class="k">Дошли до второй встречи</div><div class="v">${r.second.length} из ${r.firsts.length}</div><div class="s">новых клиентов</div></div>`:''}
       ${r.gap?`<div class="kpi"><div class="k">Пауза между встречами</div><div class="v">${r.gap}</div><div class="s">дней в среднем</div></div>`:''}
     </div>
-    ${canc.length?`<h3>Отмены и неявки</h3>${canc.map(([n,v])=>`<div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v}</span></div>
-      <div class="bar"><i class="${/поздно|Не пришли/.test(n)?'r':''}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}`:''}
-    ${tips.length?`<h3>На что обратить внимание</h3><div class="list">${tips.map(([t,tab,btn])=>`<div class="item"><div>${t}</div><button class="btn mini ghost" data-act="tab" data-t="${tab}">${btn}</button></div>`).join('')}</div>`:''}
-    ${Object.keys(r.byWhy).length?`<h3>Завершённые работы</h3>
+    ${canc.length?`<details class="sec"><summary>Отмены и неявки</summary>${canc.map(([n,v])=>`<div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v}</span></div>
+      <div class="bar"><i class="${/поздно|Не пришли/.test(n)?'r':''}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}</details>`:''}
+    ${tips.length?`<details class="sec" open><summary>На что обратить внимание <span class="sumv warn">${tips.length}</span></summary><div class="list">${tips.map(([t,tab,btn])=>`<div class="item"><div>${t}</div><button class="btn mini ghost" data-act="tab" data-t="${tab}">${btn}</button></div>`).join('')}</div></details>`:''}
+    ${Object.keys(r.byWhy).length?`<details class="sec"><summary>Завершённые работы</summary>
     <div class="tw"><table><thead><tr><th>Причина</th><th class="num">Клиентов</th><th class="num">В среднем, дней</th></tr></thead>
       <tbody>${Object.keys(r.byWhy).map(k=>`<tr><td>${esc(k)}</td><td class="num">${r.byWhy[k].length}</td>
-        <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')}</tbody></table></div>`:''}
+        <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')}</tbody></table></div></details>`:''}
   </div>`;
 }
 
