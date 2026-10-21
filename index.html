@@ -247,6 +247,20 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+.ph-only{display:none}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:60;width:56px;height:56px;border-radius:50%;border:0;background:var(--panel);color:#fff;font-size:30px;line-height:1;box-shadow:var(--shadow);cursor:pointer}
+@media(max-width:900px){
+  span.ph-only,button.lnk.ph-only{display:inline}.fab.ph-only{display:block}
+  .pc-only{display:none!important}
+  .dayhead{padding:12px 16px;margin-bottom:10px}.dayhead h2{font-size:20px;margin:0}.dayhead .sub{display:none}
+  .todo .t{padding:7px 10px;font-size:13.5px;display:flex;align-items:center;gap:8px}.todo .t .tx{flex:1;min-width:0}.todo .t .tb{flex:none;margin:0}.todo .t .btn{margin:0;padding:5px 9px}
+  .todo:not(.all) .t:nth-child(n+4){display:none}
+  .hr.fr.past{display:none}
+  .hr{min-height:30px;padding:2px 0}
+  .ev{padding:8px 10px;margin-bottom:4px!important}.ev .n{font-size:15px}.ev .d{font-size:12.5px}
+  .ev .row{margin-top:6px!important}.ev .row .btn{padding:5px 10px;font-size:13px}
+  #view{padding-bottom:84px}
+}
 .more{position:relative;display:inline-block}.more>summary{list-style:none}.more>summary::-webkit-details-marker{display:none}
 .more .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:grid;gap:4px;min-width:260px}
 .more .menu .btn{justify-content:flex-start;text-align:left;border:0;width:100%}
@@ -1029,7 +1043,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в37';
+const APP_VER='редакция от 21.10.2026 · в38';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1520,7 +1534,8 @@ function interp(kind,n){
 const sessEnd=v=>{const d=pd(v.date),[h,m]=String(v.time).split(':').map(Number);d.setHours(h||0,(m||0)+(+v.dur||50),0,0);return d};
 const sessStart=v=>{const d=pd(v.date),[h,m]=String(v.time).split(':').map(Number);d.setHours(h||0,m||0,0,0);return d};
 const needMark=v=>(v.status==='запланирована'||v.status==='подтверждена')&&sessEnd(v)<=new Date()&&days(v.date,D(0))<=30;
-const markBtns=(v,mini)=>`<button class="btn ${mini?'mini':''}" data-act="markDone" data-id="${v.id}">Состоялась</button><button class="btn ${mini?'mini':''} ghost" data-act="markNo" data-id="${v.id}">Не пришёл</button>`;
+const DUO=(pc,ph)=>`<span class="pc-only">${pc}</span><span class="ph-only">${ph}</span>`;
+const markBtns=(v,mini,short)=>`<button class="btn ${mini?'mini':''}" data-act="markDone" data-id="${v.id}">${short?DUO('Состоялась','Да'):'Состоялась'}</button><button class="btn ${mini?'mini':''} ghost" data-act="markNo" data-id="${v.id}">${short?DUO('Не пришёл','Нет'):'Не пришёл'}</button>`;
 function flagUnfilled(){
   return S.sessions.filter(v=>v.status==='состоялась'&&!v.done&&days(v.date,D(0))>=1);
 }
@@ -1664,7 +1679,7 @@ function stepBack(from,to,verb){
 }
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
-const RO_OK=new Set(['goSpec','repNow','repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
+const RO_OK=new Set(['todoAll','goSpec','repNow','repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
   'wordReport','wordClient','exportClient','icsModal','icsGet','taxModal','taxGet','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
@@ -1938,17 +1953,19 @@ function vToday(){
   const bd=S.settings.lastBackup,backupOld=!bd||days(bd,today)>=7;
   const items=[];
 
-  toMark.forEach(v=>items.push(`<div class="t">Отметьте, состоялась ли встреча${v.date===today?'':' '+ru(v.date)} в ${v.time}: <b>${esc(title(v))}</b>
-    <div class="row" style="gap:6px">${markBtns(v,true)}</div></div>`));
+  /* Каждое дело — два текста: полный для компьютера и короткий для телефона, где дело занимает одну строку. */
+  const T=(full,short,btns)=>`<div class="t"><span class="pc-only">${full}</span><span class="ph-only tx">${short}</span><div class="row tb" style="gap:6px">${btns}</div></div>`;
+  toMark.forEach(v=>items.push(T(`Отметьте, состоялась ли встреча${v.date===today?'':' '+ru(v.date)} в ${v.time}: <b>${esc(title(v))}</b>`,
+    `${v.date===today?'':shortD(v.date)+' '}${v.time} <b>${esc(title(v))}</b> — состоялась?`,markBtns(v,true,true))));
 
-  unf.forEach(v=>items.push(`<div class="t">Запись о встрече не заполнена: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — прошло ${days(v.date,today)} дн.
-    <div><button class="btn mini" data-act="openSess" data-id="${v.id}">Заполнить</button></div></div>`));
+  unf.forEach(v=>items.push(T(`Запись о встрече не заполнена: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — прошло ${days(v.date,today)} дн.`,
+    `Запись: <b>${esc(title(v))}</b>, ${shortD(v.date)}`,`<button class="btn mini" data-act="openSess" data-id="${v.id}">Заполнить</button>`)));
 
-  notConf.forEach(v=>items.push(`<div class="t">Встреча в ${v.time} не подтверждена: <b>${esc(title(v))}</b> · ${esc(v.fmt)}
-    <div><button class="btn mini ghost" data-act="openSess" data-id="${v.id}">Открыть встречу</button></div></div>`));
+  notConf.forEach(v=>items.push(T(`Встреча в ${v.time} не подтверждена: <b>${esc(title(v))}</b> · ${esc(v.fmt)}`,
+    `${v.time} <b>${esc(title(v))}</b> — не подтверждена`,`<button class="btn mini ghost" data-act="openSess" data-id="${v.id}">${DUO('Открыть встречу','Открыть')}</button>`)));
 
-  ls.forEach(v=>items.push(`<div class="t">${v.sentOld?'Встреча перенесена, ссылка на новое время не отправлена':'Ссылка на онлайн-встречу не отправлена'}: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — до начала менее суток${v.sentOld?'. У клиента на руках прежнее время '+ru(v.sentOld.date).slice(0,5)+' в '+v.sentOld.time:''}
-    <div><button class="btn mini" data-act="sendLink" data-id="${v.id}">Отправить ссылку клиенту</button></div></div>`));
+  ls.forEach(v=>items.push(T(`${v.sentOld?'Встреча перенесена, ссылка на новое время не отправлена':'Ссылка на онлайн-встречу не отправлена'}: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — до начала менее суток${v.sentOld?'. У клиента на руках прежнее время '+ru(v.sentOld.date).slice(0,5)+' в '+v.sentOld.time:''}`,
+    `Ссылка: <b>${esc(title(v))}</b>, ${shortD(v.date)} ${v.time}`,`<button class="btn mini" data-act="sendLink" data-id="${v.id}">${DUO('Отправить ссылку клиенту','Отправить')}</button>`)));
 
   const restN=repCount(repMonth(D(0).slice(0,7)));
 
@@ -1964,12 +1981,12 @@ function vToday(){
   return `
   <div class="card dayhead">
     <div class="spread">
-      <div><h2>Сегодня, ${ru(today)} · ${dow(today)}</h2>
+      <div><h2><span class="pc-only">Сегодня, ${ru(today)} · ${dow(today)}</span><span class="ph-only">${dow(today).replace(/^./,x=>x.toUpperCase())}, ${ru(today).slice(0,5)} · ${tv.length?tv.length+' '+plN(tv.length,'встреча','встречи','встреч'):'встреч нет'}</span></h2>
       <p class="sub">${tv.length?`${tv.length} ${plN(tv.length,'встреча','встречи','встреч')}, с ${tv[0].time} до ${tv[tv.length-1].time} · свободно ${Math.floor(free/60)} ч · ожидается ${rub(plan)}`:'встреч на сегодня нет'}</p></div>
-      <button class="btn" data-act="newSess">Новая встреча</button>
+      <button class="btn pc-only" data-act="newSess">Новая встреча</button>
     </div>
   </div>
-
+  <button type="button" class="fab ph-only" data-act="newSess" aria-label="Новая встреча">+</button>
   <div class="today">
     <div class="card" style="margin:0">
       <h2>Линия дня</h2>
@@ -1978,7 +1995,7 @@ function vToday(){
     </div>
     <div>
       <div class="side-block">
-        ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Сделать сегодня: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
+        ${items.length?`<details class="todo-d" open><summary>Сделать сегодня: ${items.length}</summary><div class="todo ${S.ui.todoAll?'all':''}">${items.join('')}</div>${items.length>3&&!S.ui.todoAll?`<button type="button" class="lnk ph-only" style="margin-top:8px" data-act="todoAll">ещё ${items.length-3}</button>`:''}</details>`
           :'<h3>Сделать сегодня</h3><div class="okbox">Всё сделано.</div>'}
         ${restN?`<button type="button" class="lnk" style="margin-top:10px;display:block" data-act="repNow">Ещё ${restN} ${plN(restN,'дело','дела','дел')} — в Отчётах</button>`:''}
       </div>
@@ -1996,7 +2013,7 @@ function evCard(v){
     :`<button class="btn mini" data-act="sendLink" data-id="${v.id}">Отправить ссылку</button>`;
   return `<div class="ev ${stc}" data-act="openSess" data-id="${v.id}" style="margin-bottom:6px">
       <div class="n">${v.time} · ${esc(title(v))}${meetOn(v)?' <span class="chip" style="background:#C08463;color:#fff;border-color:transparent">идёт</span>':''}</div>
-      <div class="d">${esc(v.fmt)} · ${v.dur} мин · ${esc(v.status)}${v.price?' · '+rub(v.price):''}${v.pay?' · '+esc(v.pay):''}${tz}</div>
+      <div class="d">${esc(v.fmt)} · ${v.dur} мин<span class="pc-only"> · ${esc(v.status)}${v.price?' · '+rub(v.price):''}${v.pay?' · '+esc(v.pay):''}</span>${tz}</div>
       ${btn?`<div class="row" style="margin-top:6px">${btn}</div>`:''}</div>`;
 }
 function dayRail(date){
@@ -2020,7 +2037,7 @@ function dayRail(date){
         if(p2x!==past||(now>=f2&&now<t2)||list.some(v=>{const m=toMin(v.time);return m<t2&&m+v.dur>f2}))break;h2++}
       const till=h2>h+1?' до '+fmt(h2*60):'';
       inner=past?`<div class="free">свободно${till}</div>`:`<div class="free"><button class="freebtn" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">свободно${till} — записать</button></div>`;
-      html+=`<div class="hr ${past?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${inner}</div>`;
+      html+=`<div class="hr fr ${past?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${inner}</div>`;
       h=h2-1;continue;
     }
     if(!evs.length)inner=busyHere
@@ -3220,6 +3237,7 @@ document.addEventListener('click',e=>{
     markNo:()=>{if(RO){toast('Здесь только просмотр');return}cancelModal(id,'неявка')},
     goSpec:()=>{go('help');setTimeout(()=>{const d=[...document.querySelectorAll('#view details.sec')].find(x=>/^Специалист/.test(x.querySelector('summary').textContent));if(d){d.open=true;const i=d.querySelector('[data-setspec=name]');if(i)i.focus()}},50)},
     setPause:()=>{if(RO){toast('Здесь только просмотр');return}const c=cl(id);pushUndo('пауза в работе');c.status='пауза';S.changedAt=new Date().toISOString();save();render();toast(nm(c)+': статус «пауза». Вернуть — кнопкой «Отменить» или в карточке')},
+    todoAll:()=>{S.ui.todoAll=true;render()},
     repNow:()=>{S.ui.repM=D(0).slice(0,7);go('rep')},
     wordClient:()=>dataReqModal(id),
     voiceParse:()=>{
