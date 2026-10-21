@@ -423,7 +423,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в27</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в28</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2457,18 +2457,18 @@ function vRep(){
     <div class="spread"><div><h2>Отчёты</h2><p class="lead">За последние ${r.win} дней.</p></div>
     <button class="btn ghost" data-act="wordReport">Отчёт за месяц в Word</button></div>
     <div class="grid g3" style="margin-top:14px">
-      <div class="kpi"><div class="k">Заработано</div><div class="v">${r.income.toLocaleString('ru-RU')}</div><div class="s">₽ за проведённые встречи · ${r.done.length}</div></div>
-      <div class="kpi"><div class="k">Поступило оплат</div><div class="v">${r.paid.toLocaleString('ru-RU')}</div><div class="s">₽ по журналу оплат</div></div>
-      <div class="kpi"><div class="k">Загрузка приёма</div><div class="v">${fill}%</div><div class="s">${String(Math.round(r.doneH*10)/10).replace('.',',')} из ${r.openH} ч за 30 дней</div></div>
-      <div class="kpi ${missPct>=10&&r.all.length>=10?'alert':''}"><div class="k">Поздние отмены и неявки</div><div class="v">${missPct}%</div><div class="s">${miss} из ${r.all.length} встреч</div></div>
-      ${r.firsts.length?`<div class="kpi"><div class="k">Дошли до второй встречи</div><div class="v">${r.second.length} из ${r.firsts.length}</div><div class="s">новых клиентов</div></div>`:''}
+      <div class="kpi"><div class="k">Заработано</div><div class="v">${r.income.toLocaleString('ru-RU')}</div><div class="s">₽ за ${r.done.length} ${plN(r.done.length,'проведённую встречу','проведённые встречи','проведённых встреч')}</div></div>
+      <div class="kpi"><div class="k">Поступило оплат</div><div class="v">${r.paid.toLocaleString('ru-RU')}</div><div class="s">₽ получено от клиентов, включая пакеты</div></div>
+      <div class="kpi"><div class="k">Загрузка приёма</div><div class="v">${fill}%</div><div class="s">за 30 дней проведено ${String(Math.round(r.doneH*10)/10).replace('.',',')} ч из ${r.openH} ч, открытых для приёма (задаётся в Настройках)</div></div>
+      <div class="kpi ${missPct>=10&&r.all.length>=10?'alert':''}"><div class="k">Поздние отмены и неявки</div><div class="v">${missPct}%</div><div class="s">${miss} из ${r.all.length} назначенных встреч</div></div>
+      ${r.firsts.length?`<div class="kpi"><div class="k">Дошли до второй встречи</div><div class="v">${r.second.length} из ${r.firsts.length}</div><div class="s">новых клиентов пришли повторно</div></div>`:''}
       ${r.gap?`<div class="kpi"><div class="k">Пауза между встречами</div><div class="v">${r.gap}</div><div class="s">дней в среднем</div></div>`:''}
     </div>
     ${canc.length?`<details class="sec"><summary>Отмены и неявки</summary>${canc.map(([n,v])=>`<div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v}</span></div>
       <div class="bar"><i class="${/поздно|Не пришли/.test(n)?'r':''}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}</details>`:''}
     ${tips.length?`<details class="sec" open><summary>На что обратить внимание <span class="sumv warn">${tips.length}</span></summary><div class="list">${tips.map(([t,tab,btn])=>`<div class="item"><div>${t}</div><button class="btn mini ghost" data-act="tab" data-t="${tab}">${btn}</button></div>`).join('')}</div></details>`:''}
-    ${Object.keys(r.byWhy).length?`<details class="sec"><summary>Завершённые работы</summary>
-    <div class="tw"><table><thead><tr><th>Причина</th><th class="num">Клиентов</th><th class="num">В среднем, дней</th></tr></thead>
+    ${Object.keys(r.byWhy).length?`<details class="sec"><summary>Завершённые и приостановленные работы</summary>
+    <div class="tw"><table><thead><tr><th>Чем закончилась работа</th><th class="num">Клиентов</th><th class="num">Длилась, дней в среднем</th></tr></thead>
       <tbody>${Object.keys(r.byWhy).map(k=>`<tr><td>${esc(k)}</td><td class="num">${r.byWhy[k].length}</td>
         <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')}</tbody></table></div></details>`:''}
   </div>`;
