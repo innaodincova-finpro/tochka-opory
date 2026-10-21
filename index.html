@@ -7,9 +7,28 @@
 <meta name="theme-color" content="#28425C">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png?v=19">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/spectral-cyrillic-400-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/spectral-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/spectral-cyrillic-600-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/spectral-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 700; src:url(fonts/spectral-cyrillic-700-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 700; src:url(fonts/spectral-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/golos-text-cyrillic-400-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/golos-text-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 500; src:url(fonts/golos-text-cyrillic-500-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 500; src:url(fonts/golos-text-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/golos-text-cyrillic-600-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/golos-text-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 700; src:url(fonts/golos-text-cyrillic-700-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-display: swap; font-weight: 700; src:url(fonts/golos-text-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/ibm-plex-mono-cyrillic-400-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 500; src:url(fonts/ibm-plex-mono-cyrillic-500-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 500; src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/ibm-plex-mono-cyrillic-600-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-display: swap; font-weight: 600; src:url(fonts/ibm-plex-mono-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+</style>
 <style>
 :root{
   --ground:#F6F8FA; --card:#fff; --soft:#F7FAFC; --panel:#28425C; --panel2:#1E3348;
@@ -400,7 +419,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в22</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в23</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -925,7 +944,7 @@ function seed(){
     settings:{name:'Точка опоры',cancelH:24,cancelRule:'списать с пакета',dur:50,price:4500,
       retest:28,lock:15,start:'09:00',end:'21:00',lastBackup:D(-11),openH:24,appr:'kpt',
       spec:{name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'},
-      room:'k'+Math.random().toString(36).slice(2,8),meetBase:'https://meet.jit.si/',defFmt:'онлайн'},
+      room:'k'+Math.random().toString(36).slice(2,8),meetBase:'',myRoom:'',v5:1,defFmt:'онлайн'},
     clients:C,sessions:V,scales:M,tpl:TPL,docs:DOC,
     groups:[{id:'g1',name:'Группа: работа с тревогой',members:['c1','c2','c5','c9'],slot:'чт 19:00',price:2500}],
     packs:[
@@ -1184,8 +1203,13 @@ let S;
 function normS(){
 if(!S.settings.appr)S.settings.appr='kpt';
 if(!S.settings.room)S.settings.room='k'+Math.random().toString(36).slice(2,8);
-if(!S.settings.meetBase)S.settings.meetBase='https://meet.jit.si/';
+/* До редакции 23 зарубежная площадка подставлялась сама. Её никто не выбирал — убираем один раз. */
+if(!S.settings.v5){S.settings.v5=1;if(S.settings.meetBase==='https://meet.jit.si/')S.settings.meetBase=''}
+if(S.settings.meetBase==null)S.settings.meetBase='';
+if(S.settings.myRoom==null)S.settings.myRoom='';
 if(!S.settings.defFmt)S.settings.defFmt='онлайн';
+/* Возраст пересчитывается при каждом открытии: в день 18-летия отметка снимается сама. */
+(S.clients||[]).forEach(c=>{if(c.birth)c.minor=ageOf(c.birth)<18;if(c.minor&&!c.guardian)c.guardian={name:'',rel:'',phone:''}});
 if(!S.settings.spec)S.settings.spec={name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'};
 if(!S.settings.openH)S.settings.openH=24;
 delete S.settings.mode;delete S.specs;if(S.ui){delete S.ui.role;delete S.ui.spec}
@@ -1228,6 +1252,10 @@ const gr=id=>S.groups.find(g=>g.id===id)||null;
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(el._t);el._t=setTimeout(()=>el.hidden=true,2600)}
 function val(id){const e=document.getElementById(id);return e?e.value:''}
 const chk=id=>{const e=document.getElementById(id);return e?e.checked:false};
+/* Полных лет на дату d (по умолчанию сегодня). */
+function ageOf(b,d){if(!b)return null;const x=pd(b),y=pd(d||D(0));let a=y.getFullYear()-x.getFullYear();
+  if(y.getMonth()<x.getMonth()||(y.getMonth()===x.getMonth()&&y.getDate()<x.getDate()))a--;return a}
+const adultDay=b=>{const x=pd(b);x.setFullYear(x.getFullYear()+18);return isoL(x)};
 
 /* ── Обезличивание ── */
 const nm=c=>!c?'—':(S.ui.anon?c.code:c.name);
@@ -1235,11 +1263,23 @@ const ph=c=>S.ui.anon?'номер скрыт':(c.phone||'—');
 const sess=id=>S.sessions.find(x=>x.id===id);
 
 /* ── Видеовстреча ── */
-const meetBase=()=>S.settings.meetBase||'https://meet.jit.si/';
-const roomOf=key=>meetBase()+'tochka-opory-'+S.settings.room+'-'+key;
+/* Ссылка на встречу: своя у встречи → своя у клиента → постоянная комната специалиста.
+   Отдельные комнаты на meet.jit.si — только если специалист сам выбрал это в настройках. */
+const JITSI='https://meet.jit.si/';
+const meetBase=()=>S.settings.meetBase||'';
+const myRoom=()=>String(S.settings.myRoom||'').trim();
+const roomReady=()=>!!(meetBase()||myRoom());
+const roomOf=key=>meetBase()?meetBase()+'tochka-opory-'+S.settings.room+'-'+key:myRoom();
 function roomUrl(c){
-  if(!c||!c.id)return meetBase()+'tochka-opory-'+S.settings.room;
-  return c.link&&c.link.trim()?c.link.trim():roomOf(c.id);
+  if(c&&c.link&&c.link.trim())return c.link.trim();
+  if(!c||!c.id)return meetBase()?meetBase()+'tochka-opory-'+S.settings.room:myRoom();
+  return roomOf(c.id);
+}
+function roomModal(){
+  modal('Ссылка на комнату не задана',`<p class="lead">Укажите ссылку на вашу постоянную комнату в российском сервисе видеосвязи — например, Контур.Толк, Яндекс Телемост или СберДжаз. Клиенты получат её в приглашениях.</p>
+    <label class="f"><span>Ссылка на вашу комнату</span><input id="room-l" placeholder="https://…" inputmode="url"></label>
+    <p class="sub">Позже её можно поменять в Настройках, раздел «Видеовстречи». Для отдельного клиента ссылку задают в его карточке.</p>`,
+    `<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="roomSave">Сохранить</button>`);
 }
 function meetUrl(v){
   if(!v)return '';
@@ -1563,17 +1603,17 @@ function stepBack(from,to,verb){
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
 const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
-  'wordReport','wordClient','exportClient','doExportClient','recDone','export','snaps','tplOpen','tplWord']);
+  'wordReport','wordClient','exportClient','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
   if(b){b.disabled=!HIST.length;b.hidden=!HIST.length}
   if(u){u.disabled=!UNDO.length;u.hidden=!UNDO.length;u.textContent='↶ Отменить'+(UNDO.length&&UNDO[UNDO.length-1].label?': '+UNDO[UNDO.length-1].label:'')}
   if(r){r.disabled=!REDO.length;r.hidden=!REDO.length;r.textContent='↷ Вернуть'+(REDO.length&&REDO[REDO.length-1].label?': '+REDO[REDO.length-1].label:'')}}
-const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
+const MUT=new Set(['reqSent','voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
   'saveDoc','saveDisc','savePay','check','usePack','payDebt','forgiveDebt','saveSup','saveWait','delWait',
   'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff','snapBack','tplSave']);
 /* Название действия показывается в уведомлении об отмене — иначе непонятно, что именно откатилось. */
-const MUTL={voiceScale:'замер со слов',createSess:'новая встреча',saveSess:'запись о встрече',tplSet:'смена шаблона записи',
+const MUTL={reqSent:'отметка об отправке данных',voiceScale:'замер со слов',createSess:'новая встреча',saveSess:'запись о встрече',tplSet:'смена шаблона записи',
   meetEnd:'завершение встречи',meetSwitch:'переход к следующей встрече',saveClient:'карточка клиента',savePlan:'план работы',
   saveScale:'замер по шкале',doCancel:'отмена встречи',revoke:'отзыв согласия',saveDoc:'документ',saveDisc:'согласие',
   savePay:'оплата',check:'отметка о выполнении',usePack:'списание из пакета',payDebt:'погашение задолженности',
@@ -1603,12 +1643,31 @@ function clearDraft(){const k=draftKey();if(k&&S.ui.drafts)delete S.ui.drafts[k]
 function aiModal(title,text,extra){
   modal('Запрос к искусственному интеллекту',`
     
-    <div class="alertbox">Имена, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</div>
+    <div class="alertbox">Имена, коды клиентов, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</div>
     ${extra||''}
     <label class="f"><span>${esc(title)}</span><textarea id="ai-t" style="min-height:210px">${esc(anon(text))}</textarea></label>
+    <div class="warnline" id="ai-caps" hidden></div>
     <div class="row"><a class="btn ghost mini" href="https://claude.ai" target="_blank" rel="noopener">Открыть Claude</a>
     <a class="btn ghost mini" href="https://chatgpt.com" target="_blank" rel="noopener">Открыть ChatGPT</a></div>`,
     `<button class="btn ghost" data-act="closeModal">Закрыть</button><button class="btn" data-act="aiCopy">Скопировать запрос</button>`);
+  const ta=document.getElementById('ai-t');if(ta){ta.addEventListener('input',aiCaps);aiCaps()}
+}
+/* Слова с заглавной буквы не в начале предложения — возможно, имена людей или названия мест. */
+const AI_OK=new Set(['Клиент','Клиентка','Клиенту','Клиента','Клиентом','Специалист','Психолог','Claude','ChatGPT','PHQ','GAD']);
+function capWords(t){
+  const out=new Set(),re=/[А-ЯЁA-Z][а-яёa-z]+/g;let m;
+  while((m=re.exec(t))){
+    const pre=t.slice(0,m.index),nx=t.charAt(m.index+m[0].length);
+    if(/[A-Za-zА-Яа-яЁё0-9]$/.test(pre)||/[A-Za-zА-Яа-яЁё]/.test(nx))continue;
+    if(/(^|[.!?…:;]|\n)[\s«"'(—–-]*$/.test(pre))continue;
+    if(!AI_OK.has(m[0]))out.add(m[0]);
+  }
+  return [...out];
+}
+function aiCaps(){
+  const ta=document.getElementById('ai-t'),w=document.getElementById('ai-caps');if(!ta||!w)return;
+  const l=capWords(ta.value);w.hidden=!l.length;
+  w.textContent=l.length?'Проверьте перед отправкой — похоже на имена или названия: '+l.slice(0,12).join(', ')+(l.length>12?' и ещё '+(l.length-12):'')+'. Если это приметы клиента, замените их.':'';
 }
 /* Обезличивание текста запроса.
    Раньше искалось только точное совпадение с написанием в карточке, поэтому «Мариной Соколовой»,
@@ -1624,10 +1683,10 @@ function anonName(out,name,repl){
   return out;
 }
 function anon(t){
-  let out=String(t);const reps=['законный представитель'];
+  let out=String(t);const reps=['законный представитель','клиент'];
   S.clients.forEach(c=>{
-    const code=c.code||'клиент';reps.push(code);
-    out=anonName(out,c.name,code);
+    out=anonName(out,c.name,'клиент');
+    if(c.code)out=out.replace(new RegExp('(^|[^А-Яа-яЁёA-Za-z0-9-])'+reEsc(c.code)+'(?![А-Яа-яЁёA-Za-z0-9])','g'),'$1клиент');
     if(c.guardian)out=anonName(out,c.guardian.name,'законный представитель')});
   /* Телефон в любом написании: +7, 7, 8, скобки, дефисы, пробелы, точки. */
   out=out.replace(/\+?\d(?:[\s()\-–.]*\d){9,14}/g,'—');
@@ -1640,6 +1699,69 @@ function anon(t){
 }
 
 /* ═══════════════ Выгрузка в Word ═══════════════ */
+/* Запрос клиента о сведениях, которые о нём хранятся: ответ — в течение 10 рабочих дней
+   (закон о персональных данных, ст. 14 и 20). Праздники кабинет не знает — считает только выходные. */
+function addWork(d,n){const x=pd(d);while(n>0){x.setDate(x.getDate()+1);const w=x.getDay();if(w!==0&&w!==6)n--}return isoL(x)}
+function dataReqModal(cid){
+  const c=cid?cl(cid):null,r=c&&c.dataReq&&!c.dataReq.sent?c.dataReq:null;
+  modal('Данные клиента по его запросу',`
+    <div class="fgrid">
+      <label class="f"><span>Клиент</span><select id="rq-c">${S.clients.map(x=>`<option value="${x.id}" ${x.id===cid?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label>
+      <label class="f"><span>Запрос получен</span><input id="rq-d" type="date" value="${r?r.got:D(0)}"></label>
+    </div>
+    <p class="sub">Ответить нужно в течение 10 рабочих дней. В файл войдёт всё, что кабинет хранит о клиенте: карточка, записи о встречах и заметки к ним, замеры, документы, оплаты. Записи совместных встреч не войдут — они касаются и второго участника.</p>`,
+    `<button class="btn ghost" data-act="reqSave">Только записать запрос</button><button class="btn" data-act="reqWord">Сформировать файл Word</button>`);
+}
+function reqTake(){
+  const c=cl(val('rq-c')),d=val('rq-d');
+  if(!c||!c.id){toast('Выберите клиента');return null}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||d>D(0)){toast('Укажите дату, когда пришёл запрос');return null}
+  pushUndo('запрос клиента о данных');S.changedAt=new Date().toISOString();
+  const keep=c.dataReq&&!c.dataReq.sent&&c.dataReq.got===d?c.dataReq:{};
+  c.dataReq=Object.assign({},keep,{got:d,due:addWork(d,10),sent:''});
+  return c;
+}
+function clientWord(c){
+  const cid=c.id,t=x=>esc(String(x==null?'':x)).replace(/\n/g,'<br>');
+  const row=(k,v)=>v===''||v==null?'':'<tr><th style="width:32%">'+esc(k)+'</th><td>'+v+'</td></tr>';
+  const tbl=rows=>{const r=rows.join('');return r?'<table>'+r+'</table>':'<p class="muted">нет сведений</p>'};
+  let h='<h1>Сведения о клиенте, которые хранит специалист</h1>'
+    +'<p class="muted">'+t(SPEC().name)+'. Сформировано '+ru(D(0))+(c.dataReq?' по запросу клиента от '+ru(c.dataReq.got):'')+'.</p>';
+  h+='<h2>Карточка</h2>'+tbl([row('Имя',t(c.name)),row('Дата рождения',c.birth?ru(c.birth):''),row('Телефон',t(c.phone)),
+    row('Электронная почта',t(c.email)),row('Канал связи',t(c.msg)),row('Часовой пояс',t(c.tz)),row('Формат работы',t(c.fmt)),
+    row('Статус работы',t(c.status)),row('Дата обращения',c.since?ru(c.since):''),row('Работа завершена',c.end?ru(c.end):''),
+    row('Причина завершения',t(c.endWhy)),row('Стоимость встречи',c.rate?c.rate.toLocaleString('ru-RU')+' ₽':''),
+    row('Задолженность',c.debt?c.debt.toLocaleString('ru-RU')+' ₽':''),row('Своя ссылка на встречи',t(c.link)),
+    c.minor&&c.guardian?row('Законный представитель',t([c.guardian.name,c.guardian.rel,c.guardian.phone].filter(Boolean).join(', '))):'',
+    c.minor?row('Что сообщается представителю',t(c.toParent)):'']);
+  h+='<h2>Запрос и план работы</h2>'+tbl([row('Запрос',t(c.req)),row('Формулировка',t(c.form)),row('Контекст',t(c.ctx)),
+    row('Предыдущий опыт помощи',t(c.prev)),row('Цели',(c.goals||[]).map(t).join('<br>')),
+    row('План работы',(c.plan||[]).map(p=>'Версия '+p.v+' от '+ru(p.d)+': '+t(p.t)).join('<br>')),
+    row('Противопоказания',t(c.contra)),
+    row('Отметки о безопасности',(c.risks||[]).map(r=>ru(r.d)+' — '+t(r.t)+(r.st?' ('+t(r.st)+')':'')).join('<br>'))]);
+  let pairHid=0;
+  const vs=cSess(cid).slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1);
+  h+='<h2>Встречи</h2>'+(vs.length?vs.map(v=>{
+    const own=v.cid===cid&&!v.partner&&!v.gid;
+    let b='<h3>'+ru(v.date)+' в '+t(v.time)+' · '+t(v.type)+' · '+t(v.fmt)+'</h3>'
+      +'<p>Статус: '+t(v.status)+(v.price?' · стоимость '+v.price.toLocaleString('ru-RU')+' ₽':'')+(v.pay?' · оплата: '+t(v.pay):'')+'</p>';
+    if(!own){pairHid++;return b+'<p class="muted">Совместная встреча: запись касается обоих участников и по запросу одного не выдаётся.</p>'}
+    const n=v.note,fl=n?(TPLS[n.tpl]||[]).filter(f=>n[f[0]]):[];
+    b+=fl.map(f=>'<p><b>'+t(f[1])+'.</b> '+t(n[f[0]])+'</p>').join('');
+    if(v.self)b+='<p><b>Заметка специалиста.</b> '+t(v.self)+'</p>';
+    return b}).join(''):'<p class="muted">нет встреч</p>');
+  const ms=mScales(cid);
+  h+='<h2>Замеры по шкалам</h2>'+(ms.length?'<table><tr><th>Дата</th><th>Методика</th><th>Баллы</th></tr>'
+    +ms.map(m=>'<tr><td>'+ru(m.date)+'</td><td>'+t(m.kind)+'</td><td>'+t(m.score)+'</td></tr>').join('')+'</table>':'<p class="muted">нет замеров</p>');
+  const ds=clientDocs(cid);
+  h+='<h2>Документы и согласия</h2>'+(ds.length?'<table><tr><th>Документ</th><th>Подписан</th><th>Способ</th><th>Статус</th></tr>'
+    +ds.map(d=>'<tr><td>'+t(tpl(d.tid).name)+'</td><td>'+ru(d.d)+'</td><td>'+t(d.method)+'</td><td>'+t(d.st)+'</td></tr>').join('')+'</table>':'<p class="muted">нет документов</p>');
+  const ps=S.pays.filter(x=>x.cid===cid);
+  h+='<h2>Оплаты</h2>'+(ps.length?'<table><tr><th>Дата</th><th>Способ</th><th>Назначение</th><th>Сумма</th></tr>'
+    +ps.map(x=>'<tr><td>'+ru(x.date)+'</td><td>'+t(x.method)+'</td><td>'+t(x.purpose)+'</td><td>'+(+x.sum||0).toLocaleString('ru-RU')+' ₽</td></tr>').join('')+'</table>':'<p class="muted">нет оплат</p>');
+  h+='<p class="muted">Сведения хранятся на устройстве специалиста и не передаются третьим лицам.'+(pairHid?' Записей совместных встреч не включено: '+pairHid+'.':'')+'</p>';
+  return h;
+}
 function toWord(name,html){
   const doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
     +'<head><meta charset="utf-8"><title>'+name+'</title><style>'
@@ -1775,6 +1897,15 @@ function vToday(){
     <div><button class="btn mini" data-act="tab" data-t="docs">Документы</button></div></div>`));
 
   dx.forEach(d=>items.push(`<div class="t">Истекает согласие: <b>${esc(nm(cl(d.cid)))}</b> — ${esc(tpl(d.tid).name)}, до ${ru(d.till)}
+    <div><button class="btn mini ghost" data-act="tab" data-t="docs">Документы</button></div></div>`));
+
+  S.clients.filter(c=>c.dataReq&&c.dataReq.got&&!c.dataReq.sent).forEach(c=>items.push(`<div class="t">Запрос клиента о его данных: <b>${esc(nm(c))}</b> — ответить до ${ru(c.dataReq.due)}${c.dataReq.due<D(0)?' <b style="color:var(--warn)">срок прошёл</b>':''}${c.dataReq.made?' · файл сформирован '+ru(c.dataReq.made):''}
+    <div><button class="btn mini ${c.dataReq.made?'ghost':''}" data-act="wordClient" data-id="${c.id}">Сформировать файл</button> <button class="btn mini ${c.dataReq.made?'':'ghost'}" data-act="reqSent" data-id="${c.id}">Отправлено</button></div></div>`));
+
+  S.clients.filter(c=>c.minor&&c.status!=='завершён'&&!hasDoc(c.id,'t8')).forEach(c=>items.push(`<div class="t"><b>${esc(nm(c))}</b> — несовершеннолетний, нет согласия законного представителя
+    <div><button class="btn mini" data-act="tab" data-t="docs">Документы</button></div></div>`));
+
+  S.clients.filter(c=>c.birth&&c.minor&&c.status!=='завершён'&&days(D(0),adultDay(c.birth))<=31).forEach(c=>items.push(`<div class="t"><b>${esc(nm(c))}</b> исполнится 18 лет ${ru(adultDay(c.birth))}. С этого дня согласие представителя перестаёт действовать — нужны согласия самого клиента
     <div><button class="btn mini ghost" data-act="tab" data-t="docs">Документы</button></div></div>`));
 
   if(backupOld)items.push(`<div class="t">Копия базы ${bd?'не сохранялась с '+ru(bd):'ещё ни разу не сохранялась'}
@@ -1969,7 +2100,7 @@ function clientCard(id){
     </div>
     <div class="item" style="margin-top:12px;align-items:flex-start">
       <div style="flex:1;min-width:220px">Ссылка на встречу
-        <div class="sub">${c.link&&c.link.trim()?'своя площадка':'постоянная комната клиента'}</div></div>
+        <div class="sub">${c.link&&c.link.trim()?'своя ссылка клиента':roomReady()?'ваша постоянная комната':'<span style="color:var(--warn)">не задана — укажите в Настройках</span>'}</div></div>
       <div style="text-align:right"><div class="sub">Способ связи</div><span class="chip b">${esc(contactOf(c))}</span>
         ${c.email?'<div class="sub">'+esc(S.ui.anon?'адрес скрыт':c.email)+'</div>':'<div class="sub">адрес почты не указан</div>'}</div>
     </div>
@@ -2325,13 +2456,19 @@ function vHelp(){
         ${ENC_ON?'<button class="btn mini ghost" data-act="newRec">Новый код восстановления</button>':''}
         ${pinOn()?'<button class="btn mini ghost" data-act="pinOff">Убрать код</button>':''}
       </div></div></details>
-    <details class="sec"><summary>Видеовстречи <span class="sumv">${esc(String(S.settings.meetBase).replace(/^https?:\/\//,'').replace(/\/$/,''))}</span></summary>
+    <details class="sec"><summary>Видеовстречи <span class="sumv ${roomReady()?'':'warn'}">${meetBase()?'отдельные комнаты, meet.jit.si':myRoom()?'ссылка задана':'ссылка не задана'}</span></summary>
     <div class="fgrid">
       <label class="f"><span>Формат встречи по умолчанию</span><select data-set="defFmt">
         ${['очно','онлайн'].map(x=>`<option ${(S.settings.defFmt||'очно')===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f"><span>Адрес площадки видеосвязи</span><input data-set="meetBase" value="${esc(S.settings.meetBase)}"></label>
-      <label class="f"><span>Код кабинета в адресе комнаты</span><input data-set="room" value="${esc(S.settings.room)}"></label>
-    </div></details>
+      <label class="f wide"><span>Где проходят онлайн-встречи</span><select data-set="meetBase">
+        <option value="" ${meetBase()?'':'selected'}>в моей постоянной комнате</option>
+        <option value="${JITSI}" ${meetBase()?'selected':''}>отдельная комната каждому клиенту на meet.jit.si</option></select></label>
+      ${meetBase()?`<label class="f"><span>Код кабинета в адресе комнаты</span><input data-set="room" value="${esc(S.settings.room)}"></label>`
+        :`<label class="f wide"><span>Ссылка на вашу комнату</span><input data-set="myRoom" value="${esc(myRoom())}" placeholder="https://…" inputmode="url"></label>`}
+    </div>
+    ${meetBase()?'<div class="alertbox">meet.jit.si — зарубежный сервис, комнаты в нём открываются без пароля. Для работы с клиентами лучше российский сервис: выберите «в моей постоянной комнате».</div>'
+      :'<p class="sub" style="margin:8px 0 0">Создайте постоянную комнату в российском сервисе видеосвязи — Контур.Толк, Яндекс Телемост или СберДжаз — и вставьте сюда ссылку. Её получат клиенты в приглашениях. Отдельному клиенту ссылку можно задать в его карточке.</p>'}
+    </details>
     <details class="sec" ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'open':''}><summary>Копия записей <span class="sumv ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'warn':''}">${S.settings.lastBackup?'последняя '+ru(S.settings.lastBackup):'ещё не сохранялась'}</span></summary>
     <p class="sub" id="auto-st" style="margin:0 0 8px">${autoLine()}</p>
     ${canAuto()?`<div class="row" style="margin-bottom:10px">${!AUTO?'<button class="btn mini" data-act="autoSet">Включить автокопию в файл</button>':AUTO_ST==='perm'?'<button class="btn mini" data-act="autoResume">Возобновить автокопию</button> <button class="btn mini ghost" data-act="autoOff">Выключить</button>':'<button class="btn mini ghost" data-act="autoOff">Выключить автокопию</button>'}</div>`:''}
@@ -2342,7 +2479,7 @@ function vHelp(){
       <button class="btn ghost" data-act="snaps">Прежние состояния</button>
     </div>
   </details>
-    ${S.clients.length?`<details class="sec"><summary>Данные клиента по запросу</summary>
+    ${S.clients.length?`<details class="sec"><summary>Запрос клиента о его данных</summary>
       <div class="row"><button class="btn ghost" data-act="exportClient">Выгрузить данные клиента</button>
       <button class="btn ghost" data-act="anonClient">Обезличить клиента</button></div></details>`:''}
     ${S.demo?'<div class="row" style="margin-top:14px"><button class="btn ghost warn" data-act="demoOff">Выйти из примера</button></div>':(!S.clients.length?'<div class="row" style="margin-top:14px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div>':'')}
@@ -2363,7 +2500,10 @@ function vHelp(){
       <p>На старом устройстве нажмите «Скачать копию». На новом откройте кабинет и нажмите «Загрузить копию». Вносите записи на одном устройстве — иначе копии разойдутся.</p></details>
     <details class="hlp"><summary>Закон и конфиденциальность</summary>
       <p>Записи о клиентах — сведения о здоровье. До начала работы возьмите у клиента письменное согласие на их обработку (раздел «Документы»).</p>
-      <p>Записи хранятся только на этом устройстве. Копии храните в России. Справочно, не юридическая консультация.</p></details>
+      <p>Записи хранятся только на этом устройстве. Копии храните в России. Видеовстречи проводите в российском сервисе.</p>
+      <p>Клиент вправе запросить сведения о себе: ответ — в течение 10 рабочих дней (Настройки → «Запрос клиента о его данных»).</p>
+      <p>Для клиента до 18 лет укажите дату рождения: кабинет напомнит о согласии законного представителя и о дне совершеннолетия.</p>
+      <p class="sub">Справочно, не юридическая консультация.</p></details>
   </div>`;
 }
 
@@ -2418,7 +2558,7 @@ function sessModal(id){
       <label class="f"><span>Длительность факт, мин</span><input id="v-fact" type="number" value="${v.fact}"></label>
       <label class="f"><span>Тип встречи</span><select id="v-type">${['первичная','регулярная','парная','семейная','групповая'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Формат</span><select id="v-fmt">${['очно','онлайн'].map(x=>`<option ${v.fmt===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f wide"><span>Ссылка на встречу — пусто означает постоянную комнату клиента</span><input id="v-link" value="${esc(v.link)}" placeholder="${esc(v.cid?roomUrl(cl(v.cid)):meetBase())}"></label>
+      <label class="f wide"><span>Ссылка на встречу — если пусто, используется ${v.cid&&cl(v.cid).link?'ссылка клиента':'ваша постоянная комната'}</span><input id="v-link" value="${esc(v.link)}" placeholder="${esc((v.cid?roomUrl(cl(v.cid)):roomUrl(null))||'https://…')}"></label>
       <label class="f"><span>Статус</span><select id="v-status">${STATUSES.map(x=>`<option ${v.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Стоимость, ₽</span><input id="v-price" type="number" value="${v.price}"></label>
       <label class="f" id="v-p-wrap" ${['парная','семейная'].includes(v.type)?'':'hidden'}><span>Второй участник</span><select id="v-partner"><option value="">— выберите —</option>${S.clients.filter(x=>x.id!==v.cid).map(x=>`<option value="${x.id}" ${v.partner===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label>
@@ -2677,6 +2817,7 @@ function clientModal(id){
       <label class="f"><span>Тариф встречи, ₽</span><input id="c-rate" type="number" value="${c.rate}"></label>
       <label class="f"><span>Задолженность, ₽</span><input id="c-debt" type="number" value="${c.debt||0}"></label>
       <label class="f"><span>Дата обращения</span><input id="c-since" type="date" value="${c.since||D(0)}"></label>
+      <label class="f"><span>Дата рождения</span><input id="c-birth" type="date" value="${esc(c.birth||'')}"></label>
     </div>
     <h3 style="font-family:'Spectral';font-size:16px;margin:10px 0 6px">Постоянное время</h3>
     <div class="fgrid">
@@ -2686,9 +2827,9 @@ function clientModal(id){
       <label class="f"><span>Как часто</span><select id="c-se"><option value="1">каждую неделю</option><option value="2" ${c.slot&&+c.slot.every===2?'selected':''}>раз в две недели</option></select></label>
       <label class="f"><span>С какой даты</span><input id="c-sf" type="date" value="${c.slot&&c.slot.from||D(0)}"></label></span>
     </div>
-    <label class="f"><span>Ссылка на встречу — оставьте пустой, чтобы использовать постоянную комнату кабинета</span>
-      <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc(id?roomOf(c.id):meetBase()+'tochka-opory-'+S.settings.room+'-…')}"></label>
-    <label class="chip" style="cursor:pointer"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент</label>
+    <label class="f"><span>Своя ссылка для этого клиента — если пусто, используется ваша постоянная комната</span>
+      <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc((id?roomOf(c.id):roomUrl(null))||'https://…')}"></label>
+    <label class="chip" style="cursor:pointer"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент${c.birth?'':' <span class="sub">— по дате рождения отмечается сам</span>'}</label>
     ${c.minor?`<div class="fgrid" style="margin-top:10px">
       <label class="f"><span>Законный представитель</span><input id="c-gname" value="${esc(c.guardian.name)}"></label>
       <label class="f"><span>Кем приходится</span><input id="c-grel" value="${esc(c.guardian.rel)}"></label>
@@ -2813,13 +2954,13 @@ document.addEventListener('click',e=>{
     openSess:()=>sessModal(id),
     prevNote:()=>sessModal(id),
     newSess:()=>{closeModal();newSessModal(el.dataset.date,el.dataset.cid,el.dataset.time)},
-    openMeet:()=>{const v=sess(id);const u=meetUrl(v);if(!u){toast('Адрес комнаты не задан');return}
+    openMeet:()=>{const v=sess(id);const u=meetUrl(v);if(!u){roomModal();return}
       /* Если идёт другая встреча, startMeet открывает вопрос и возвращает false — комнату не открываем. */
       if(!startMeet(v))return;
       closeModal();render();
       window.open(u,'_blank','noopener');
       toast('Комната открыта рядом. Кабинет остался здесь — вернитесь сюда, чтобы завершить встречу и заполнить запись')},
-    openMeetC:()=>{const c=cl(id);const u=roomUrl(c);if(!u){toast('Адрес комнаты не задан');return}
+    openMeetC:()=>{const c=cl(id);const u=roomUrl(c);if(!u){roomModal();return}
       const v=S.sessions.filter(x=>x.cid===c.id&&x.date===D(0)&&(x.status==='запланирована'||x.status==='подтверждена'))
         .sort((a,b)=>a.time<b.time?-1:1)[0];
       if(v&&!startMeet(v))return;
@@ -2837,7 +2978,7 @@ document.addEventListener('click',e=>{
       const u=meetUrl(next);if(u)window.open(u,'_blank','noopener');
       toast('Предыдущая встреча завершена: '+mins+' мин. Начата встреча: '+title(next))},
     meetBack:()=>{const v=sess(id)||(S.ui.meet?sess(S.ui.meet.id):null);const u=meetUrl(v);
-      if(!u){toast('Адрес комнаты не задан');return}
+      if(!u){roomModal();return}
       window.open(u,'_blank','noopener');toast('Окно встречи открыто заново')},
     meetHide:()=>{MEET_HIDDEN=true;renderMeetBar();toast('Полоса свёрнута. Встреча продолжается — отметка «идёт» осталась в линии дня')},
     meetEnd:()=>{
@@ -2853,10 +2994,14 @@ document.addEventListener('click',e=>{
       finishMeet(v,mins);render();
       sessModal(v.id);
       toast('Встреча завершена. Фактическая продолжительность '+mins+' мин — исправьте, если нужно')},
-    sendLink:()=>sendSheet(sess(id),sess(id)&&sess(id).cid?cl(sess(id).cid):null),
+    sendLink:()=>{const v=sess(id);if(!meetUrl(v)){roomModal();return}sendSheet(v,v&&v.cid?cl(v.cid):null)},
+    roomSave:()=>{const u=val('room-l').trim();
+      if(!/^https?:\/\/\S+\.\S+$/.test(u)){toast('Вставьте ссылку целиком, начиная с https://');return}
+      pushUndo('ссылка на комнату');S.settings.myRoom=u;S.changedAt=new Date().toISOString();save();closeModal();render();toast('Ссылка на комнату сохранена')},
     sendLinkC:()=>{const c=cl(id);
       const v=cSess(c.id).filter(x=>x.date>=D(0)&&(x.status==='запланирована'||x.status==='подтверждена'))
         .sort((a,b)=>a.date<b.date?-1:1)[0];
+      if(!(v?meetUrl(v):roomUrl(c))){roomModal();return}
       sendSheet(v||null,c)},
     sendVia:()=>{
       const via=el.dataset.via,v=el.dataset.id?sess(el.dataset.id):null,c=el.dataset.cid?cl(el.dataset.cid):null;
@@ -2894,10 +3039,10 @@ document.addEventListener('click',e=>{
       toast(rule==='forgive'?'Отмена прощена — ничего не удержано':'Встреча отменена: '+v.rule)},
     /* Обезличивание применяется в момент копирования, иначе ручная правка поля уезжала в буфер как есть. */
     aiCopy:()=>{const el=document.getElementById('ai-t');const raw=el.value,clean=anon(raw);
-      if(clean!==raw)el.value=clean;
+      if(clean!==raw)el.value=clean;aiCaps();
       copyText(clean);
       toast(clean!==raw
-        ? 'Из запроса убраны имя, телефон и адрес почты — скопирован обезличенный текст'
+        ? 'Из запроса убраны имя, код клиента, телефон или почта — скопирован обезличенный текст'
         : 'Запрос скопирован. Перенесите его в выбранный сервис')},
     aiHome:()=>{
       const v=sess(id);if(!v)return;
@@ -2980,30 +3125,7 @@ document.addEventListener('click',e=>{
         +'<tr><th>Поступило платежей за период</th><td>'+r.paid.toLocaleString('ru-RU')+' \u20BD</td></tr>'
         +'<tr><th>Обязательства по неиспользованным пакетам</th><td>'+r.oblig.toLocaleString('ru-RU')+' \u20BD</td></tr></table>';
       toWord('otchet-kabineta-'+D(0),h)},
-    wordClient:()=>{
-      const c=cl(id),vs=cSess(c.id);
-      let h='<h1>Выгрузка данных субъекта персональных данных</h1>';
-      h+='<p class="muted">Кабинет «'+esc(S.settings.name)+'». Сформировано '+ru(D(0))+' по запросу субъекта.</p>';
-      h+='<h2>Административные сведения</h2><table>'
-        +'<tr><th>Имя</th><td>'+esc(c.name)+'</td></tr><tr><th>Код в кабинете</th><td>'+esc(c.code)+'</td></tr>'
-        +'<tr><th>Телефон</th><td>'+esc(c.phone||'—')+'</td></tr><tr><th>Канал связи</th><td>'+esc(c.msg)+'</td></tr>'
-        +'<tr><th>Часовой пояс</th><td>'+esc(c.tz)+'</td></tr><tr><th>Формат работы</th><td>'+esc(c.fmt)+'</td></tr>'
-        +'<tr><th>Статус работы</th><td>'+esc(c.status)+'</td></tr>'
-        +'<tr><th>Дата обращения</th><td>'+ru(c.since)+'</td></tr>'
-        +'<tr><th>Тариф встречи</th><td>'+c.rate.toLocaleString('ru-RU')+' ₽</td></tr>'
-        +'<tr><th>Задолженность</th><td>'+(c.debt?c.debt.toLocaleString('ru-RU')+' ₽':'нет')+'</td></tr></table>';
-      h+='<h2>Встречи</h2><table><tr><th>Дата</th><th>Время</th><th>Тип</th><th>Формат</th><th>Статус</th><th>Стоимость</th><th>Оплата</th></tr>'
-        +vs.map(v=>'<tr><td>'+ru(v.date)+'</td><td>'+esc(v.time)+'</td><td>'+esc(v.type)+'</td><td>'+esc(v.fmt)
-          +'</td><td>'+esc(v.status)+'</td><td>'+(v.price?v.price.toLocaleString('ru-RU')+' ₽':'—')+'</td><td>'
-          +esc(v.pay||'—')+'</td></tr>').join('')+'</table>';
-      h+='<h2>Подписанные согласия и документы</h2><table><tr><th>Документ</th><th>Версия</th><th>Подписан</th><th>Способ</th><th>Статус</th></tr>'
-        +clientDocs(c.id).map(d=>'<tr><td>'+esc(tpl(d.tid).name)+'</td><td>'+esc(tpl(d.tid).ver)+'</td><td>'+ru(d.d)
-          +'</td><td>'+esc(d.method)+'</td><td>'+esc(d.st)+'</td></tr>').join('')+'</table>';
-      h+='<h2>Оплаты</h2><table><tr><th>Дата</th><th>Способ</th><th>Назначение</th><th>Сумма</th></tr>'
-        +S.pays.filter(x=>x.cid===c.id).map(x=>'<tr><td>'+ru(x.date)+'</td><td>'+esc(x.method)+'</td><td>'
-          +esc(x.purpose)+'</td><td>'+x.sum.toLocaleString('ru-RU')+' ₽</td></tr>').join('')+'</table>';
-      h+='<p class="muted">В выгрузку не входит поле «заметка для себя»: это рабочие заметки специалиста о собственных реакциях, они не являются сведениями о субъекте и не передаются.</p>';
-      toWord('vygruzka-'+c.id+'-'+D(0),h)},
+    wordClient:()=>dataReqModal(id),
     voiceParse:()=>{
       const v=sess(id);if(!v)return;
       const box=document.getElementById('n-raw');if(!box||!box.value.trim()){toast('Сначала наговорите или впишите текст в поле «Свободный рассказ»');return}
@@ -3080,6 +3202,8 @@ document.addEventListener('click',e=>{
       if(ob&&!confirm(busyText(ob)+'.\n\nЗаписать всё равно?'))return;
       const two=['парная','семейная'].includes(val('s-type'));
       if(two&&(!val('s-p')||val('s-p')===cid)){toast('Выберите второго участника встречи');return}
+      const mc=cl(cid);
+      if(mc.minor&&!hasDoc(cid,'t8')&&!confirm(nm(mc)+' — несовершеннолетний клиент, согласие законного представителя не подписано.\n\nЗаписать всё равно?'))return;
       const v={id:uid(),cid,partner:two?val('s-p'):'',date:val('s-d'),time:val('s-t'),dur:+val('s-dur')||50,fact:+val('s-dur')||50,
         type:val('s-type'),fmt:val('s-fmt'),link:'',status:'запланирована',price:+val('s-price')||0,pay:'',
         risk:'без изменений',done:false,note:null,self:'',by:SPEC().name,upd:'',before:0,charged:0,rule:'',reason:'',sent:''};
@@ -3092,7 +3216,8 @@ document.addEventListener('click',e=>{
       c.phone=val('c-phone');c.msg=val('c-msg');c.tz=val('c-tz');c.tzOff=+val('c-tzo')||0;
       c.contact=val('c-contact')||contactOf(c);c.email=val('c-email');
       c.fmt=val('c-fmt');c.link=val('c-link');c.status=val('c-status');c.rate=+val('c-rate')||0;
-      c.debt=+val('c-debt')||0;c.since=val('c-since');c.minor=chk('c-minor');
+      c.debt=+val('c-debt')||0;c.since=val('c-since');c.birth=val('c-birth');
+      c.minor=c.birth?ageOf(c.birth)<18:chk('c-minor');c.guardian=c.guardian||{name:'',rel:'',phone:''};
       const sd=val('c-sd'),oldSlot=JSON.stringify(c.slot||null);
       if(sd===''){c.slot=null}else{if(!okTime(val('c-st'))){toast('Укажите постоянное время часами и минутами');return}
         c.slot={d:+sd,time:val('c-st'),every:+val('c-se')||1,from:val('c-sf')||D(0)}}
@@ -3207,42 +3332,13 @@ document.addEventListener('click',e=>{
       let data=null;
       try{data=await openData({iv:unb64(d.data.iv),ct:unb64(d.data.ct)},dek)}catch(e){alert('Код верный, но файл копии повреждён. Записи не изменены.');return}
       IMPORT_COPY=null;closeModal();data.copyMade=d.made;importData(data)},
-    exportClient:()=>modal('Выгрузка данных по запросу клиента',`
-      <label class="f"><span>Клиент</span><select id="ex-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
-      <div class="note">Войдут всегда: административная карточка, документы и согласия, оплаты, даты и статусы встреч, замеры по шкалам — это ответы самого клиента.
-      Не войдут никогда: поле «заметка для себя», отметки о риске и совместные записи парной работы — записи о встрече с двумя участниками принадлежат обоим, и передать их одному без согласия второго нельзя.</div>
-      <label class="chip" style="cursor:pointer;margin:8px 0"><input type="checkbox" id="ex-clin" style="width:auto;margin-right:6px">Добавить клиническую часть карточки и тексты записей о встречах</label>`,
-      `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="doExportClient">Сформировать файл</button>`),
-    doExportClient:()=>{
-      const cid=val('ex-c'),c=cl(cid);
-      const clin=!!(document.getElementById('ex-clin')||{}).checked;
-      /* Административная часть собирается по перечню полей, а не копированием карточки целиком:
-         иначе в файл попадают флаги риска, противопоказания и план работы. */
-      const card={код:c.code,имя:c.name,'дата рождения':c.birth||'',телефон:c.phone||'',почта:c.email||'',
-        'способ связи':c.msg||c.contact||'','формат работы':c.fmt||'','часовой пояс':c.tz||'',
-        статус:c.status||'','стоимость встречи':c.rate,задолженность:c.debt,'работа с':c.since||'',
-        'работа завершена':c.end||'','причина завершения':c.endWhy||''};
-      if(c.minor)card['законный представитель']={имя:c.guardian.name,'кем приходится':c.guardian.rel,телефон:c.guardian.phone};
-      if(clin)card['клиническая часть']={запрос:c.req||'',формулировка:c.form||'',контекст:c.ctx||'',
-        'предыдущий опыт помощи':c.prev||'',цели:c.goals||[],'план работы':c.plan||[],противопоказания:c.contra||''};
-      let pairHid=0;
-      const out={клиент:card,
-        документы:clientDocs(cid).map(d=>({документ:tpl(d.tid).name,версия:tpl(d.tid).ver,подписан:d.d,статус:d.st})),
-        оплаты:S.pays.filter(p=>p.cid===cid),шкалы:mScales(cid),
-        встречи:cSess(cid).map(v=>{
-          const o={дата:v.date,время:v.time,'тип встречи':v.type,формат:v.fmt,статус:v.status,
-            'длительность, мин':v.fact||v.dur,стоимость:v.price,оплата:v.pay,специалист:v.by};
-          /* Совместная встреча числится за одним из партнёров, второму подтягивается по связке.
-             Её запись рассказывает об обоих — в выгрузку одному участнику она не идёт. */
-          const own=v.cid===cid&&!v.partner&&!v.gid;
-          if(!own){pairHid++;o['запись о встрече']='совместная встреча — запись касается обоих участников и по запросу одного не выдаётся';}
-          else if(clin&&v.note)o['запись о встрече']=v.note;
-          return o})};
-      const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='vygruzka-'+c.code+'-'+D(0)+'.json';a.click();
-      closeModal();
-      toast('Файл сформирован'+(clin?' с клинической частью':' — только административные сведения')
-        +'. Заметки для себя и отметки о риске исключены'+(pairHid?'; совместных записей скрыто: '+pairHid:''))},
+    exportClient:()=>dataReqModal(''),
+    reqSave:()=>{const c=reqTake();if(!c)return;save();closeModal();render();
+      toast('Запрос записан. Ответить нужно до '+ru(c.dataReq.due)+' — напоминание в «Нужно отметить»')},
+    reqWord:()=>{const c=reqTake();if(!c)return;c.dataReq.made=D(0);save();
+      toWord('dannye-'+(c.code||'klient').replace(/[^\wА-Яа-яЁё-]/g,'')+'-'+D(0),clientWord(c));closeModal();render();
+      toast('Файл Word сохранён. Отправьте его клиенту и отметьте «Отправлено» в «Нужно отметить»')},
+    reqSent:()=>{const c=cl(id);if(!c.dataReq)return;c.dataReq.sent=D(0);save();render();toast('Отмечено: данные отправлены клиенту')},
     anonClient:()=>modal('Обезличивание клиента',`
       <label class="f"><span>Клиент</span><select id="an-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
       <div class="alertbox">Действие необратимо. Будут удалены имя, телефон, адрес электронной почты, дата рождения, сведения о законном представителе, запрос, формулировка, контекст, план и все записи о встречах.
@@ -3296,7 +3392,7 @@ document.addEventListener('click',e=>{
       save();render();renderHead();toast('Открыт пример. Выйти — кнопкой вверху')},
     demoOff:()=>{if(!confirm('Выйти из примера? Вымышленные клиенты и встречи будут удалены, кабинет станет пустым.'))return;
       const keep=S.settings;S=emptyBase();S.ui.apprAsked=true;S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room,
-        start:keep.start,end:keep.end,price:keep.price,dur:keep.dur,cancelH:keep.cancelH,cancelRule:keep.cancelRule,meetBase:keep.meetBase,defFmt:keep.defFmt});
+        start:keep.start,end:keep.end,price:keep.price,dur:keep.dur,cancelH:keep.cancelH,cancelRule:keep.cancelRule,meetBase:keep.meetBase,myRoom:keep.myRoom,v5:1,defFmt:keep.defFmt});
       normS();save();render();renderHead();toast('Пример убран. Кабинет пустой — начните с первого клиента')},
   };
   if(A[a]){e.preventDefault();if(MUT.has(a)){pushUndo(MUTL[a]||'');S.changedAt=new Date().toISOString()}
@@ -3318,7 +3414,7 @@ document.addEventListener('change',e=>{
   if(t.dataset&&t.dataset.set){pushUndo(setLabel(t));S.settings[t.dataset.set]=t.type==='number'?+t.value:t.value;save();toast('Сохранено');
     if(t.dataset.set==='appr'){setTimeout(()=>{renderHead();render()},0);
       toast('Подход изменён: '+appr().name+'. Прежние записи сохранены — шаблон каждой остаётся тем, в котором её вели')}
-    else if(['defFmt','meetBase','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
+    else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
@@ -3656,7 +3752,7 @@ const MICNO=/link|room|url|code|phone|tel|mail|time|date|price|rate|sum|amount|d
 const micOK=t=>{
   const n=(t.tagName||'').toLowerCase();
   if(t.closest&&t.closest('#lockscr,#badscr'))return false;
-  if(t.dataset&&['start','end','meetBase','room'].includes(t.dataset.set))return false;
+  if(t.dataset&&['start','end','meetBase','myRoom','room'].includes(t.dataset.set))return false;
   if(t.id&&MICNO.test(t.id))return false;
   if(n==='textarea')return true;
   if(n!=='input')return false;
