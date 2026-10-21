@@ -419,7 +419,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в24</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в25</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1128,11 +1128,27 @@ function autoLine(){
   if(AUTO_ST==='perm')return 'Автокопия на паузе: нужно разрешение браузера. Нажмите «Возобновить автокопию».';
   return 'Автокопия включена: файл «'+esc(AUTO.name)+'»'+(AUTO_AT?', последняя запись в '+hhmmL(AUTO_AT.toISOString()):'')+'.'}
 /* Единственный путь записи базы в браузер. */
+/* Для будущего перехода на сервер: у каждой записи — время последнего изменения (u),
+   удалённые записи остаются в списке S.del. Сервер по ним поймёт, что новее, а что удалено. */
+const REC_KINDS=['clients','sessions','pays','docs','scales','packs','groups','superv','wait','disc'];
+let LASTREC=null,LASTS=null,KEEP_BASE=false;
+function stamp(){
+  const now=new Date().toISOString(),cur={},cont=LASTREC&&(S===LASTS||KEEP_BASE);
+  REC_KINDS.forEach(k=>(Array.isArray(S[k])?S[k]:[]).forEach(r=>{
+    if(!r||typeof r!=='object'||!r.id)return;
+    const key=k+'|'+r.id,h=JSON.stringify(Object.assign({},r,{u:0}));cur[key]=h;
+    if(cont&&LASTREC[key]!==h)r.u=now;else if(!r.u)r.u=S.changedAt||now}));
+  if(cont){S.del=Array.isArray(S.del)?S.del:[];
+    Object.keys(LASTREC).forEach(key=>{if(!(key in cur)){const i=key.indexOf('|');S.del.push({k:key.slice(0,i),id:key.slice(i+1),at:now})}});
+    S.del=S.del.filter(d=>!((d.k+'|'+d.id) in cur)).slice(-2000)}
+  LASTREC=cur;LASTS=S;KEEP_BASE=false;
+}
 function persist(){
   if(BOOT){BOOT_SAVE=true;return}
   if(ENC_WAIT||BAD||RO)return;
   clearTimeout(SOON);SOON=null;
   S.fmt=FMT;
+  try{stamp()}catch(e){}
   if(S.settings){delete S.settings.pinLen;if(ENC_ON)delete S.settings.pinHash}
   const t=JSON.stringify(S);
   if(!ENC_ON){localStorage.setItem(KEY,t);snapTake();autoSoon();return}
@@ -1596,14 +1612,14 @@ function applyView(k){S.ui.tab=k.tab;S.ui.client=k.client;S.ui.filter=k.filter;S
 function stepBack(from,to,verb){
   if(!from.length)return;
   const k=keepView();const e=from.pop();
-  try{to.push({s:JSON.stringify(S),label:e.label});S=JSON.parse(e.s);applyView(k);
+  try{to.push({s:JSON.stringify(S),label:e.label});S=JSON.parse(e.s);KEEP_BASE=true;applyView(k);
     save();closeModal();render();syncRail();
     toast(verb+(e.label?': '+e.label:''))}catch(err){}
 }
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
 const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
-  'wordReport','wordClient','exportClient','recDone','export','snaps','tplOpen','tplWord']);
+  'wordReport','wordClient','exportClient','icsModal','icsGet','taxModal','taxGet','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
   if(b){b.disabled=!HIST.length;b.hidden=!HIST.length}
@@ -2015,7 +2031,7 @@ function vSched(){
   for(let k=-back;k<3;k++){const d=new Date(t.getFullYear(),t.getMonth()+k,1);months+=monthCard(d.getFullYear(),d.getMonth())}
   return `<div class="card">
     <div class="spread"><h2>Расписание</h2><div class="row"><button class="btn ghost" data-act="offNew">Отпуск</button><button class="btn" data-act="newSess">Новая встреча</button></div></div>
-    ${back<12?`<button class="btn ghost mini" style="margin:6px 0 10px" data-act="calPast">Показать прошлый месяц</button>`:''}
+    <div class="row" style="margin:6px 0 10px">${back<12?`<button class="btn ghost mini" data-act="calPast">Показать прошлый месяц</button>`:''}<button class="btn ghost mini" data-act="icsModal">В календарь телефона</button></div>
     <div class="cstream">${months}</div>
     <h3>Лист ожидания</h3>
     <div class="list">${S.wait.map(w=>`<div class="item">
@@ -2024,6 +2040,29 @@ function vSched(){
       <button class="btn mini ghost" data-act="delWait" data-id="${w.id}">Убрать</button></div></div>`).join('')||'<p class="sub">Лист пуст.</p>'}</div>
     <div class="row" style="margin-top:10px"><button class="btn ghost mini" data-act="addWait">Добавить в лист ожидания</button></div>
   </div>`;
+}
+/* Встречи в календарь телефона: файл .ics без имён клиентов. */
+const ICS_WEEKS=8;
+const plN=(n,a,b,c)=>{const t=n%100,o=n%10;return t>10&&t<20?c:o===1?a:o>1&&o<5?b:c};
+function icsList(){const to=D(ICS_WEEKS*7);
+  return S.sessions.filter(v=>v.date>=D(0)&&v.date<=to&&okTime(v.time)&&v.status!=='перенесена').sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)}
+function icsText(){
+  const z=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
+  const st=v=>{const [h,m]=v.time.split(':').map(Number),d=pd(v.date);d.setHours(h,m,0,0);return d};
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Tochka opory//RU','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Встречи'];
+  const seq=Math.floor(Date.now()/60000)%2000000000;
+  icsList().forEach(v=>{const a=st(v),b=new Date(a.getTime()+(+v.dur||50)*60000),off=/отмен/.test(v.status);
+    L.push('BEGIN:VEVENT','UID:'+v.id+'@tochka-opory','DTSTAMP:'+z(new Date()),'SEQUENCE:'+seq,'DTSTART:'+z(a),'DTEND:'+z(b),
+      'SUMMARY:Встреча'+(v.fmt==='онлайн'?' · онлайн':''),'STATUS:'+(off?'CANCELLED':v.status==='подтверждена'?'CONFIRMED':'TENTATIVE'));
+    if(!off)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Встреча','TRIGGER:-PT15M','END:VALARM');
+    L.push('END:VEVENT')});
+  L.push('END:VCALENDAR');return L.join('\r\n')+'\r\n';
+}
+function icsModal(){
+  const n=icsList().filter(v=>!/отмен/.test(v.status)).length;
+  modal('Встречи в календарь телефона',`<p class="lead">В файл войдут все встречи на ${ICS_WEEKS} недель вперёд — ${n} ${plN(n,'встреча','встречи','встреч')}. В календаре они будут называться «Встреча» — без имён клиентов, с напоминанием за 15 минут.</p>
+    <p class="sub">Откройте сохранённый файл на телефоне и добавьте встречи в календарь. После изменений в расписании сохраните файл заново: в Google Календаре встречи обновятся, отменённые уберутся. В календаре iPhone перед повторной загрузкой удалите прежние встречи, иначе они задвоятся.</p>`,
+    `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="icsGet" ${n?'':'disabled'}>Сохранить файл</button>`);
 }
 /* День: встречи и свободные часы в рабочем времени. */
 function dayModal(ds){
@@ -2270,6 +2309,21 @@ function vDocs(){
 }
 
 /* ═══════════════ Оплаты и пакеты ═══════════════ */
+/* Оплаты за месяц для приложения «Мой налог»: без имён клиентов. 4 % — ставка с доходов от физических лиц. */
+const monthList=()=>{const t=pd(D(0)),r=[];for(let k=0;k<13;k++){const d=new Date(t.getFullYear(),t.getMonth()-k,1);r.push(d.getFullYear()+'-'+p2(d.getMonth()+1))}return r};
+const monthName=m=>MONTHS_N[+m.slice(5)-1]+' '+m.slice(0,4);
+function taxRows(m){return S.pays.filter(p=>String(p.date).slice(0,7)===m&&(+p.sum||0)>0).sort((a,b)=>a.date<b.date?-1:1)}
+function taxModal(m){
+  m=m||D(0).slice(0,7);const rows=taxRows(m),sum=rows.reduce((s,p)=>s+(+p.sum||0),0),noc=rows.filter(p=>!p.check);
+  modal('Оплаты для налога',`<label class="f"><span>Месяц</span><select id="tx-m">${monthList().map(x=>`<option value="${x}" ${x===m?'selected':''}>${monthName(x)}</option>`).join('')}</select></label>
+    <div class="grid g3" style="margin-top:10px">
+      <div class="kpi"><div class="k">Поступило</div><div class="v">${sum.toLocaleString('ru-RU')}</div><div class="s">₽ · ${rows.length} ${plN(rows.length,'платёж','платежа','платежей')}</div></div>
+      <div class="kpi"><div class="k">Налог 4 %</div><div class="v">${Math.round(sum*0.04).toLocaleString('ru-RU')}</div><div class="s">₽, ориентировочно</div></div>
+      <div class="kpi ${noc.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noc.length}</div><div class="s">${plN(noc.length,'платёж','платежа','платежей')}</div></div>
+    </div>
+    <p class="sub">Таблица для сверки с приложением «Мой налог»: дата, сумма, способ оплаты, отметка о чеке. Имён клиентов в ней нет. Точную сумму налога показывает «Мой налог» — в ней учтён налоговый вычет.</p>`,
+    `<button class="btn ghost" data-act="closeModal">Закрыть</button><button class="btn" data-act="taxGet" ${rows.length?'':'disabled'}>Скачать таблицу</button>`);
+}
 function vPay(){
   const debt=S.clients.reduce((s,c)=>s+(c.debt||0),0);
   const oblig=S.packs.reduce((s,p)=>s+Math.max(0,p.n-p.used)*p.price,0);
@@ -2279,7 +2333,7 @@ function vPay(){
   return `<div class="card">
     <div class="spread"><div><h2>Оплаты и пакеты</h2>
     </div>
-    <button class="btn" data-act="newPay">Записать оплату</button></div>
+    <div class="row"><button class="btn ghost" data-act="taxModal">Для налога</button><button class="btn" data-act="newPay">Записать оплату</button></div></div>
     <div class="grid g4" style="margin-top:12px">
       <div class="kpi"><div class="k">Поступило за 30 дней</div><div class="v">${sum30.toLocaleString('ru-RU')}</div><div class="s">${m30.length} платежей</div></div>
       <div class="kpi ${debt?'alert':'ok'}"><div class="k">Задолженность</div><div class="v">${debt.toLocaleString('ru-RU')}</div><div class="s">₽ по клиентам</div></div>
@@ -3338,6 +3392,19 @@ document.addEventListener('click',e=>{
     reqWord:()=>{const c=reqTake();if(!c)return;c.dataReq.made=D(0);save();
       toWord('dannye-'+(c.code||'klient').replace(/[^\wА-Яа-яЁё-]/g,'')+'-'+D(0),clientWord(c));closeModal();render();
       toast('Файл Word сохранён. Отправьте его клиенту и отметьте «Отправлено» в «Нужно отметить»')},
+    icsModal:()=>icsModal(),
+    icsGet:()=>{const b=new Blob([icsText()],{type:'text/calendar;charset=utf-8'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='vstrechi-'+D(0)+'.ics';a.click();
+      closeModal();toast('Файл сохранён. Откройте его на телефоне, чтобы добавить встречи в календарь')},
+    taxModal:()=>taxModal(),
+    taxGet:()=>{const m=val('tx-m')||D(0).slice(0,7),rows=taxRows(m),q=x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"';
+      const sum=rows.reduce((s,p)=>s+(+p.sum||0),0);
+      const L=[['Дата','Сумма, ₽','Способ оплаты','Чек в «Мой налог»','Назначение'].map(q).join(';')]
+        .concat(rows.map(p=>[ru(p.date),+p.sum||0,p.method||'',p.check?'выдан':'не отмечен',p.purpose||'Консультация'].map(q).join(';')))
+        .concat(['',[q('Итого'),sum].join(';'),[q('Налог 4 %, ориентировочно'),Math.round(sum*0.04)].join(';')]);
+      const b=new Blob(['\ufeff'+L.join('\r\n')],{type:'text/csv;charset=utf-8'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='oplaty-'+m+'.csv';a.click();
+      closeModal();toast('Таблица за '+monthName(m)+' сохранена. Открывается в Excel')},
     reqSent:()=>{const c=cl(id);if(!c.dataReq)return;c.dataReq.sent=D(0);save();render();toast('Отмечено: данные отправлены клиенту')},
     anonClient:()=>modal('Обезличивание клиента',`
       <label class="f"><span>Клиент</span><select id="an-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
@@ -3416,6 +3483,7 @@ document.addEventListener('change',e=>{
       toast('Подход изменён: '+appr().name+'. Прежние записи сохранены — шаблон каждой остаётся тем, в котором её вели')}
     else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
+  if(t.id==='tx-m'){taxModal(t.value);return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
   /* Новая встреча: цена берётся из тарифа клиента, для парной и семейной — поле второго участника. */
@@ -3875,6 +3943,10 @@ document.addEventListener('keydown',e=>{
 try{const th=localStorage.getItem(KEY+'-theme');if(th)document.documentElement.setAttribute('data-theme',th)}catch(e){}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 render();saveMark();syncRail();
+</script>
+<script>
+/* Работа без интернета: файлы кабинета сохраняются в браузере после первого открытия. */
+if('serviceWorker' in navigator&&window.isSecureContext)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
 </script>
 </body>
 </html>
