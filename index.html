@@ -424,7 +424,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в29</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в30</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2057,6 +2057,12 @@ const ICS_WEEKS=8;
 const plN=(n,a,b,c)=>{const t=n%100,o=n%10;return t>10&&t<20?c:o===1?a:o>1&&o<5?b:c};
 function icsList(){const to=D(ICS_WEEKS*7);
   return S.sessions.filter(v=>v.date>=D(0)&&v.date<=to&&okTime(v.time)&&v.status!=='перенесена').sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)}
+/* Имя в календаре — только если специалист сам выбрал; только имя, без фамилии. */
+const firstName=c=>c&&c.id?String(c.name||'').trim().split(/\s+/)[0]:'';
+function icsWho(v){if(S.settings.icsName!=='first')return '';
+  if(v.gid)return ' · группа';
+  const n=[firstName(cl(v.cid)),v.partner?firstName(cl(v.partner)):''].filter(Boolean).join(' и ');
+  return n?' · '+n:''}
 function icsText(){
   const z=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
   const st=v=>{const [h,m]=v.time.split(':').map(Number),d=pd(v.date);d.setHours(h,m,0,0);return d};
@@ -2064,14 +2070,19 @@ function icsText(){
   const seq=Math.floor(Date.now()/60000)%2000000000;
   icsList().forEach(v=>{const a=st(v),b=new Date(a.getTime()+(+v.dur||50)*60000),off=/отмен/.test(v.status);
     L.push('BEGIN:VEVENT','UID:'+v.id+'@tochka-opory','DTSTAMP:'+z(new Date()),'SEQUENCE:'+seq,'DTSTART:'+z(a),'DTEND:'+z(b),
-      'SUMMARY:Встреча'+(v.fmt==='онлайн'?' · онлайн':''),'STATUS:'+(off?'CANCELLED':v.status==='подтверждена'?'CONFIRMED':'TENTATIVE'));
+      'SUMMARY:Встреча'+icsWho(v)+(v.fmt==='онлайн'?' · онлайн':''),'STATUS:'+(off?'CANCELLED':v.status==='подтверждена'?'CONFIRMED':'TENTATIVE'));
     if(!off)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Встреча','TRIGGER:-PT15M','END:VALARM');
     L.push('END:VEVENT')});
   L.push('END:VCALENDAR');return L.join('\r\n')+'\r\n';
 }
 function icsModal(){
   const n=icsList().filter(v=>!/отмен/.test(v.status)).length;
-  modal('Встречи в календарь телефона',`<p class="lead">В файл войдут все встречи на ${ICS_WEEKS} недель вперёд — ${n} ${plN(n,'встреча','встречи','встреч')}. В календаре они будут называться «Встреча» — без имён клиентов, с напоминанием за 15 минут.</p>
+  const nm1=S.settings.icsName==='first';
+  modal('Встречи в календарь телефона',`<p class="lead">В файл войдут все встречи на ${ICS_WEEKS} недель вперёд — ${n} ${plN(n,'встреча','встречи','встреч')}, с напоминанием за 15 минут.</p>
+    <label class="f"><span>Как подписать встречи в календаре</span><select id="ics-n">
+      <option value="" ${nm1?'':'selected'}>«Встреча» — без имени клиента</option>
+      <option value="first" ${nm1?'selected':''}>«Встреча · Марина» — с именем, без фамилии</option></select></label>
+    ${nm1?'<div class="alertbox">Имена клиентов попадут в календарь телефона, а его хранят Google или Apple за рубежом. По имени рядом со встречей видно, что человек обращается к психологу. Выбирайте этот вариант, только если клиенты согласны.</div>':''}
     <p class="sub">Откройте сохранённый файл на телефоне и добавьте встречи в календарь. После изменений в расписании сохраните файл заново: в Google Календаре встречи обновятся, отменённые уберутся. В календаре iPhone перед повторной загрузкой удалите прежние встречи, иначе они задвоятся.</p>`,
     `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="icsGet" ${n?'':'disabled'}>Сохранить файл</button>`);
 }
@@ -3500,6 +3511,7 @@ document.addEventListener('change',e=>{
     else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
   if(t.id==='tx-m'){taxModal(t.value);return}
+  if(t.id==='ics-n'){if(RO){toast('Здесь только просмотр — настройка не сохранена');icsModal();return}S.settings.icsName=t.value;save();icsModal();return}
   if(t.dataset&&t.dataset.setui){S.ui[t.dataset.setui]=t.value;S.ui.client=null;save();render();return}
   if(t.id==='sc-k'){scaleModal(val('sc-c'),t.value);return}
   /* Новая встреча: цена берётся из тарифа клиента, для парной и семейной — поле второго участника. */
