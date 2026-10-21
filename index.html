@@ -247,6 +247,8 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+.todo-top{margin-bottom:18px}
+@media(min-width:901px){.todo-top .todo{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}}
 .todo .t{background:var(--soft);border:1px solid var(--line2);border-radius:9px;padding:9px 11px;font-size:13.5px;color:var(--ink2)}
 .todo .t b{color:var(--ink)}
 .todo .t .btn{margin-top:6px}
@@ -295,6 +297,8 @@ textarea{min-height:70px;resize:vertical}
 #robar{position:relative;z-index:60;background:var(--ochre);color:#1d1d1d;padding:9px 16px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
 #robar button{background:#1d1d1d;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
 .cstream{display:grid;gap:14px}
+.mcard>summary.mtitle{cursor:pointer}
+.mcard:not([open])>summary.mtitle{margin-bottom:0}
 .mcard{border:1px solid var(--line);border-radius:16px;padding:12px 8px;background:var(--card)}
 .mtitle{font-family:'Spectral',Georgia,serif;font-size:18px;font-weight:600;margin:0 4px 10px;color:var(--ink)}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
@@ -419,7 +423,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в25</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в26</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1945,6 +1949,10 @@ function vToday(){
     </div>
   </div>
 
+  <div class="side-block todo-top">
+    ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Нужно отметить: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
+      :'<h3>Нужно отметить</h3><div class="okbox">Всё заполнено.</div>'}
+  </div>
   <div class="today">
     <div class="card" style="margin:0">
       <h2>Линия дня</h2>
@@ -1952,10 +1960,6 @@ function vToday(){
       <div class="line" style="margin-top:14px">${dayRail(today)}</div>
     </div>
     <div>
-      <div class="side-block">
-        ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Нужно отметить: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
-          :'<h3>Нужно отметить</h3><div class="okbox">Всё заполнено.</div>'}
-      </div>
       <div class="side-block stats">
         <h3>День в цифрах</h3>
         <div class="stat"><span class="k">Встреч сегодня</span><span class="v">${tv.length}</span></div>
@@ -2024,8 +2028,13 @@ function monthCard(y,m){
     const prev=list.slice(0,2).map(v=>`<span class="dp">${v.time}<span class="dnm"> ${esc(calLabel(v))}</span></span>`).join('')+(list.length>2?`<span class="dp more">ещё ${list.length-2}</span>`:'');
     cells+=`<button type="button" class="d${ds===D(0)?' today':''}${ds<D(0)?' past':''}${isOff(ds)?' off':''}" data-act="calDay" data-date="${ds}" aria-label="${ru(ds)}, встреч: ${list.length}"><span class="dn">${i}</span>${prev}</button>`;
   }
-  return `<div class="mcard"><div class="mtitle">${MONTHS_N[m]} ${y}</div><div class="cal">${heads}${cells}</div></div>`;
+  const n=S.sessions.filter(v=>String(v.date).slice(0,7)===key&&!/^отменена|перенесена/.test(v.status)).length;
+  const open=key in CAL_OPEN?CAL_OPEN[key]:key===D(0).slice(0,7);
+  return `<details class="mcard" data-month="${key}" ${open?'open':''}><summary class="mtitle">${MONTHS_N[m]} ${y} <span class="sumv">${n?n+' '+plN(n,'встреча','встречи','встреч'):'встреч нет'}</span></summary><div class="cal">${heads}${cells}</div></details>`;
 }
+/* Месяцы сворачиваются; по умолчанию раскрыт текущий. Выбор помнится до закрытия кабинета. */
+const CAL_OPEN={};
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.mcard'))CAL_OPEN[d.dataset.month]=d.open},true);
 function vSched(){
   const back=+S.ui.calPast||0,t=pd(D(0));let months='';
   for(let k=-back;k<3;k++){const d=new Date(t.getFullYear(),t.getMonth()+k,1);months+=monthCard(d.getFullYear(),d.getMonth())}
