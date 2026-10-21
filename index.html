@@ -247,6 +247,17 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+@media(min-width:901px){
+  .dayhead{padding-top:14px;padding-bottom:14px;margin-bottom:14px}.dayhead h2{margin:0}.dayhead .sub{margin:2px 0 0}
+  .today{grid-template-columns:1fr 360px;gap:18px}
+  .today>.card{padding-top:16px;padding-bottom:12px}
+  .hr{min-height:28px;padding:1px 0}
+  .hr .free{padding:2px 0}
+  .ev{padding:6px 12px;display:flex;flex-wrap:wrap;align-items:center;column-gap:12px;row-gap:2px;margin-bottom:3px!important}
+  .ev .row{margin:0 0 0 auto!important}
+  .todo .t{padding:7px 10px;font-size:13px}
+  .todo .t .btn{margin-top:4px}
+}
 .lnk{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:600;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}.lnk:hover{color:var(--accent,#3b6188)}
 .dict{margin-bottom:12px}.dict>summary{list-style:none;display:inline-block}.dict>summary::-webkit-details-marker{display:none}.dict[open]>summary{margin-bottom:0}
 .todo-top{margin-bottom:18px}
@@ -425,7 +436,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в33</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в34</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1913,10 +1924,10 @@ function vToday(){
     <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div></div>`:'';
   if(start)return start;
   return `
-  <div class="card">
+  <div class="card dayhead">
     <div class="spread">
       <div><h2>Сегодня, ${ru(today)} · ${dow(today)}</h2>
-      <p class="sub">${tv.length?`первая встреча в ${tv[0].time}, последняя в ${tv[tv.length-1].time} · ${tv.length} ${tv.length===1?'встреча':tv.length<5?'встречи':'встреч'}`:'встреч на сегодня нет'}</p></div>
+      <p class="sub">${tv.length?`${tv.length} ${plN(tv.length,'встреча','встречи','встреч')}, с ${tv[0].time} до ${tv[tv.length-1].time} · свободно ${Math.floor(free/60)} ч · ожидается ${rub(plan)}`:'встреч на сегодня нет'}</p></div>
       <button class="btn" data-act="newSess">Новая встреча</button>
     </div>
   </div>
@@ -1932,14 +1943,6 @@ function vToday(){
         ${items.length?`<details class="todo-d" ${innerWidth>900?'open':''}><summary>Сделать сегодня: ${items.length}</summary><div class="todo">${items.join('')}</div></details>`
           :'<h3>Сделать сегодня</h3><div class="okbox">Всё сделано.</div>'}
         ${restN?`<button type="button" class="lnk" style="margin-top:10px;display:block" data-act="repNow">Ещё ${restN} ${plN(restN,'дело','дела','дел')} — в Отчётах</button>`:''}
-      </div>
-      <div class="side-block stats">
-        <h3>День в цифрах</h3>
-        <div class="stat"><span class="k">Встреч сегодня</span><span class="v">${tv.length}</span></div>
-        <div class="stat"><span class="k">Часов приёма</span><span class="v">${(Math.round(busy/6)/10).toLocaleString('ru-RU')}</span></div>
-        <div class="stat"><span class="k">Свободно</span><span class="v">${Math.floor(free/60)} ч</span></div>
-        <div class="stat"><span class="k">Ожидается за день</span><span class="v">${plan.toLocaleString('ru-RU')}</span></div>
-        <div class="stat"><span class="k">Не подтверждено</span><span class="v">${notConf.length}</span></div>
       </div>
     </div>
   </div>`;
@@ -1972,6 +1975,16 @@ function dayRail(date){
     const nowline=(now>=from&&now<to)?`<div class="now"><span>сейчас ${fmt(now)}</span></div>`:'';
     let inner=evs.map(evCard).join('');
     const ongoing=list.find(v=>{const m=toMin(v.time);return m<from&&m+v.dur>from});
+    if(!evs.length&&!busyHere&&!nowline){
+      /* Свободные часы подряд — одна строка «свободно до …», чтобы день помещался на экран. */
+      let h2=h+1;
+      while(h2<en){const f2=h2*60,t2=f2+60,p2x=now>=0&&t2<=now;
+        if(p2x!==past||(now>=f2&&now<t2)||list.some(v=>{const m=toMin(v.time);return m<t2&&m+v.dur>f2}))break;h2++}
+      const till=h2>h+1?' до '+fmt(h2*60):'';
+      inner=past?`<div class="free">свободно${till}</div>`:`<div class="free"><button class="freebtn" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">свободно${till} — записать</button></div>`;
+      html+=`<div class="hr ${past?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${inner}</div>`;
+      h=h2-1;continue;
+    }
     if(!evs.length)inner=busyHere
       ? `<div class="free">продолжается встреча${ongoing?' · '+esc(title(ongoing)):''}</div>`
       : (past?`<div class="free">свободно</div>`:`<div class="free"><button class="freebtn" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">свободно — записать</button></div>`);
