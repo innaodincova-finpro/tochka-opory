@@ -296,6 +296,8 @@ textarea{min-height:70px;resize:vertical}
 .warnline{color:var(--warn);font-size:13.5px;font-weight:600;grid-column:1/-1}
 .freegrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .sec{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:6px}
+.sumv{font-family:Inter,system-ui,sans-serif;font-size:13px;font-weight:400;color:var(--ink3);margin-left:8px}
+.sumv.warn{color:var(--warn);font-weight:600}
 .sec>summary{cursor:pointer;font-family:'Spectral',Georgia,serif;font-size:17px;font-weight:600;color:var(--ink);padding:2px 0 8px}
 .hlp{border-top:1px solid var(--line);padding:10px 0}
 .hlp summary{cursor:pointer;font-weight:600;color:var(--ink);list-style-position:inside}
@@ -398,7 +400,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в21</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в22</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1038,7 +1040,7 @@ async function writer(){
     }
   }catch(e){fail=true}
   WRITING=false;
-  if(fail){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Откройте «Помощь» и скачайте копию базы')}
+  if(fail){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Откройте «Настройки» и скачайте копию базы')}
   if(PEND!==null&&ENC){writer();return}
   const w=WAITERS.splice(0);w.forEach(f=>f());
 }
@@ -1204,11 +1206,11 @@ if(!BAD&&!ENC_WAIT)normS();
    Теперь у него три состояния: записано, есть незаписанное, запись не удалась. */
 let SAVED_AT=null,SAVE_FAIL=false,DIRTY=false;
 function save(){try{persist();SAVED_AT=new Date();SAVE_FAIL=false;saveMark()}
-  catch(e){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Скопируйте набранный текст, откройте «Помощь» и скачайте копию базы')}}
+  catch(e){SAVE_FAIL=true;saveMark();toast('Запись не сохранена. Скопируйте набранный текст, откройте «Настройки» и скачайте копию базы')}}
 function saveMark(){const el=document.getElementById('save');if(!el)return;
   el.classList.remove('wait','fail');
   const sp=el.querySelector('span');
-  if(SAVE_FAIL){el.classList.add('fail');sp.textContent='не сохранено';el.title='Браузер не разрешил запись. Скачайте копию базы через «Помощь».';return}
+  if(SAVE_FAIL){el.classList.add('fail');sp.textContent='не сохранено';el.title='Браузер не разрешил запись. Скачайте копию базы через «Настройки».';return}
   if(DIRTY){el.classList.add('wait');sp.textContent='есть незаписанное';el.title='В открытой форме есть текст, который ещё не сохранён кнопкой «Сохранить».';return}
   if(!SAVED_AT){sp.textContent='пока не записывалось';el.title='С момента открытия кабинета изменений не было.';return}
   const t=SAVED_AT;sp.textContent='сохранено '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
@@ -1536,7 +1538,7 @@ function importData(d){
       idbDel('vault').catch(()=>{});
       document.getElementById('badscr').hidden=true;shellOff(false);
       render();renderHead();
-      toast(hadEnc?'Копия загружена. Задайте код входа заново в «Помощи» — без него записи не закрыты':'Копия загружена: '+станет);return}
+      toast(hadEnc?'Копия загружена. Задайте код входа заново в «Настройках» — без него записи не закрыты':'Копия загружена: '+станет);return}
     save();render();renderHead();toast('Копия загружена: '+станет)}
   catch(e){alert('Копию загрузить не удалось. Записи не изменены.')}
 }
@@ -1671,7 +1673,7 @@ setInterval(()=>{if(S.ui.meet&&!MEET_HIDDEN)renderMeetBar()},6e4);
 
 /* ═══════════════ Каркас ═══════════════ */
 const TABS=[['today','Сегодня'],['sched','Расписание'],['clients','Клиенты'],['scales','Шкалы'],
-  ['docs','Документы'],['pay','Оплаты'],['superv','Супервизия'],['rep','Отчёты'],['help','Помощь']];
+  ['docs','Документы'],['pay','Оплаты'],['superv','Супервизия'],['rep','Отчёты'],['help','Настройки']];
 const tabsNow=()=>TABS.filter(([k])=>k!=='scales'||useScales());
 /* На телефоне в строку помещаются четыре вкладки. Остальные — под кнопкой «Ещё»:
    оплаты, документы, супервизия и отчёты на телефоне читают, а не ведут. */
@@ -2291,16 +2293,19 @@ function emptyCard(h,text,act,btn){return `<div class="card"><div class="spread"
 function vHelp(){
   return `<div class="card">
     <h2>Настройки</h2>
-    <h3>Специалист</h3>
+    <details class="sec"><summary>Специалист <span class="sumv">${esc(SPEC().name)} · ${esc(appr().name)}</span></summary>
     <div class="fgrid">
       <label class="f"><span>Имя специалиста</span><input data-setspec="name" value="${esc(SPEC().name)}"></label>
       <label class="f wide"><span>Как вы работаете — от этого зависят шаблоны записи и раздел «Шкалы»</span>
         <select data-set="appr">${Object.keys(APPR).map(k=>`<option value="${k}" ${((S.settings.appr||'kpt')===k)?'selected':''}>${esc(APPR[k].name)}</option>`).join('')}</select></label>
       <label class="f wide"><span>Подход, как он указывается в документах</span><input data-setspec="title" value="${esc(SPEC().title)}"></label>
       <label class="f"><span>Открытых часов приёма в месяц</span><input data-set="openH" type="number" value="${S.settings.openH}"></label>
+    </div></details>
+    <details class="sec"><summary>Приём и правила <span class="sumv">${esc(S.settings.start)}–${esc(S.settings.end)} · ${S.settings.dur} мин · ${rub(S.settings.price)}</span></summary>
+    <div class="fgrid">
+      <label class="f"><span>Начало приёма</span><input data-set="start" type="time" step="900" value="${esc(S.settings.start)}"></label>
+      <label class="f"><span>Конец приёма</span><input data-set="end" type="time" step="900" value="${esc(S.settings.end)}"></label>
     </div>
-
-    <h3>Правила работы</h3>
     <div class="fgrid">
       <label class="f"><span>Отмена без последствий, часов до встречи</span><input data-set="cancelH" type="number" value="${S.settings.cancelH}"></label>
       <label class="f"><span>Правило при поздней отмене — предложение по умолчанию</span><select data-set="cancelRule">
@@ -2309,8 +2314,8 @@ function vHelp(){
       <label class="f"><span>Стоимость встречи, ₽</span><input data-set="price" type="number" value="${S.settings.price}"></label>
       ${useScales()?`<label class="f"><span>Срок повторного замера по шкалам, дней</span><input data-set="retest" type="number" value="${S.settings.retest}"></label>`:''}
       <label class="f"><span>Блокировка кабинета при бездействии, мин</span><input data-set="lock" type="number" value="${S.settings.lock}"></label>
-    </div>
-    <h3>Вход по коду</h3>
+    </div></details>
+    <details class="sec" ${pinOn()?'':'open'}><summary>Вход по коду <span class="sumv ${pinOn()?'':'warn'}">${pinOn()?'задан':'не задан'}</span></summary>
     <div class="note">${pinOn()
       ? (LEGACY?'Код задан в прежней редакции кабинета. При следующем входе записи будут закрыты этим кодом.':'Код задан, записи в браузере закрыты. Кабинет закрывается при бездействии через '+S.settings.lock+' мин и при каждом открытии.'+(ENC&&ENC.meta.pinLen<6?' <b>В коде четыре цифры — задайте новый код из шести цифр.</b>':''))
       : '<b>Код не задан.</b> Кабинет открывается сразу — записи о встречах увидит любой, кто возьмёт устройство. На телефоне это особенно важно.'}
@@ -2319,32 +2324,28 @@ function vHelp(){
         <button class="btn mini" data-act="setPin">${pinOn()?'Задать новый код':'Задать код входа'}</button>
         ${ENC_ON?'<button class="btn mini ghost" data-act="newRec">Новый код восстановления</button>':''}
         ${pinOn()?'<button class="btn mini ghost" data-act="pinOff">Убрать код</button>':''}
-      </div></div>
-    <div class="fgrid" style="margin-top:12px">
-      <label class="f"><span>Начало приёма</span><input data-set="start" value="${esc(S.settings.start)}"></label>
-      <label class="f"><span>Конец приёма</span><input data-set="end" value="${esc(S.settings.end)}"></label>
-    </div>
-
-    <h3>Видеовстречи</h3>
+      </div></div></details>
+    <details class="sec"><summary>Видеовстречи <span class="sumv">${esc(String(S.settings.meetBase).replace(/^https?:\/\//,'').replace(/\/$/,''))}</span></summary>
     <div class="fgrid">
       <label class="f"><span>Формат встречи по умолчанию</span><select data-set="defFmt">
         ${['очно','онлайн'].map(x=>`<option ${(S.settings.defFmt||'очно')===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Адрес площадки видеосвязи</span><input data-set="meetBase" value="${esc(S.settings.meetBase)}"></label>
       <label class="f"><span>Код кабинета в адресе комнаты</span><input data-set="room" value="${esc(S.settings.room)}"></label>
-    </div>
-
-    <h3>Копия записей</h3>
-    <div class="note" id="auto-st" style="margin-bottom:8px">${autoLine()}</div>
+    </div></details>
+    <details class="sec" ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'open':''}><summary>Копия записей <span class="sumv ${!S.settings.lastBackup||days(S.settings.lastBackup,D(0))>=7?'warn':''}">${S.settings.lastBackup?'последняя '+ru(S.settings.lastBackup):'ещё не сохранялась'}</span></summary>
+    <p class="sub" id="auto-st" style="margin:0 0 8px">${autoLine()}</p>
     ${canAuto()?`<div class="row" style="margin-bottom:10px">${!AUTO?'<button class="btn mini" data-act="autoSet">Включить автокопию в файл</button>':AUTO_ST==='perm'?'<button class="btn mini" data-act="autoResume">Возобновить автокопию</button> <button class="btn mini ghost" data-act="autoOff">Выключить</button>':'<button class="btn mini ghost" data-act="autoOff">Выключить автокопию</button>'}</div>`:''}
     <p class="lead">Последняя копия: <b>${S.settings.lastBackup?ru(S.settings.lastBackup):'ещё не сохранялась'}</b>${S.settings.lastBackup&&days(S.settings.lastBackup,D(0))>=7?' — '+days(S.settings.lastBackup,D(0))+' дн. назад':''}. Сохраняйте копию раз в неделю на компьютер или в российское облако (Яндекс Диск).</p>
     <div class="row" style="margin-top:10px">
       <button class="btn" data-act="export">Скачать копию базы</button>
       <button class="btn ghost" data-act="import">Загрузить копию</button>
       <button class="btn ghost" data-act="snaps">Прежние состояния</button>
-      <button class="btn ghost" data-act="exportClient">Выгрузка по запросу клиента</button>
-      <button class="btn ghost" data-act="anonClient">Обезличить клиента</button>
-      ${S.demo?'<button class="btn ghost warn" data-act="demoOff">Выйти из примера</button>':(!S.clients.length?'<button class="btn ghost" data-act="demoOn">Посмотреть на примере</button>':'')}
     </div>
+  </details>
+    ${S.clients.length?`<details class="sec"><summary>Данные клиента по запросу</summary>
+      <div class="row"><button class="btn ghost" data-act="exportClient">Выгрузить данные клиента</button>
+      <button class="btn ghost" data-act="anonClient">Обезличить клиента</button></div></details>`:''}
+    ${S.demo?'<div class="row" style="margin-top:14px"><button class="btn ghost warn" data-act="demoOff">Выйти из примера</button></div>':(!S.clients.length?'<div class="row" style="margin-top:14px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div>':'')}
   </div>
   <div class="card">
     <h2>Справка</h2>
@@ -3179,7 +3180,7 @@ document.addEventListener('click',e=>{
       a.download='tochka-opory-kopiya-'+D(0)+'.json';a.click();
       if(!RO){S.settings.lastBackup=D(0);save();render()}
       toast(ENC_ON?'Копия сохранена и закрыта вашим кодом. Храните файл на компьютере или в российском облаке, например на Яндекс Диске'
-        :'Копия сохранена, но не закрыта кодом: задайте код входа в «Помощи». Храните файл на компьютере или в российском облаке')},
+        :'Копия сохранена, но не закрыта кодом: задайте код входа в «Настройках». Храните файл на компьютере или в российском облаке')},
     /* Файл проверяется до замены базы: посторонний файл не должен стирать данные. */
     import:()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
       i.onchange=()=>{const r=new FileReader();r.onload=()=>{
@@ -3288,7 +3289,7 @@ document.addEventListener('click',e=>{
       ENC_ON=false;ENC=null;
       render();clearTimeout(IDLE);toast('Код входа убран. Записи в браузере больше не закрыты')},
     setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';save();closeModal();renderHead();render();
-      toast('Подход: '+appr().name+'. Поменять можно в «Помощи», раздел «Специалист»')},
+      toast('Подход: '+appr().name+'. Поменять можно в «Настройках», раздел «Специалист»')},
     reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();S.demo=true;normS();save();render();toast('Демонстрационные данные восстановлены')}},
     demoOn:()=>{if(S.clients.length&&!S.demo){toast('Пример открывается только в пустом кабинете');return}
       const keep=S.settings;S=seed();S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.demo=true;S.demoDay=D(0);S.ui.apprAsked=true;normS();
@@ -3630,7 +3631,7 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted(
    и то, ведутся ли шкалы. Инструменты у подходов разные. */
 function askAppr(){
   modal('Как вы работаете',`
-    <p class="lead">От подхода зависит, какие шаблоны записи о встрече кабинет предложит и будет ли раздел «Шкалы». Выбор можно поменять в любой момент: «Помощь» → «Специалист».</p>
+    <p class="lead">От подхода зависит, какие шаблоны записи о встрече кабинет предложит и будет ли раздел «Шкалы». Выбор можно поменять в любой момент: «Настройки» → «Специалист».</p>
     <div class="list">${Object.keys(APPR).map(k=>`<div class="item">
       <div><b>${esc(APPR[k].name)}</b>
       <div class="sub">Записи: ${APPR[k].tpl.map(t=>esc(TPLNAME[t])).join(', ')}. Шкалы ${APPR[k].scales?'ведутся':'не ведутся'}.</div></div>
@@ -3655,6 +3656,7 @@ const MICNO=/link|room|url|code|phone|tel|mail|time|date|price|rate|sum|amount|d
 const micOK=t=>{
   const n=(t.tagName||'').toLowerCase();
   if(t.closest&&t.closest('#lockscr,#badscr'))return false;
+  if(t.dataset&&['start','end','meetBase','room'].includes(t.dataset.set))return false;
   if(t.id&&MICNO.test(t.id))return false;
   if(n==='textarea')return true;
   if(n!=='input')return false;
@@ -3741,9 +3743,11 @@ function tableLabels(){document.querySelectorAll('.tw table').forEach(t=>{const 
   t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((td,i)=>{if(h[i]&&!td.dataset.l)td.dataset.l=h[i]}))})}
 /* Раскрытые разделы остаются раскрытыми после сохранения и перерисовки экрана. */
 const OPEN_SEC=new Set();
+/* Ключ раздела — только его название, без меняющегося значения рядом. */
+const secKey=d=>{const m=d.querySelector('summary');return m&&m.firstChild?String(m.firstChild.textContent).trim():''};
 document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.sec,details.todo-d'))return;
-  const k=(S.ui.tab||'')+'|'+(d.querySelector('summary')||{}).textContent;if(d.open)OPEN_SEC.add(k);else OPEN_SEC.delete(k)},true);
-function keepOpen(){document.querySelectorAll('#view details.sec').forEach(d=>{const k=(S.ui.tab||'')+'|'+(d.querySelector('summary')||{}).textContent;if(OPEN_SEC.has(k))d.open=true})}
+  const k=(S.ui.tab||'')+'|'+secKey(d);if(d.open)OPEN_SEC.add(k);else OPEN_SEC.delete(k)},true);
+function keepOpen(){document.querySelectorAll('#view details.sec').forEach(d=>{const k=(S.ui.tab||'')+'|'+secKey(d);if(OPEN_SEC.has(k))d.open=true})}
 const _render=render;render=function(){_render.apply(this,arguments);mountMics();tableLabels();keepOpen()};
 const _modal=modal;modal=function(){const r=_modal.apply(this,arguments);mountMics();tableLabels();return r};
 mountMics();
