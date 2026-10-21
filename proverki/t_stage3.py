@@ -20,7 +20,7 @@ with sync_playwright() as p:
     pg.click('[data-act=seriesGo]'); pg.wait_for_timeout(300)
     n=pg.evaluate("S.sessions.length"); ok('встречи на 4 недели расставлены по средам', n in (4,5) and pg.evaluate("S.sessions.every(v=>pd(v.date).getDay()===3&&v.time==='11:00')"), str(n))
     cid=pg.evaluate("S.clients[0].id")
-    act(pg,'series',id=cid); ok('повторная расстановка не задваивает', pg.locator('text=Новых встреч нет').count()==1); act(pg,'closeModal')
+    n_before=pg.evaluate("S.sessions.length"); act(pg,'series',id=cid); ok('повторная расстановка не задваивает', pg.locator('#toast:has-text("все встречи уже стоят")').count()==1 and pg.evaluate("S.sessions.length")==n_before); act(pg,'closeModal')
     # пересечение
     d0=pg.evaluate("S.sessions[0].date")
     act(pg,'newClient'); pg.evaluate("document.querySelectorAll('#modal details').forEach(d=>d.open=true)"); pg.fill('#c-name','Олег Второй'); pg.click('[data-act=saveClient]'); pg.wait_for_timeout(400)

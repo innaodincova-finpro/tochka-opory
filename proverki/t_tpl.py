@@ -7,7 +7,7 @@ with sync_playwright() as p:
         ctx=b.new_context(viewport={'width':vp[0],'height':vp[1]},accept_downloads=True); pg=ctx.new_page(); e=[]
         pg.on('pageerror',lambda x:e.append(str(x))); pg.on('dialog',lambda d:d.accept())
         pg.goto(U); pg.wait_for_timeout(900); pg.get_by_role('button',name='Выбрать').first.click(); pg.wait_for_timeout(300)
-        pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';b.hidden=true;document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(300)
+        pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';b.hidden=true;document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(300); pg.evaluate("S.settings.spec.name='Анна Ремизова';save()")
         pg.evaluate("go('docs')"); pg.wait_for_timeout(300)
         pg.locator('summary:has-text("Шаблоны документов")').click(); pg.wait_for_timeout(200)
         pg.locator('tr[data-act=tplOpen]').first.click(); pg.wait_for_timeout(400)
