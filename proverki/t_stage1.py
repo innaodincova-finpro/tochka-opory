@@ -170,7 +170,7 @@ with sync_playwright() as p:
     # T15 видеовстреча не закрывает кабинет
     b,ctx=fresh(p); pg=openp(ctx); appr(pg); set_code(pg,'123456'); rec_done(pg)
     pg.evaluate("S.settings.myRoom='https://ktalk.ru/test-room';save();document.querySelector('[data-tab=today]').click()"); pg.wait_for_timeout(300)
-    with ctx.expect_page() as np_: pg.get_by_role('button',name='Войти во встречу').first.click()
+    with ctx.expect_page() as np_: pg.evaluate("(()=>{const o=document.getElementById('tmpmeet');if(o)o.remove();const v=S.sessions.filter(v=>v.fmt==='онлайн'&&meetOpen(v)&&!needMark(v)).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)[0];const b=document.createElement('button');b.dataset.act='openMeet';b.dataset.id=v.id;b.id='tmpmeet';b.textContent='x';document.body.appendChild(b)})()"); pg.click('#tmpmeet')
     np_.value.close(); pg.wait_for_timeout(300)
     pg.evaluate("Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'))"); pg.wait_for_timeout(500)
     ok('T15 во время встречи кабинет не закрылся', not locked(pg))

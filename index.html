@@ -1029,7 +1029,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в35';
+const APP_VER='редакция от 21.10.2026 · в36';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1516,6 +1516,11 @@ function interp(kind,n){
   return `Сумма <b class="mono">${n}</b> из ${SCALES[kind].max} — ${band(kind,n)}.`;
 }
 /* Флаги внимания */
+/* Встреча прошла, а статус всё ещё «запланирована» или «подтверждена» — её нужно отметить. */
+const sessEnd=v=>{const d=pd(v.date),[h,m]=String(v.time).split(':').map(Number);d.setHours(h||0,(m||0)+(+v.dur||50),0,0);return d};
+const sessStart=v=>{const d=pd(v.date),[h,m]=String(v.time).split(':').map(Number);d.setHours(h||0,m||0,0,0);return d};
+const needMark=v=>(v.status==='запланирована'||v.status==='подтверждена')&&sessEnd(v)<=new Date()&&days(v.date,D(0))<=30;
+const markBtns=(v,mini)=>`<button class="btn ${mini?'mini':''}" data-act="markDone" data-id="${v.id}">Состоялась</button><button class="btn ${mini?'mini':''} ghost" data-act="markNo" data-id="${v.id}">Не пришёл</button>`;
 function flagUnfilled(){
   return S.sessions.filter(v=>v.status==='состоялась'&&!v.done&&days(v.date,D(0))>=1);
 }
@@ -1659,7 +1664,7 @@ function stepBack(from,to,verb){
 }
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
-const RO_OK=new Set(['repNow','repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
+const RO_OK=new Set(['goSpec','repNow','repList','wordReport','tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
   'wordReport','wordClient','exportClient','icsModal','icsGet','taxModal','taxGet','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
@@ -1873,7 +1878,7 @@ function renderHead(){
   document.getElementById('tabs').innerHTML=vis.map(([k,n])=>
     `<button data-tab="${k}" class="${k==='__more'?(MAIN.includes(S.ui.tab)?'':'on'):(S.ui.tab===k?'on':'')}">${n}</button>`).join('');
   document.getElementById('rolebox').innerHTML=`
-    <div class="who"><b>${esc(SPEC().name)}</b><span>${esc(SPEC().title)}</span></div>
+    <div class="who">${SPEC().name?`<b>${esc(SPEC().name)}</b>`:'<button type="button" class="lnk" data-act="goSpec" style="color:#fff;display:block">Укажите своё имя</button>'}<span>${esc(SPEC().title)}</span></div>
     <button class="hbtn ${S.ui.anon?'on':''}" data-act="anon">${S.ui.anon?'Имена скрыты':'Скрыть имена'}</button>`;
 }
 function demoBar(){const b=document.getElementById('demobar');if(b)b.hidden=!(S&&S.demo&&!ENC_WAIT)}
@@ -1914,7 +1919,8 @@ function vToday(){
   const today=D(0);
   const tv=S.sessions.filter(v=>v.date===today&&!v.status.startsWith('отменена')&&v.status!=='перенесена')
     .sort((a,b)=>a.time<b.time?-1:1);
-  const notConf=tv.filter(v=>v.status==='запланирована');
+  const notConf=tv.filter(v=>v.status==='запланирована'&&sessStart(v)>new Date());
+  const toMark=S.sessions.filter(needMark).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1);
   const busy=tv.reduce((s,v)=>s+v.dur,0);
   const st=parseInt(S.settings.start),en=parseInt(S.settings.end);
   const open=(en-st)*60;
@@ -1925,6 +1931,9 @@ function vToday(){
   const debt=S.clients.filter(c=>c.debt>0);
   const bd=S.settings.lastBackup,backupOld=!bd||days(bd,today)>=7;
   const items=[];
+
+  toMark.forEach(v=>items.push(`<div class="t">Отметьте, состоялась ли встреча${v.date===today?'':' '+ru(v.date)} в ${v.time}: <b>${esc(title(v))}</b>
+    <div class="row" style="gap:6px">${markBtns(v,true)}</div></div>`));
 
   unf.forEach(v=>items.push(`<div class="t">Запись о встрече не заполнена: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — прошло ${days(v.date,today)} дн.
     <div><button class="btn mini" data-act="openSess" data-id="${v.id}">Заполнить</button></div></div>`));
@@ -1975,7 +1984,7 @@ function evCard(v){
   const stc=v.status==='состоялась'?'done':(v.status==='неявка')?'no':v.status==='запланирована'?'wait':'';
   const tz=c&&v.fmt==='онлайн'&&c.tzOff?` · у клиента ${fmt(toMin(v.time)+c.tzOff*60)}`:'';
   /* Одна главная кнопка: идёт встреча — вернуться; ссылка отправлена — войти; не отправлена — отправить. */
-  const btn=v.fmt!=='онлайн'||v.status==='состоялась'?'':meetOn(v)
+  const btn=needMark(v)&&!meetOn(v)?markBtns(v,true):v.fmt!=='онлайн'||v.status==='состоялась'?'':meetOn(v)
     ?`<button class="btn mini" data-act="meetBack" data-id="${v.id}">Вернуться во встречу</button>`
     :v.sent?`<button class="btn mini ghost" data-act="openMeet" data-id="${v.id}">Войти во встречу</button>`
     :`<button class="btn mini" data-act="sendLink" data-id="${v.id}">Отправить ссылку</button>`;
@@ -2011,7 +2020,7 @@ function dayRail(date){
     if(!evs.length)inner=busyHere
       ? `<div class="free">продолжается встреча${ongoing?' · '+esc(title(ongoing)):''}</div>`
       : (past?`<div class="free">свободно</div>`:`<div class="free"><button class="freebtn" data-act="newSess" data-date="${date}" data-time="${fmt(from)}">свободно — записать</button></div>`);
-    html+=`<div class="hr ${evs.length?'has':''} ${past?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${nowline}${inner}</div>`;
+    html+=`<div class="hr ${evs.length?'has':''} ${past&&!evs.some(needMark)?'past':''}"><div class="hl">${fmt(from)}</div><div class="dot"></div>${nowline}${inner}</div>`;
   }
   return html;
 }
@@ -2865,15 +2874,15 @@ function readSess(v){
 }
 
 /* ── Отмена встречи и правило отмены ── */
-function cancelModal(id){
+function cancelModal(id,who){
   const v=sess(id);if(!v)return;
   const h=hoursTo(v);
   const late=h<S.settings.cancelH;
   const pk=v.cid?pack(v.cid)[0]:null;
-  modal('Отмена встречи',`
+  modal(who==='неявка'?'Клиент не пришёл':'Отмена встречи',`
     <p class="lead">${esc(title(v))} · ${ru(v.date)} в ${v.time}. До начала встречи ${h<0?'прошло '+Math.abs(Math.round(h)):'осталось '+Math.round(h)} ч.</p>
     <div class="fgrid" style="margin-top:10px">
-      <label class="f"><span>Кто отменяет</span><select id="x-who"><option>отменена клиентом</option><option>отменена специалистом</option><option>неявка</option><option>перенесена</option></select></label>
+      <label class="f"><span>Кто отменяет</span><select id="x-who"><option>отменена клиентом</option><option>отменена специалистом</option><option ${who==='неявка'?'selected':''}>неявка</option><option>перенесена</option></select></label>
       <label class="f"><span>Причина</span><input id="x-why" placeholder="коротко, без оценок"></label>
     </div>
     ${late?`<div class="alertbox"><b>Отмена менее чем за ${S.settings.cancelH} ч.</b> Правило кабинета допускает удержание стоимости встречи (${rub(v.price)}).
@@ -3241,6 +3250,11 @@ document.addEventListener('click',e=>{
         +r.pays.map(p=>'<tr><td>'+ru(p.date)+'</td><td>'+t(nm(cl(p.cid)))+'</td><td>'+t(p.method)+'</td><td>'+rub(p.sum)+'</td></tr>').join('')+'</table>';
       toWord('otchet-'+m,h)},
     repList:()=>repList(el.dataset.k,el.dataset.m),
+    markDone:()=>{if(RO){toast('Здесь только просмотр');return}const v=sess(id);if(!v)return;pushUndo('отметка «состоялась»');
+      const was=packWant(v.pay,v.status,v.rule);PAY_NOTE='';v.status='состоялась';v.fact=v.fact||v.dur;v.by=v.by||SPEC().name;if(!v.note)v.note={tpl:defTpl()};
+      syncPack(v,was);S.changedAt=new Date().toISOString();save();render();toast('Встреча отмечена как состоявшаяся'+(PAY_NOTE?'. '+PAY_NOTE:'')+'. Запись о встрече — по нажатию на встречу')},
+    markNo:()=>{if(RO){toast('Здесь только просмотр');return}cancelModal(id,'неявка')},
+    goSpec:()=>{go('help');setTimeout(()=>{const d=[...document.querySelectorAll('#view details.sec')].find(x=>/^Специалист/.test(x.querySelector('summary').textContent));if(d){d.open=true;const i=d.querySelector('[data-setspec=name]');if(i)i.focus()}},50)},
     setPause:()=>{if(RO){toast('Здесь только просмотр');return}const c=cl(id);pushUndo('пауза в работе');c.status='пауза';S.changedAt=new Date().toISOString();save();render();toast(nm(c)+': статус «пауза». Вернуть — кнопкой «Отменить» или в карточке')},
     repNow:()=>{S.ui.repM=D(0).slice(0,7);go('rep')},
     wordClient:()=>dataReqModal(id),

@@ -8,7 +8,7 @@ with sync_playwright() as p:
     pg.on('dialog',lambda d:d.accept() if ans['v'] else d.dismiss())
     pg.goto(U); pg.wait_for_timeout(900); pg.get_by_role('button',name='Выбрать').first.click(); pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';b.hidden=true;document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(300); pg.wait_for_timeout(300)
     # 23: без ссылки на комнату кабинет просит её, зарубежная площадка не подставляется
-    pg.get_by_role('button',name='Войти во встречу').first.click(); pg.wait_for_timeout(300)
+    pg.evaluate("(()=>{const o=document.getElementById('tmpmeet');if(o)o.remove();const v=S.sessions.filter(v=>v.fmt==='онлайн'&&meetOpen(v)&&!needMark(v)).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)[0];const b=document.createElement('button');b.dataset.act='openMeet';b.dataset.id=v.id;b.id='tmpmeet';b.textContent='x';document.body.appendChild(b)})()"); pg.click('#tmpmeet'); pg.wait_for_timeout(300)
     ok('без ссылки открывается окно ввода ссылки',pg.locator('#room-l').count()==1)
     pg.fill('#room-l','abc'); pg.click('[data-act=roomSave]'); pg.wait_for_timeout(200)
     ok('неполная ссылка не принимается',pg.locator('#room-l').count()==1)
@@ -16,7 +16,7 @@ with sync_playwright() as p:
     ok('ссылка сохранена',pg.evaluate("S.settings.myRoom")=='https://ktalk.ru/test-room')
     ok('нигде нет meet.jit.si',pg.evaluate("S.sessions.every(v=>!/jit\\.si/.test(meetUrl(v)))"))
     # 16
-    with ctx.expect_page() as np_: pg.get_by_role('button',name='Войти во встречу').first.click()
+    with ctx.expect_page() as np_: pg.evaluate("(()=>{const o=document.getElementById('tmpmeet');if(o)o.remove();const v=S.sessions.filter(v=>v.fmt==='онлайн'&&meetOpen(v)&&!needMark(v)).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)[0];const b=document.createElement('button');b.dataset.act='openMeet';b.dataset.id=v.id;b.id='tmpmeet';b.textContent='x';document.body.appendChild(b)})()"); pg.click('#tmpmeet')
     np_.value.close(); pg.wait_for_timeout(300)
     nxt=pg.evaluate("S.sessions.find(v=>v.cid==='c2'&&v.date===D(0)).id")
     pg.evaluate("id=>{const b=document.createElement('button');b.dataset.act='meetSwitch';b.dataset.id=id;document.body.appendChild(b);b.click();b.remove()}",nxt)

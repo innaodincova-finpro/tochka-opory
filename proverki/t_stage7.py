@@ -27,7 +27,7 @@ with sync_playwright() as p:
     act(pg,'newClient'); pg.fill('#c-name','Тест Городов'); pg.select_option('#c-city','Новосибирск'); act(pg,'saveClient')
     ok('разница во времени посчитана',pg.evaluate("(()=>{const c=S.clients.find(c=>c.name==='Тест Городов');return c.tzOff===7-myUtc()&&/^К-\\d{3}$/.test(c.code)})()"))
     ok('нет поля долга в форме',(act(pg,'newClient') or True) and pg.locator('#c-debt').count()==0); pg.evaluate("closeModal()")
-    pg.evaluate("go('help')"); ok('версия в справке','в35' in pg.text_content('#view'))
+    pg.evaluate("go('help')"); ok('версия в справке','в36' in pg.text_content('#view'))
     ok('в Настройках нет запроса данных и выхода из примера',pg.locator('#view summary:has-text("Запрос клиента")').count()==0 and pg.locator('#view [data-act=demoOff]').count()==0)
     pg.evaluate("go('superv')"); ok('кнопки вопроса супервизору нет',pg.locator('[data-act=aiSuperv]').count()==0)
     ok('ошибок нет',not e,str(e)); b.close()
