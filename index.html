@@ -398,7 +398,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в19</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в20</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -528,6 +528,119 @@ const CSTAT=['обращение','первичная','в работе','пау
 function emptyBase(){const z=seed();
   ['clients','sessions','scales','docs','groups','packs','pays','disc','superv','wait'].forEach(k=>{if(Array.isArray(z[k]))z[k]=[]});
   z.settings.lastBackup='';z.demo=false;z.off=[];z.ui.apprAsked=false;return z}
+/* Тексты образцов документов. Специалист правит их под себя в окне шаблона.
+   [Клиент], [Дата], [Специалист] подставляются при выгрузке для конкретного клиента. */
+const TPL_TEXT={
+t1:`ДОГОВОР-ОФЕРТА НА ОКАЗАНИЕ ПСИХОЛОГИЧЕСКИХ УСЛУГ
+
+г. ____________                                    [Дата]
+
+[Специалист] (далее — Психолог) предлагает [Клиент] (далее — Клиент) заключить договор на следующих условиях.
+
+1. Предмет договора
+1.1. Психолог оказывает Клиенту консультационные психологические услуги (далее — встречи). Услуги не являются медицинской помощью.
+1.2. Встреча длится [длительность] минут, проводится очно или онлайн по согласованию сторон.
+
+2. Стоимость и порядок оплаты
+2.1. Стоимость одной встречи — [стоимость] рублей.
+2.2. Оплата вносится до начала встречи. Психолог выдаёт чек.
+
+3. Перенос и отмена
+3.1. Клиент может перенести или отменить встречу не позднее чем за [часы] часов до её начала без оплаты.
+3.2. При более поздней отмене или неявке встреча оплачивается полностью.
+
+4. Конфиденциальность
+4.1. Психолог сохраняет в тайне сведения, полученные на встречах, кроме случаев, предусмотренных законом.
+
+5. Срок действия
+5.1. Договор действует до завершения работы. Каждая сторона вправе прекратить его, уведомив другую сторону.
+
+Акцепт оферты — оплата первой встречи или подпись ниже.
+
+Психолог: ____________ / [Специалист] /
+Клиент: ____________ / [Клиент] /`,
+
+t2:`ИНФОРМИРОВАННОЕ СОГЛАСИЕ НА ПСИХОЛОГИЧЕСКУЮ ПОМОЩЬ
+
+Я, [Клиент], подтверждаю, что [Специалист] сообщил(а) мне:
+— цели и формат работы, примерную продолжительность и частоту встреч;
+— что психологическая помощь не является медицинской и не заменяет лечение;
+— что результат зависит в том числе от моего участия и не гарантируется;
+— что я могу задавать вопросы о ходе работы и прекратить её в любой момент;
+— границы конфиденциальности и случаи, когда сведения могут быть раскрыты по закону.
+
+Я добровольно соглашаюсь на получение психологической помощи.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t3:`СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ
+
+Я, [Клиент], даю согласие [Специалист] на обработку моих персональных данных: фамилия, имя, отчество, телефон, адрес электронной почты, даты встреч и сведения об оплате.
+
+Цель обработки: заключение и исполнение договора на оказание психологических услуг, связь со мной по поводу встреч.
+Действия с данными: сбор, запись, хранение, уточнение, использование, удаление.
+Данные хранятся на территории Российской Федерации и не передаются третьим лицам без моего согласия, кроме случаев, предусмотренных законом.
+
+Согласие действует 5 лет и может быть отозвано мной письменно.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t4:`СОГЛАСИЕ НА ОБРАБОТКУ СВЕДЕНИЙ О СОСТОЯНИИ ЗДОРОВЬЯ
+
+Я, [Клиент], в письменной форме даю согласие [Специалист] на обработку сведений о моём психологическом и эмоциональном состоянии, которые я сообщаю на встречах и которые фиксируются в записях о встречах и результатах опросников.
+
+Цель обработки: оказание мне психологической помощи.
+Действия со сведениями: запись, хранение, использование, удаление.
+Сведения хранятся на территории Российской Федерации, не передаются третьим лицам без моего отдельного согласия, кроме случаев, предусмотренных законом.
+
+Согласие действует 5 лет и может быть отозвано мной письменно.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t5:`СОГЛАСИЕ НА НАПОМИНАНИЯ О ВСТРЕЧАХ
+
+Я, [Клиент], согласен(на) получать от [Специалист] напоминания о встречах, ссылки на онлайн-встречи и сообщения о переносе по каналу: ____________ (телефон, мессенджер, электронная почта).
+
+В сообщениях не указывается характер встреч.
+
+Согласие действует до его отзыва.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t6:`СОГЛАСИЕ НА АУДИО- ИЛИ ВИДЕОЗАПИСЬ ВСТРЕЧ
+
+Я, [Клиент], согласен(на) на аудио- или видеозапись встреч с [Специалист].
+
+Цель записи: ____________ (например, супервизия, обучение).
+Запись хранится не дольше ____ дней, не передаётся третьим лицам без моего отдельного согласия и удаляется по моему требованию.
+
+Согласие действует до его отзыва.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t7:`СОГЛАСИЕ НА ОБСУЖДЕНИЕ СЛУЧАЯ НА СУПЕРВИЗИИ
+
+Я, [Клиент], согласен(на), чтобы [Специалист] обсуждал(а) работу со мной с супервизором в обезличенном виде: без моего имени, контактов и сведений, по которым меня можно узнать.
+
+Супервизия нужна для качества психологической помощи.
+
+Согласие действует до его отзыва.
+
+[Дата]                         Подпись: ____________ / [Клиент] /`,
+
+t8:`СОГЛАСИЕ ЗАКОННОГО ПРЕДСТАВИТЕЛЯ НЕСОВЕРШЕННОЛЕТНЕГО
+
+Я, ____________________ (ФИО законного представителя), являясь ____________ (мать, отец, опекун) несовершеннолетнего [Клиент], ____ года рождения, даю согласие:
+— на оказание ему (ей) психологической помощи [Специалист];
+— на обработку его (её) персональных данных и сведений о психологическом состоянии в целях оказания помощи.
+
+Мне разъяснено, какие сведения о встречах сообщаются законному представителю: ____________.
+
+Согласие действует до совершеннолетия либо до его отзыва.
+
+[Дата]                         Подпись: ____________ / ____________ /`
+};
+
 function seed(){
   const C=[
     {id:'c1',code:'К-014',name:'Марина Соколова',phone:'+7 916 220-14-08',msg:'Telegram',contact:'Telegram',email:'m.sokolova@example.ru',tz:'МСК',tzOff:0,
@@ -1448,7 +1561,7 @@ function stepBack(from,to,verb){
 function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
 const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
-  'wordReport','wordClient','exportClient','doExportClient','recDone','export','snaps']);
+  'wordReport','wordClient','exportClient','doExportClient','recDone','export','snaps','tplOpen','tplWord']);
 /* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
   if(b){b.disabled=!HIST.length;b.hidden=!HIST.length}
@@ -1456,7 +1569,7 @@ function syncRail(){const b=document.getElementById('back'),u=document.getElemen
   if(r){r.disabled=!REDO.length;r.hidden=!REDO.length;r.textContent='↷ Вернуть'+(REDO.length&&REDO[REDO.length-1].label?': '+REDO[REDO.length-1].label:'')}}
 const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
   'saveDoc','saveDisc','savePay','check','usePack','payDebt','forgiveDebt','saveSup','saveWait','delWait',
-  'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff','snapBack']);
+  'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff','snapBack','tplSave']);
 /* Название действия показывается в уведомлении об отмене — иначе непонятно, что именно откатилось. */
 const MUTL={voiceScale:'замер со слов',createSess:'новая встреча',saveSess:'запись о встрече',tplSet:'смена шаблона записи',
   meetEnd:'завершение встречи',meetSwitch:'переход к следующей встрече',saveClient:'карточка клиента',savePlan:'план работы',
@@ -1464,7 +1577,7 @@ const MUTL={voiceScale:'замер со слов',createSess:'новая вст�
   savePay:'оплата',check:'отметка о выполнении',usePack:'списание из пакета',payDebt:'погашение задолженности',
   forgiveDebt:'прощение задолженности',saveSup:'запись в реестре супервизии',saveWait:'лист ожидания',delWait:'строка листа ожидания',
   doAnon:'обезличивание клиента',import:'загрузка копии базы',reset:'возврат демонстрационных данных',delSess:'удаление встречи',delPay:'удаление платежа',
-  delClient:'удаление клиента',moveGo:'перенос встречи',seriesGo:'постоянное расписание',offGo:'отпуск',offDel:'отмена отпуска',demoOn:'открытие примера',demoOff:'выход из примера',snapBack:'возврат к прежнему состоянию'};
+  delClient:'удаление клиента',moveGo:'перенос встречи',seriesGo:'постоянное расписание',offGo:'отпуск',offDel:'отмена отпуска',demoOn:'открытие примера',demoOff:'выход из примера',snapBack:'возврат к прежнему состоянию',tplSave:'текст шаблона'};
 
 /* Черновики незаполненных форм: если окно закрыто случайно, введённое не теряется. */
 /* Ключ черновика привязан не только к названию окна, но и к записи, которую в нём правят:
@@ -1996,7 +2109,7 @@ function vDocs(){
 
     <details class="sec"><summary>Шаблоны документов</summary>
     <div class="tw"><table><thead><tr><th>Документ</th><th>Версия</th><th>Редакция</th><th>Срок действия</th><th class="num">Подписан</th></tr></thead>
-      <tbody>${tpls.map(t=>`<tr><td><b>${esc(t.name)}</b></td>
+      <tbody>${tpls.map(t=>`<tr class="click" data-act="tplOpen" data-id="${t.id}"><td><b>${esc(t.name)}</b></td>
         <td class="mono">${esc(t.ver)}</td><td class="mono">${ru(t.verDate)}</td><td class="sub">${esc(t.term)}</td>
         <td class="num">${S.docs.filter(d=>d.tid===t.id&&d.st==='действует').length}</td></tr>`).join('')}</tbody></table></div>
     </details>
@@ -2010,14 +2123,14 @@ function vDocs(){
         <td class="mono sub">${esc(tpl(d.tid).ver)}</td><td class="mono">${ru(d.d)}</td><td class="sub">${esc(d.method)}</td>
         <td class="sub">${d.till?ru(d.till):esc(tpl(d.tid).term)}</td>
         <td><span class="chip ${d.st==='действует'?'g':'r'}">${esc(d.st)}</span></td>
-        <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+        <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="sub">Подписанных документов пока нет. Нажмите «Отметить подписание».</td></tr>'}</tbody></table></div>
 
     </details>
     <details class="sec"><summary>Журнал раскрытия сведений</summary>
     <div class="tw" style="margin-top:8px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Кому</th><th>Основание</th><th>Объём</th></tr></thead>
       <tbody>${S.disc.slice().sort((a,b)=>a.date<b.date?1:-1).map(j=>`<tr>
         <td class="mono">${ru(j.date)}</td><td>${esc(nm(cl(j.cid)))}</td><td>${esc(j.who)}</td>
-        <td class="sub">${esc(j.base)}</td><td class="sub">${esc(j.vol)}</td></tr>`).join('')}</tbody></table></div>
+        <td class="sub">${esc(j.base)}</td><td class="sub">${esc(j.vol)}</td></tr>`).join('')||'<tr><td colspan="5" class="sub">Записей нет. Сюда вносится каждая передача сведений о клиенте другим лицам.</td></tr>'}</tbody></table></div>
     <div class="row" style="margin-top:10px"><button class="btn ghost mini" data-act="addDisc">Записать раскрытие</button></div>
     </details>
   </div>`;
@@ -2631,6 +2744,22 @@ document.addEventListener('click',e=>{
     backClients:()=>{pushHist();S.ui.client=null;save();render();syncRail()},
     filter:()=>{S.ui.filter=el.dataset.f;save();render()},
     calDay:()=>dayModal(el.dataset.date),
+    tplOpen:()=>{const t=tpl(id);const txt=t.text||TPL_TEXT[t.id]||'';
+      modal(esc(t.name),`<div class="sub" style="margin-bottom:8px">Версия ${esc(t.ver)} · срок действия: ${esc(t.term)}. Образец — перед использованием сверьте текст с юристом.</div>
+        <label class="f"><span>Текст документа</span><textarea id="tp-text" style="min-height:340px;font-size:14px;line-height:1.5">${esc(txt)}</textarea></label>
+        ${S.clients.length?`<label class="f"><span>Подставить данные клиента при скачивании</span><select id="tp-c"><option value="">— без клиента —</option>${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>`:''}`,
+        `<button class="btn ghost" data-act="tplWord" data-id="${t.id}">Скачать в Word</button><button class="btn ghost" data-act="tplSave" data-id="${t.id}">Сохранить текст</button><button class="btn" data-act="tplSign" data-id="${t.id}">Отметить подписание</button>`)},
+    tplSave:()=>{const t=tpl(id);const v=val('tp-text');if(v===(t.text||TPL_TEXT[t.id]||'')){toast('Текст не изменился');return}
+      t.text=v;const p=String(t.ver).split('.');t.ver=p[0]+'.'+((+p[1]||0)+1);t.verDate=D(0);
+      save();closeModal();render();toast('Текст сохранён, новая версия '+t.ver+'. Прежние подписи остаются на своей версии')},
+    tplWord:()=>{const t=tpl(id);const c=cl(val('tp-c'));const sp=SPEC();
+      let txt=val('tp-text').replace(/\[Специалист\]/g,sp.name).replace(/\[Дата\]/g,ru(D(0)))
+        .replace(/\[длительность\]/g,S.settings.dur).replace(/\[стоимость\]/g,c&&c.id?c.rate:S.settings.price).replace(/\[часы\]/g,S.settings.cancelH);
+      if(c&&c.id)txt=txt.replace(/\[Клиент\]/g,c.name);
+      toWord((t.id+'-'+(c&&c.id?c.code:'obrazec')).replace(/[^\w-]/g,''),'<div style="white-space:pre-wrap;font-family:Georgia,serif;font-size:12pt;line-height:1.5">'+esc(txt)+'</div>')},
+    tplSign:()=>{const tid=id,cid=val('tp-c');closeModal();
+      const b=document.createElement('button');b.dataset.act='newDoc';b.hidden=true;document.body.appendChild(b);b.click();b.remove();
+      setTimeout(()=>{const s1=document.getElementById('dc-t');if(s1)s1.value=tid;const s2=document.getElementById('dc-c');if(s2&&cid)s2.value=cid},0)},
     snaps:()=>snapModal(),
     snapBack:()=>snapBack(+id),
     autoSet:async()=>{try{const h=await window.showSaveFilePicker({suggestedName:'tochka-opory-avtokopiya.json',types:[{description:'Копия кабинета',accept:{'application/json':['.json']}}]});
@@ -2984,7 +3113,7 @@ document.addEventListener('click',e=>{
     revoke:()=>{const d=S.docs.find(x=>x.id===id);d.st='отозвано';
       S.disc.push({id:uid(),date:D(0),cid:d.cid,who:'—',base:'отзыв согласия субъектом',vol:'зафиксирован отзыв документа «'+tpl(d.tid).name+'»'});
       save();render();toast('Согласие отозвано, отметка внесена в журнал')},
-    newDoc:()=>modal('Отметить подписание',`
+    newDoc:()=>!S.clients.length?toast('Сначала добавьте клиента'):modal('Отметить подписание',`
       <div class="fgrid">
         <label class="f"><span>Клиент</span><select id="dc-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
         <label class="f"><span>Документ</span><select id="dc-t">${S.tpl.map(t=>`<option value="${t.id}">${esc(t.name)} · в. ${esc(t.ver)}</option>`).join('')}</select></label>
@@ -3615,7 +3744,12 @@ function mountMics(){
 /* Подписи столбцов для таблиц, которые на телефоне показываются строками. */
 function tableLabels(){document.querySelectorAll('.tw table').forEach(t=>{const h=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());
   t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((td,i)=>{if(h[i]&&!td.dataset.l)td.dataset.l=h[i]}))})}
-const _render=render;render=function(){_render.apply(this,arguments);mountMics();tableLabels()};
+/* Раскрытые разделы остаются раскрытыми после сохранения и перерисовки экрана. */
+const OPEN_SEC=new Set();
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.sec,details.todo-d'))return;
+  const k=(S.ui.tab||'')+'|'+(d.querySelector('summary')||{}).textContent;if(d.open)OPEN_SEC.add(k);else OPEN_SEC.delete(k)},true);
+function keepOpen(){document.querySelectorAll('#view details.sec').forEach(d=>{const k=(S.ui.tab||'')+'|'+(d.querySelector('summary')||{}).textContent;if(OPEN_SEC.has(k))d.open=true})}
+const _render=render;render=function(){_render.apply(this,arguments);mountMics();tableLabels();keepOpen()};
 const _modal=modal;modal=function(){const r=_modal.apply(this,arguments);mountMics();tableLabels();return r};
 mountMics();
 /* Меню на телефоне: то, что на компьютере стоит в боковой панели. */
