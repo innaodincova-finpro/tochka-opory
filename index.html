@@ -6,7 +6,7 @@
 <title>Точка опоры — кабинет специалиста</title>
 <meta name="theme-color" content="#28425C">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png?v=19">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -397,8 +397,8 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <div class="shell">
 <header class="app">
   <div class="brand">
-    <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#B08347" d="M12 1.5l2.2 6.1 6.3.6-4.7 4.2 1.4 6.2L12 15.4l-5.2 3.2 1.4-6.2L3.5 8.2l6.3-.6z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 20.10.2026 · в18</span></div>
+    <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в19</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1080,6 +1080,9 @@ if(S.settings.lastBackup===undefined)S.settings.lastBackup='';
 /* Прежние базы: пример узнаётся по первому демонстрационному клиенту. */
 if(S.demo===undefined)S.demo=(S.clients||[]).some(c=>c.id==='c1'&&c.name==='Марина Соколова');
 if(!Array.isArray(S.off))S.off=[];
+/* Пример строится от текущей даты. Если его открыли в другой день — пересобираем, иначе встречи «уехали» в прошлое. */
+if(S.demo&&S.demoDay&&S.demoDay!==D(0)){const keep=S.settings,ui=S.ui;S=seed();S.demo=true;S.demoDay=D(0);
+  S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.ui=Object.assign(S.ui,{apprAsked:true,tab:ui.tab||'today'})}
 delete S.settings.pinLen;if(S.settings.pinHash==='enc')delete S.settings.pinHash;
 S.fmt=FMT;
 }
@@ -1446,8 +1449,11 @@ function doUndo(){if(RO||LOCKED)return;stepBack(UNDO,REDO,'Отменено')}
 function doRedo(){if(RO||LOCKED)return;stepBack(REDO,UNDO,'Возвращено')}
 const RO_OK=new Set(['tab','closeModal','goTab','theme','client','backClients','filter','shift','openSess','prevNote',
   'wordReport','wordClient','exportClient','doExportClient','recDone','export','snaps']);
+/* Кнопки боковой панели видны только тогда, когда ими можно воспользоваться; «Отменить» называет, что именно отменится. */
 function syncRail(){const b=document.getElementById('back'),u=document.getElementById('undo'),r=document.getElementById('redo');
-  if(b)b.disabled=!HIST.length; if(u)u.disabled=!UNDO.length; if(r)r.disabled=!REDO.length}
+  if(b){b.disabled=!HIST.length;b.hidden=!HIST.length}
+  if(u){u.disabled=!UNDO.length;u.hidden=!UNDO.length;u.textContent='↶ Отменить'+(UNDO.length&&UNDO[UNDO.length-1].label?': '+UNDO[UNDO.length-1].label:'')}
+  if(r){r.disabled=!REDO.length;r.hidden=!REDO.length;r.textContent='↷ Вернуть'+(REDO.length&&REDO[REDO.length-1].label?': '+REDO[REDO.length-1].label:'')}}
 const MUT=new Set(['voiceScale','createSess','saveSess','tplSet','meetEnd','meetSwitch','saveClient','savePlan','saveScale','doCancel','revoke',
   'saveDoc','saveDisc','savePay','check','usePack','payDebt','forgiveDebt','saveSup','saveWait','delWait',
   'doAnon','import','reset','delSess','delPay','delClient','moveGo','seriesGo','offGo','offDel','demoOn','demoOff','snapBack']);
@@ -3161,7 +3167,7 @@ document.addEventListener('click',e=>{
       toast('Подход: '+appr().name+'. Поменять можно в «Помощи», раздел «Специалист»')},
     reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();S.demo=true;normS();save();render();toast('Демонстрационные данные восстановлены')}},
     demoOn:()=>{if(S.clients.length&&!S.demo){toast('Пример открывается только в пустом кабинете');return}
-      const keep=S.settings;S=seed();S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.demo=true;S.ui.apprAsked=true;normS();
+      const keep=S.settings;S=seed();S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.demo=true;S.demoDay=D(0);S.ui.apprAsked=true;normS();
       save();render();renderHead();toast('Открыт пример. Выйти — кнопкой вверху')},
     demoOff:()=>{if(!confirm('Выйти из примера? Вымышленные клиенты и встречи будут удалены, кабинет станет пустым.'))return;
       const keep=S.settings;S=emptyBase();S.ui.apprAsked=true;S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room,
