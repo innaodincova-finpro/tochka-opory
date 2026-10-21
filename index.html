@@ -247,6 +247,7 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+.dict{margin-bottom:12px}.dict>summary{list-style:none;display:inline-block}.dict>summary::-webkit-details-marker{display:none}.dict[open]>summary{margin-bottom:0}
 .todo-top{margin-bottom:18px}
 @media(min-width:901px){.todo-top .todo{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}}
 .todo .t{background:var(--soft);border:1px solid var(--line2);border-radius:9px;padding:9px 11px;font-size:13.5px;color:var(--ink2)}
@@ -423,7 +424,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в28</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в29</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -1232,6 +1233,7 @@ if(!S.settings.defFmt)S.settings.defFmt='онлайн';
 (S.clients||[]).forEach(c=>{if(c.birth)c.minor=ageOf(c.birth)<18;if(c.minor&&!c.guardian)c.guardian={name:'',rel:'',phone:''}});
 if(!S.settings.spec)S.settings.spec={name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'};
 if(!S.settings.openH)S.settings.openH=24;
+syncTitle();
 delete S.settings.mode;delete S.specs;if(S.ui){delete S.ui.role;delete S.ui.spec}
 if(!S.settings.start)S.settings.start='09:00';
 if(!S.settings.end)S.settings.end='21:00';
@@ -2555,7 +2557,7 @@ function vHelp(){
       <p>Нажмите «Войти во встречу» — откроется комната. Кабинет не закроется, пока идёт встреча. После встречи нажмите «Завершить встречу и заполнить запись» в полосе сверху.</p>
       <p>Ссылку клиенту отправьте кнопкой «Отправить ссылку клиенту»: кабинет откроет мессенджер или почту с готовым текстом.</p></details>
     <details class="hlp"><summary>Запись голосом</summary>
-      <p>В карточке встречи наговорите ход встречи в поле «Свободный рассказ»: на компьютере — Win+H, на телефоне — микрофон на клавиатуре. Затем нажмите «Разложить по полям».</p></details>
+      <p>В карточке встречи нажмите «Наговорить и разложить по полям» и наговорите ход встречи в поле «Свободный рассказ»: на компьютере — Win+H, на телефоне — микрофон на клавиатуре. Затем нажмите «Разложить по полям».</p></details>
     <details class="hlp"><summary>Помощник на основе ИИ</summary>
       <p>Кабинет готовит текст запроса: домашнее задание, письмо клиенту, вопрос супервизору. Текст вы копируете в выбранный сервис сами.</p>
       <p>Имена, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</p></details>
@@ -2598,6 +2600,10 @@ const APPR={
   psd:{name:'Психодинамический, психоанализ',tpl:['PSD','CONS'],def:'PSD',scales:false},
   other:{name:'Другой подход',tpl:['SOAP','DAP','CONS','GEST','PSD'],def:'CONS',scales:true}};
 const appr=()=>APPR[(S.settings&&S.settings.appr)||'kpt']||APPR.kpt;
+/* Подпись под именем меняется вместе с подходом, если специалист не вписал свою. */
+function apprTitles(){return {kpt:'психолог, когнитивно-поведенческий подход',schema:'психолог, схема-терапия',gestalt:'психолог, гештальт-подход',psd:'психолог, психодинамический подход',other:'психолог'}}
+function syncTitle(){const APPR_TITLE=apprTitles();const sp=S.settings&&S.settings.spec;if(!sp)return;const t=String(sp.title||'').trim();
+  if(!t||Object.values(APPR_TITLE).includes(t))sp.title=APPR_TITLE[S.settings.appr]||'психолог'}
 const useScales=()=>appr().scales;
 const defTpl=()=>appr().def;
 function sessModal(id){
@@ -2644,14 +2650,15 @@ function sessModal(id){
       `<button class="btn mini ${n.tpl===k?'':'ghost'}" data-act="tplSet" data-id="${v.id}" data-tpl="${k}">${TPLNAME[k]}</button>`).join('')}
       ${prev?`<button class="btn mini ghost" data-act="prevNote" data-id="${prev.id}">Открыть прошлую запись</button>`:''}
       <button class="btn mini ghost" data-act="aiHome" data-id="${v.id}">Сформулировать домашнее задание</button></div>
-    <div class="note" style="margin-bottom:12px">
+    <details class="dict"><summary class="btn mini ghost">Наговорить и разложить по полям</summary>
+    <div class="note" style="margin:8px 0 12px">
       Наговорите ход встречи в поле «Свободный рассказ» (Win+H или микрофон на клавиатуре телефона) и нажмите «Разложить по полям».
       <label class="f" style="margin-top:10px"><span>Свободный рассказ</span><textarea id="n-raw" style="min-height:95px" placeholder="Клиентка рассказала, что неделя прошла спокойнее. Наблюдалась в контакте, темп речи ровный. Похоже, помогает регулярность встреч. Договорились продолжить дневник. По опроснику девять баллов, было четырнадцать.">${esc(n.raw||'')}</textarea></label>
       <div class="row" style="margin-top:2px;gap:6px">
         <button class="btn mini" data-act="voiceParse" data-id="${v.id}">Разложить по полям</button>
       </div>
       <div id="voice-found"></div>
-    </div>
+    </div></details>
     ${TPLS[n.tpl].map(([k,lab])=>`<label class="f"><span>${lab}</span><textarea id="n-${k}">${esc(n[k]||'')}</textarea></label>`).join('')}
     <label class="f"><span>Не разобрано</span><textarea id="n-rest" placeholder="Сюда попадёт то, что не удалось разложить">${esc(n.rest||'')}</textarea></label>
     <div class="fgrid">
@@ -3460,7 +3467,7 @@ document.addEventListener('click',e=>{
         alert('Убрать код не удалось: браузер не удалил закрытые записи. Код остаётся прежним, записи на месте.');return}
       ENC_ON=false;ENC=null;
       render();clearTimeout(IDLE);toast('Код входа убран. Записи в браузере больше не закрыты')},
-    setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';save();closeModal();renderHead();render();
+    setAppr:()=>{S.settings.appr=el.dataset.k||'kpt';syncTitle();save();closeModal();renderHead();render();
       toast('Подход: '+appr().name+'. Поменять можно в «Настройках», раздел «Специалист»')},
     reset:()=>{if(confirm('Вернуть демонстрационные данные? Всё, что вы ввели, будет стёрто.')){S=seed();S.demo=true;normS();save();render();toast('Демонстрационные данные восстановлены')}},
     demoOn:()=>{if(S.clients.length&&!S.demo){toast('Пример открывается только в пустом кабинете');return}
@@ -3487,7 +3494,7 @@ document.addEventListener('change',e=>{
   if(RO&&t.dataset&&(t.dataset.set||t.dataset.setspec)){toast('Здесь только просмотр — настройка не сохранена');render();return}
   if(t.dataset&&t.dataset.setspec){pushUndo(setLabel(t));S.settings.spec[t.dataset.setspec]=t.value;save();toast('Сохранено');
     setTimeout(renderHead,0);return}
-  if(t.dataset&&t.dataset.set){pushUndo(setLabel(t));S.settings[t.dataset.set]=t.type==='number'?+t.value:t.value;save();toast('Сохранено');
+  if(t.dataset&&t.dataset.set){pushUndo(setLabel(t));S.settings[t.dataset.set]=t.type==='number'?+t.value:t.value;if(t.dataset.set==='appr')syncTitle();save();toast('Сохранено');
     if(t.dataset.set==='appr'){setTimeout(()=>{renderHead();render()},0);
       toast('Подход изменён: '+appr().name+'. Прежние записи сохранены — шаблон каждой остаётся тем, в котором её вели')}
     else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
