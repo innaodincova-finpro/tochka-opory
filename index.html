@@ -425,7 +425,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в31</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в32</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2395,33 +2395,44 @@ function vPay(){
 }
 
 /* ═══════════════ Супервизия ═══════════════ */
+/* Супервизия: записи по клиентам, а не по кодам. Код показывается только при «Скрыть имена». */
+const supC=x=>S.clients.find(c=>c.id===x.cid)||S.clients.find(c=>c.code===x.code)||null;
+const supOk=x=>{const c=supC(x);return !!(x.consent||(c&&hasDoc(c.id,'t7')))};
 function vSuperv(){
-  const h=S.superv.reduce((s,x)=>s+x.hours,0);
-  const noCons=S.superv.filter(x=>!x.consent);
   return `<div class="card">
-    <div class="spread"><div><h2>Супервизия</h2>
-    <p class="lead">Только код клиента — без имён.</p></div>
+    <div class="spread"><h2>Супервизия</h2>
     <div class="row"><button class="btn ghost" data-act="aiSuperv">Сформулировать вопрос супервизору</button>
     <button class="btn" data-act="newSup">Внести случай</button></div></div>
-    <div class="grid g4" style="margin-top:12px">
-      <div class="kpi"><div class="k">Случаев в реестре</div><div class="v">${S.superv.length}</div><div class="s">за всё время</div></div>
-      <div class="kpi"><div class="k">Часов супервизии</div><div class="v">${h}</div><div class="s">суммарно</div></div>
-      <div class="kpi ${noCons.length?'alert':'ok'}"><div class="k">Без согласия клиента</div><div class="v">${noCons.length}</div><div class="s">обсуждение недопустимо</div></div>
-      <div class="kpi"><div class="k">Внедрено изменений</div><div class="v">${S.superv.filter(x=>x.chg).length}</div><div class="s">из рекомендаций</div></div>
-    </div>
+    <p class="lead" style="margin-top:6px">Здесь записываются случаи, которые вы разбирали с супервизором: что спросили, что посоветовали, что изменили в работе.</p>
     <div class="list" style="margin-top:14px">
-    ${S.superv.slice().sort((a,b)=>a.date<b.date?1:-1).map(x=>`<div class="item" style="align-items:flex-start;flex-direction:column">
-      <div class="spread" style="width:100%"><div><b class="mono">${esc(x.code)}</b> · ${ru(x.date)} · супервизор ${esc(x.sup)} · ${x.hours} ч</div>
-      <span class="chip ${x.consent?'g':'r'}">${x.consent?'согласие клиента есть':'согласия нет'}</span></div>
-      <div class="lead" style="margin-top:6px"><b>Кратко:</b> ${esc(x.brief)}</div>
-      <div class="lead"><b>Вопрос супервизору:</b> ${esc(x.q)}</div>
-      ${x.rec?`<div class="lead"><b>Рекомендации:</b> ${esc(x.rec)}</div>`:'<div class="sub">Рекомендации не внесены.</div>'}
+    ${S.superv.slice().sort((a,b)=>a.date<b.date?1:-1).map(x=>{const c=supC(x),ok=supOk(x);
+      return `<div class="item" style="align-items:flex-start;flex-direction:column">
+      <div class="spread" style="width:100%"><div>${c?`<button type="button" class="lnk" data-act="client" data-id="${c.id}">${esc(nm(c))}</button>`:`<b>${esc(x.code)}</b>`} · ${ru(x.date)} · супервизор ${esc(x.sup)}${x.hours?' · '+String(x.hours).replace('.',',')+' ч':''}</div>
+      <button class="btn mini ghost" data-act="supEdit" data-id="${x.id}">Изменить</button></div>
+      ${x.brief?`<div class="lead" style="margin-top:6px"><b>Кратко:</b> ${esc(x.brief)}</div>`:''}
+      ${x.q?`<div class="lead"><b>Вопрос:</b> ${esc(x.q)}</div>`:''}
+      ${x.rec?`<div class="lead"><b>Рекомендации:</b> ${esc(x.rec)}</div>`:''}
       ${x.chg?`<div class="lead"><b>Что изменено в работе:</b> ${esc(x.chg)}</div>`:''}
-    </div>`).join('')}</div>
-    
+      ${ok?'':`<div class="warnline" style="margin-top:8px">Нет согласия клиента на обсуждение случая. ${c?`<button class="btn mini" data-act="newDoc" data-cid="${c.id}" data-tid="t7">Оформить согласие</button>`:''}</div>`}
+      ${x.rec?'':`<div class="row" style="margin-top:8px"><span class="sub">Рекомендаций пока нет</span> <button class="btn mini ghost" data-act="supEdit" data-id="${x.id}">Внести рекомендации</button></div>`}
+    </div>`}).join('')||'<p class="sub">Случаев пока нет. Нажмите «Внести случай» после встречи с супервизором.</p>'}</div>
   </div>`;
 }
-
+function supModal(id){
+  const x=id?S.superv.find(y=>y.id===id):null,c0=x?supC(x):null;
+  modal(x?'Случай на супервизии':'Новый случай на супервизии',`
+    <div class="fgrid">
+      <label class="f"><span>Клиент</span><select id="sv-c">${S.clients.map(c=>`<option value="${c.id}" ${c0&&c0.id===c.id?'selected':''}>${esc(nm(c))}</option>`).join('')}</select></label>
+      <label class="f"><span>Дата</span><input id="sv-d" type="date" value="${x?x.date:D(0)}"></label>
+      <label class="f"><span>Супервизор</span><input id="sv-s" value="${esc(x?x.sup:'')}"></label>
+      <label class="f"><span>Часов</span><input id="sv-h" type="number" step="0.5" value="${x?x.hours:1.5}"></label>
+    </div>
+    <label class="f"><span>Кратко о случае — без имени и примет клиента</span><textarea id="sv-b">${esc(x?x.brief:'')}</textarea></label>
+    <label class="f"><span>Вопрос супервизору</span><textarea id="sv-q">${esc(x?x.q:'')}</textarea></label>
+    <label class="f"><span>Рекомендации супервизора</span><textarea id="sv-r">${esc(x?x.rec:'')}</textarea></label>
+    <label class="f"><span>Что изменено в работе</span><textarea id="sv-g">${esc(x?x.chg:'')}</textarea></label>`,
+    `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveSup" ${x?`data-id="${x.id}"`:''}>Сохранить</button>`);
+}
 /* ═══════════════ Отчёты ═══════════════ */
 function repData(){
   const win=90;
@@ -3330,8 +3341,8 @@ document.addEventListener('click',e=>{
       save();render();toast('Согласие отозвано, отметка внесена в журнал')},
     newDoc:()=>!S.clients.length?toast('Сначала добавьте клиента'):modal('Отметить подписание',`
       <div class="fgrid">
-        <label class="f"><span>Клиент</span><select id="dc-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
-        <label class="f"><span>Документ</span><select id="dc-t">${S.tpl.map(t=>`<option value="${t.id}">${esc(t.name)} · в. ${esc(t.ver)}</option>`).join('')}</select></label>
+        <label class="f"><span>Клиент</span><select id="dc-c">${S.clients.map(c=>`<option value="${c.id}" ${c.id===el.dataset.cid?'selected':''}>${esc(nm(c))}</option>`).join('')}</select></label>
+        <label class="f"><span>Документ</span><select id="dc-t">${S.tpl.map(t=>`<option value="${t.id}" ${t.id===el.dataset.tid?'selected':''}>${esc(t.name)} · в. ${esc(t.ver)}</option>`).join('')}</select></label>
         <label class="f"><span>Дата подписания</span><input id="dc-d" type="date" value="${D(0)}"></label>
         <label class="f"><span>Способ</span><select id="dc-m"><option>бумага</option><option>электронная форма</option><option>скан</option></select></label>
       </div>
@@ -3370,20 +3381,14 @@ document.addEventListener('click',e=>{
     payDebt:()=>{const c=cl(id);S.pays.push({id:uid(),cid:c.id,date:D(0),sum:c.debt,method:'СБП',sid:'',check:false,purpose:'Консультация',comment:'Погашение задолженности'});
       c.debt=0;save();render();toast('Задолженность погашена, оплата записана')},
     forgiveDebt:()=>{const c=cl(id);c.debt=0;save();render();toast('Задолженность списана решением специалиста')},
-    newSup:()=>modal('Случай на супервизию',`
-      <div class="fgrid">
-        <label class="f"><span>Код клиента</span><select id="sv-c">${S.clients.map(c=>`<option value="${c.code}">${esc(c.code)}</option>`).join('')}</select></label>
-        <label class="f"><span>Дата</span><input id="sv-d" type="date" value="${D(0)}"></label>
-        <label class="f"><span>Супервизор</span><input id="sv-s"></label>
-        <label class="f"><span>Часов</span><input id="sv-h" type="number" step="0.5" value="1.5"></label>
-      </div>
-      <label class="f"><span>Краткая формулировка — обезличенно</span><textarea id="sv-b"></textarea></label>
-      <label class="f"><span>Вопрос супервизору</span><textarea id="sv-q"></textarea></label>
-      <label class="chip" style="cursor:pointer"><input type="checkbox" id="sv-k" style="width:auto;margin-right:7px">Клиент дал согласие на обсуждение случая в обезличенном виде</label>
-      <div class="alertbox">Без согласия клиента случай нельзя выносить на супервизию.</div>`,
-      `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveSup">Внести</button>`),
-    saveSup:()=>{S.superv.push({id:uid(),code:val('sv-c'),date:val('sv-d'),sup:val('sv-s'),hours:+val('sv-h')||0,
-      consent:chk('sv-k'),brief:val('sv-b'),q:val('sv-q'),rec:'',chg:''});save();closeModal();render();toast('Случай внесён в реестр')},
+    newSup:()=>supModal(''),
+    supEdit:()=>supModal(id),
+    saveSup:()=>{const c=cl(val('sv-c'));if(!c||!c.id){UNDO.pop();syncRail();toast('Выберите клиента');return}
+      if(!hasDoc(c.id,'t7')&&!(id&&(S.superv.find(y=>y.id===id)||{}).consent)&&!confirm(nm(c)+': согласие клиента на обсуждение случая на супервизии не оформлено.\n\nСохранить всё равно?')){UNDO.pop();syncRail();return}
+      const d={cid:c.id,code:c.code,date:val('sv-d'),sup:val('sv-s'),hours:+val('sv-h')||0,brief:val('sv-b'),q:val('sv-q'),rec:val('sv-r'),chg:val('sv-g')};
+      const x=id?S.superv.find(y=>y.id===id):null;
+      if(x)Object.assign(x,d);else S.superv.push(Object.assign({id:uid(),consent:false},d));
+      save();closeModal();render();toast(x?'Запись обновлена':'Случай записан')},
     addWait:()=>modal('Лист ожидания',`
       <label class="f"><span>Клиент</span><select id="w-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
       <label class="f"><span>Что подходит</span><input id="w-t" placeholder="будни после 18:00, онлайн"></label>`,
