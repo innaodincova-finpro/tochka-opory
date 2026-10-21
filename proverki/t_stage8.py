@@ -11,7 +11,7 @@ with sync_playwright() as p:
     pg.screenshot(path=O+'today-mark.png')
     n=pg.evaluate("S.sessions.filter(needMark).length")
     ok('есть встречи для отметки',n>=2,str(n))
-    ok('в «Сделать сегодня» пункт об отметке',pg.locator('.todo .t:has-text("Отметьте, состоялась ли")').count()==n)
+    ok('сегодняшние встречи не повторяются в «Сделать сегодня»',pg.locator('.todo .t:has-text("Отметьте, состоялась ли")').count()==pg.evaluate("S.sessions.filter(v=>needMark(v)&&v.date!==D(0)).length"))
     ok('нет «не подтверждена» для начавшейся в 16:00',pg.locator('.todo .t:has-text("Встреча в 16:00 не подтверждена")').count()==0)
     vid=pg.evaluate("S.sessions.filter(needMark)[0].id"); used0=pg.evaluate("pack('c1')[0].used")
     pg.locator(f'.line [data-act=markDone][data-id="{vid}"]').click(); pg.wait_for_timeout(300)
