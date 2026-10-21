@@ -250,7 +250,9 @@ textarea{min-height:70px;resize:vertical}
 .ph-only{display:none}
 .fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:60;width:56px;height:56px;border-radius:50%;border:0;background:var(--panel);color:#fff;font-size:30px;line-height:1;box-shadow:var(--shadow);cursor:pointer}
 @media(max-width:900px){
-  span.ph-only,button.lnk.ph-only{display:inline}.fab.ph-only{display:block}
+  span.ph-only,button.lnk.ph-only{display:inline}.fab.ph-only,div.ph-only{display:block}button.btn.ph-only{display:inline-block}
+  #demobar{flex-wrap:nowrap;padding:6px 12px}
+  .crow{align-items:flex-start;padding:10px 12px}.crow .chip{font-size:12px}
   .pc-only{display:none!important}
   .dayhead{padding:12px 16px;margin-bottom:10px}.dayhead h2{font-size:20px;margin:0}.dayhead .sub{display:none}
   .todo .t{padding:7px 10px;font-size:13.5px;display:flex;align-items:center;gap:8px}.todo .t .tx{flex:1;min-width:0}.todo .t .tb{flex:none;margin:0}.todo .t .btn{margin:0;padding:5px 9px}
@@ -471,7 +473,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
   </div>
 </header>
 <div class="col">
-  <div id="demobar" hidden>Это пример с вымышленными клиентами. <button type="button" data-act="demoOff">Выйти из примера</button></div>
+  <div id="demobar" hidden><span class="pc-only">Это пример с вымышленными клиентами.</span><span class="ph-only">Пример с вымышленными клиентами</span> <button type="button" data-act="demoOff"><span class="pc-only">Выйти из примера</span><span class="ph-only">Выйти</span></button></div>
   <div class="meetwrap" id="meetbar"></div>
   <main id="view"></main>
 </div>
@@ -1043,7 +1045,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в38';
+const APP_VER='редакция от 21.10.2026 · в39';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1941,7 +1943,7 @@ function vToday(){
   const tv=S.sessions.filter(v=>v.date===today&&!v.status.startsWith('отменена')&&v.status!=='перенесена')
     .sort((a,b)=>a.time<b.time?-1:1);
   const notConf=tv.filter(v=>v.status==='запланирована'&&sessStart(v)>new Date());
-  const toMark=S.sessions.filter(needMark).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1);
+  const toMark=S.sessions.filter(v=>needMark(v)&&v.date!==today).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1);
   const busy=tv.reduce((s,v)=>s+v.dur,0);
   const st=parseInt(S.settings.start),en=parseInt(S.settings.end);
   const open=(en-st)*60;
@@ -1959,7 +1961,7 @@ function vToday(){
     `${v.date===today?'':shortD(v.date)+' '}${v.time} <b>${esc(title(v))}</b> — состоялась?`,markBtns(v,true,true))));
 
   unf.forEach(v=>items.push(T(`Запись о встрече не заполнена: <b>${esc(title(v))}</b>, ${ru(v.date)} в ${v.time} — прошло ${days(v.date,today)} дн.`,
-    `Запись: <b>${esc(title(v))}</b>, ${shortD(v.date)}`,`<button class="btn mini" data-act="openSess" data-id="${v.id}">Заполнить</button>`)));
+    `Запись о встрече: <b>${esc(title(v))}</b>, ${shortD(v.date)}`,`<button class="btn mini" data-act="openSess" data-id="${v.id}">Заполнить</button>`)));
 
   notConf.forEach(v=>items.push(T(`Встреча в ${v.time} не подтверждена: <b>${esc(title(v))}</b> · ${esc(v.fmt)}`,
     `${v.time} <b>${esc(title(v))}</b> — не подтверждена`,`<button class="btn mini ghost" data-act="openSess" data-id="${v.id}">${DUO('Открыть встречу','Открыть')}</button>`)));
@@ -2080,8 +2082,9 @@ function vSched(){
   const back=+S.ui.calPast||0,t=pd(D(0));let months='';
   for(let k=-back;k<3;k++){const d=new Date(t.getFullYear(),t.getMonth()+k,1);months+=monthCard(d.getFullYear(),d.getMonth())}
   return `<div class="card">
-    <div class="spread"><h2>Расписание</h2><div class="row"><button class="btn ghost" data-act="offNew">Отпуск</button><button class="btn" data-act="newSess">Новая встреча</button></div></div>
-    <div class="row" style="margin:6px 0 10px">${back<12?`<button class="btn ghost mini" data-act="calPast">Показать прошлый месяц</button>`:''}<button class="btn ghost mini" data-act="icsModal">В календарь телефона</button></div>
+    <div class="spread"><h2>Расписание</h2><div class="row"><button class="btn ghost pc-only" data-act="offNew">Отпуск</button><button class="btn pc-only" data-act="newSess">Новая встреча</button></div></div>
+    <button type="button" class="fab ph-only" data-act="newSess" aria-label="Новая встреча">+</button>
+    <div class="row" style="margin:6px 0 10px">${back<12?`<button class="btn ghost mini" data-act="calPast">${DUO('Показать прошлый месяц','Прошлый месяц')}</button>`:''}<button class="btn ghost mini" data-act="icsModal">${DUO('В календарь телефона','В календарь')}</button><button class="btn ghost mini ph-only" data-act="offNew">Отпуск</button></div>
     <div class="cstream">${months}</div>
     <h3>Лист ожидания</h3>
     <div class="list">${S.wait.map(w=>`<div class="item">
@@ -2152,7 +2155,12 @@ function vClients(){
     <button class="btn" data-act="newClient">Новый клиент</button></div>
     <div class="row" style="margin-top:12px">${[['все','Все']].concat(CSTAT.map(s=>[s,s[0].toUpperCase()+s.slice(1)])).map(([k,n])=>
       `<button class="chip ${f===k?'b':''}" data-act="filter" data-f="${k}" style="cursor:pointer">${esc(n)}</button>`).join('')}</div>
-    <div class="tw" style="margin-top:12px"><table>
+    <div class="list ph-only" style="margin-top:12px">${list.map(c=>{const dn=doneSess(c.id),lv=dn[dn.length-1];
+      return `<div class="item crow" data-act="client" data-id="${c.id}" style="cursor:pointer"><div style="min-width:0"><b>${esc(nm(c))}</b>
+        <div class="sub">${lv?'последняя '+shortD(lv.date):'встреч не было'}${dn.length?' · '+dn.length+' '+plN(dn.length,'встреча','встречи','встреч'):''}${c.minor?' · до 18 лет':''}</div>
+        <div>${c.debt?'<span class="chip r">долг</span> ':''}${!hasDoc(c.id,'t4')?'<span class="chip r">нет согласия</span> ':''}${pack(c.id).length?'<span class="chip">пакет</span>':''}</div></div>
+        <span class="chip ${c.status==='в работе'?'g':c.status==='прервал'?'r':c.status==='пауза'?'o':'b'}">${esc(c.status)}</span></div>`}).join('')}</div>
+    <div class="tw pc-only" style="margin-top:12px"><table>
       <thead><tr><th>${S.ui.anon?'Код':'Клиент'}</th><th>Статус</th><th>Формат</th><th class="num">Встреч</th><th>Последняя</th><th>Отметки</th></tr></thead>
       <tbody>${list.map(c=>{
         const dn=doneSess(c.id),lv=dn[dn.length-1];
@@ -3513,7 +3521,7 @@ document.addEventListener('click',e=>{
       const keep=S.settings;S=seed();S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room});S.demo=true;S.demoDay=D(0);S.ui.apprAsked=true;normS();
       save();render();renderHead();toast('Открыт пример. Выйти — кнопкой вверху')},
     demoOff:()=>{if(!confirm('Выйти из примера? Вымышленные клиенты и встречи будут удалены, кабинет станет пустым.'))return;
-      const keep=S.settings;S=emptyBase();S.ui.apprAsked=true;S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room,
+      const keep=S.settings;if(keep.spec&&keep.spec.name==='Анна Ремизова')keep.spec=Object.assign({},keep.spec,{name:''});S=emptyBase();S.ui.apprAsked=true;S.settings=Object.assign(S.settings,{spec:keep.spec,appr:keep.appr,lock:keep.lock,room:keep.room,
         start:keep.start,end:keep.end,price:keep.price,dur:keep.dur,cancelH:keep.cancelH,cancelRule:keep.cancelRule,meetBase:keep.meetBase,myRoom:keep.myRoom,v5:1,defFmt:keep.defFmt});
       normS();save();render();renderHead();toast('Пример убран. Кабинет пустой — начните с первого клиента')},
   };
