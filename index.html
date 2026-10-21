@@ -579,7 +579,7 @@ const CSTAT=['обращение','первичная','в работе','пау
 /* Пустой кабинет: настройки и шаблоны документов есть, клиентов и встреч нет. */
 function emptyBase(){const z=seed();
   ['clients','sessions','scales','docs','groups','packs','pays','disc','superv','wait'].forEach(k=>{if(Array.isArray(z[k]))z[k]=[]});
-  z.settings.lastBackup='';z.demo=false;z.off=[];z.ui.apprAsked=false;return z}
+  z.settings.lastBackup='';z.settings.spec={name:'',title:''};z.demo=false;z.off=[];z.ui.apprAsked=false;return z}
 /* Тексты образцов документов. Специалист правит их под себя в окне шаблона.
    [Клиент], [Дата], [Специалист] подставляются при выгрузке для конкретного клиента. */
 const TPL_TEXT={
@@ -1029,7 +1029,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в36';
+const APP_VER='редакция от 21.10.2026 · в37';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1258,7 +1258,7 @@ if(S.settings.myRoom==null)S.settings.myRoom='';
 if(!S.settings.defFmt)S.settings.defFmt='онлайн';
 /* Возраст пересчитывается при каждом открытии: в день 18-летия отметка снимается сама. */
 (S.clients||[]).forEach(c=>{if(c.birth)c.minor=ageOf(c.birth)<18;if(c.minor&&!c.guardian)c.guardian={name:'',rel:'',phone:''}});
-if(!S.settings.spec)S.settings.spec={name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'};
+if(!S.settings.spec)S.settings.spec={name:'',title:''};
 if(!S.settings.openH)S.settings.openH=24;
 syncTitle();
 (S.clients||[]).forEach(c=>(c.events||[]).forEach(e=>{if(/^план в\.\d+$/.test(e.t))e.t='новый план работы'}));
@@ -1703,11 +1703,12 @@ function clearDraft(){const k=draftKey();if(k&&S.ui.drafts)delete S.ui.drafts[k]
 
 /* ═══════════════ Помощник ИИ (через буфер обмена) ═══════════════ */
 function aiModal(title,text,extra){
-  modal('Запрос к искусственному интеллекту',`
+  modal('Помощник: ChatGPT или Claude',`
     
     <div class="alertbox">Имена, коды клиентов, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</div>
     ${extra||''}
-    <label class="f"><span>${esc(title)}</span><textarea id="ai-t" style="min-height:210px">${esc(anon(text))}</textarea></label>
+    <details class="fs"><summary>Показать, что будет скопировано</summary>
+    <label class="f"><span>${esc(title)}</span><textarea id="ai-t" style="min-height:210px">${esc(anon(text))}</textarea></label></details>
     <div class="warnline" id="ai-caps" hidden></div>
     <div class="row"><a class="btn ghost mini" href="https://claude.ai" target="_blank" rel="noopener">Открыть Claude</a>
     <a class="btn ghost mini" href="https://chatgpt.com" target="_blank" rel="noopener">Открыть ChatGPT</a></div>`,
@@ -1762,8 +1763,13 @@ function anon(t){
 
 /* ═══════════════ Выгрузка в Word ═══════════════ */
 /* Запрос клиента о сведениях, которые о нём хранятся: ответ — в течение 10 рабочих дней
-   (закон о персональных данных, ст. 14 и 20). Праздники кабинет не знает — считает только выходные. */
-function addWork(d,n){const x=pd(d);while(n>0){x.setDate(x.getDate()+1);const w=x.getDay();if(w!==0&&w!==6)n--}return isoL(x)}
+   (закон о персональных данных, ст. 14 и 20). Выходные и праздничные дни не считаются. */
+/* Нерабочие праздничные дни по постановлениям Правительства РФ на 2026 и 2027 годы (будни) и рабочая суббота 20.02.2027.
+   Для следующих лет — только выходные, пока список не дополнен. */
+const HOLI=new Set(['2026-01-01','2026-01-02','2026-01-05','2026-01-06','2026-01-07','2026-01-08','2026-01-09','2026-02-23','2026-03-09','2026-05-01','2026-05-11','2026-06-12','2026-11-04','2026-12-31',
+  '2027-01-01','2027-01-04','2027-01-05','2027-01-06','2027-01-07','2027-01-08','2027-02-22','2027-02-23','2027-03-08','2027-05-03','2027-05-10','2027-06-14','2027-11-04','2027-11-05','2027-12-31']);
+const WORKSAT=new Set(['2027-02-20']);
+function addWork(d,n){const x=pd(d);while(n>0){x.setDate(x.getDate()+1);const w=x.getDay(),k=isoL(x);if(WORKSAT.has(k)||(w!==0&&w!==6&&!HOLI.has(k)))n--}return isoL(x)}
 function dataReqModal(cid){
   const c=cid?cl(cid):null,r=c&&c.dataReq&&!c.dataReq.sent?c.dataReq:null;
   modal('Данные клиента по его запросу',`
@@ -1771,7 +1777,7 @@ function dataReqModal(cid){
       <label class="f"><span>Клиент</span><select id="rq-c">${S.clients.map(x=>`<option value="${x.id}" ${x.id===cid?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label>
       <label class="f"><span>Запрос получен</span><input id="rq-d" type="date" value="${r?r.got:D(0)}"></label>
     </div>
-    <p class="sub">Ответить нужно в течение 10 рабочих дней. В файл войдёт всё, что кабинет хранит о клиенте: карточка, записи о встречах и заметки к ним, замеры, документы, оплаты. Записи совместных встреч не войдут — они касаются и второго участника.</p>`,
+    <p class="sub">Ответить нужно в течение 10 рабочих дней, выходные и праздники не считаются. В файл войдёт всё, что кабинет хранит о клиенте: карточка, записи о встречах и заметки к ним, замеры, документы, оплаты. Записи совместных встреч не войдут — они касаются и второго участника.</p>`,
     `<button class="btn ghost" data-act="reqSave">Только записать запрос</button><button class="btn" data-act="reqWord">Сформировать файл Word</button>`);
 }
 function reqTake(){
@@ -2374,7 +2380,7 @@ function vPay(){
         <div class="bar" style="margin-top:6px"><i class="${exp<=14?'r':'o'}" style="width:${Math.round(p.used/p.n*100)}%"></i></div>
         <div class="sub" style="margin-top:4px">Использовано ${p.used} из ${p.n}, остаток <b>${left}</b></div></div>
         <div class="row"><span class="mono" style="color:var(--ochre)">${rub(left*p.price)}</span>
-        <button class="btn mini ghost" data-act="usePack" data-id="${p.id}">Списать встречу</button></div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div></details>
+        </div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div></details>
 
 
 
@@ -2429,36 +2435,6 @@ function supModal(id){
     `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveSup" ${x?`data-id="${x.id}"`:''}>Сохранить</button>`);
 }
 /* ═══════════════ Отчёты ═══════════════ */
-function repData(){
-  const win=90;
-  const inWin=v=>days(v.date,D(0))<=win&&days(v.date,D(0))>=0;
-  const all=S.sessions.filter(inWin);
-  const done=all.filter(v=>v.status==='состоялась');
-  const cancEarly=all.filter(v=>v.status==='отменена клиентом'&&v.before>=S.settings.cancelH);
-  const cancLate=all.filter(v=>v.status==='отменена клиентом'&&v.before<S.settings.cancelH);
-  const cancSpec=all.filter(v=>v.status==='отменена специалистом');
-  const noShow=all.filter(v=>v.status==='неявка');
-  const missed=cancEarly.concat(cancLate,cancSpec,noShow);
-  const lost=missed.reduce((s,v)=>s+v.price,0)-missed.reduce((s,v)=>s+(v.charged||0),0);
-  const m30=S.sessions.filter(v=>v.status==='состоялась'&&days(v.date,D(0))<=30&&days(v.date,D(0))>=0);
-  const doneH=m30.reduce((s,v)=>s+v.fact,0)/60;
-  const openH=S.settings.openH||1;
-  const started=S.clients.filter(c=>doneSess(c.id).length>=1);
-  const firsts=S.clients.filter(c=>doneSess(c.id).some(v=>v.type==='первичная'));
-  const second=firsts.filter(c=>doneSess(c.id).length>=2);
-  const keep=started.filter(c=>doneSess(c.id).length>=5);
-  const dur=c=>{const l=doneSess(c.id);return l.length>1?days(l[0].date,l[l.length-1].date):0};
-  const byWhy={};
-  S.clients.filter(c=>c.status==='завершён'||c.status==='прервал'||c.status==='пауза').forEach(c=>{
-    const k=c.endWhy||c.status;(byWhy[k]=byWhy[k]||[]).push(dur(c))});
-  let gapSum=0,gapN=0;
-  S.clients.forEach(c=>{const l=doneSess(c.id);for(let i=1;i<l.length;i++){gapSum+=days(l[i-1].date,l[i].date);gapN++}});
-  const oblig=S.packs.reduce((s,p)=>s+Math.max(0,p.n-p.used)*p.price,0);
-  const income=done.reduce((s,v)=>s+(v.price||0),0);
-  const paid=S.pays.filter(x=>days(x.date,D(0))<=win&&days(x.date,D(0))>=0).reduce((s,x)=>s+x.sum,0);
-  return {income,paid,win,all,done,cancEarly,cancLate,cancSpec,noShow,missed,lost,m30,doneH,openH,started,firsts,second,keep,byWhy,
-    gap:gapN?Math.round(gapSum/gapN):0,oblig};
-}
 /* Отчёт за месяц для психолога: не проценты, а список дел. Каждое число раскрывается списком, из которого сложилось. */
 function repMonth(m){
   const inM=d=>String(d||'').slice(0,7)===m;
@@ -2556,7 +2532,6 @@ function vHelp(){
       <label class="f wide"><span>Как вы работаете — от этого зависят шаблоны записи и раздел «Шкалы»</span>
         <select data-set="appr">${Object.keys(APPR).map(k=>`<option value="${k}" ${((S.settings.appr||'kpt')===k)?'selected':''}>${esc(APPR[k].name)}</option>`).join('')}</select></label>
       <label class="f wide"><span>Подход, как он указывается в документах</span><input data-setspec="title" value="${esc(SPEC().title)}"></label>
-      <label class="f"><span>Открытых часов приёма в месяц</span><input data-set="openH" type="number" value="${S.settings.openH}"></label>
     </div></details>
     <details class="sec"><summary>Приём и правила <span class="sumv">${esc(S.settings.start)}–${esc(S.settings.end)} · ${S.settings.dur} мин · ${rub(S.settings.price)}</span></summary>
     <div class="fgrid">
@@ -3026,7 +3001,8 @@ document.addEventListener('click',e=>{
       t.text=v;const p=String(t.ver).split('.');t.ver=p[0]+'.'+((+p[1]||0)+1);t.verDate=D(0);
       save();closeModal();render();toast('Текст сохранён, новая версия '+t.ver+'. Прежние подписи остаются на своей версии')},
     tplWord:()=>{const t=tpl(id);const c=cl(val('tp-c'));const sp=SPEC();
-      let txt=val('tp-text').replace(/\[Специалист\]/g,sp.name).replace(/\[Дата\]/g,ru(D(0)))
+      if(!sp.name)toast('Ваше имя не указано — в документе оставлено место для него. Имя задаётся в Настройках, раздел «Специалист»');
+      let txt=val('tp-text').replace(/\[Специалист\]/g,sp.name||'____________________').replace(/\[Дата\]/g,ru(D(0)))
         .replace(/\[длительность\]/g,S.settings.dur).replace(/\[стоимость\]/g,c&&c.id?c.rate:S.settings.price).replace(/\[часы\]/g,S.settings.cancelH);
       if(c&&c.id)txt=txt.replace(/\[Клиент\]/g,c.name);
       toWord((t.id+'-'+(c&&c.id?c.code:'obrazec')).replace(/[^\w-]/g,''),'<div style="white-space:pre-wrap;font-family:Georgia,serif;font-size:12pt;line-height:1.5">'+esc(txt)+'</div>')},
@@ -3194,7 +3170,7 @@ document.addEventListener('click',e=>{
         +'Цели работы, о которых договорились с клиентом:\n'+goals+'\n\n'
         +'Нужно: два-три варианта короткого выполнимого задания на неделю, каждое — одно действие и способ его отметить. '
         +'Формулировки — нейтральные, без оценок и без обещаний результата. Не предлагай диагнозов и методов лечения.';
-      aiModal('Домашнее задание — запрос для ИИ',mk(''),
+      aiModal('Текст запроса',mk(''),
         `<label class="f"><span>Тема встречи одной фразой — подставится в запрос</span><input id="ai-theme" placeholder="например: границы в разговоре с руководителем"></label>`);
       const box=document.getElementById('ai-t'),th=document.getElementById('ai-theme');
       if(th)th.addEventListener('input',()=>{box.value=anon(mk(th.value))});},
@@ -3205,32 +3181,20 @@ document.addEventListener('click',e=>{
       const p0=pack(c.id)[0];
       const mk=kind=>'Подготовьте краткое деловое письмо клиенту от психолога. Только организационная часть, без разбора содержания работы.\n\n'
         +'Повод: '+kind+'\n'
-        +'Клиент: код '+c.code+', канал связи: '+c.msg+', формат работы: '+c.fmt
+        +'Канал связи с клиентом: '+c.msg+', формат работы: '+c.fmt
         +(c.tzOff?', часовой пояс '+c.tz+' (+'+c.tzOff+' ч)':'')+'\n'
         +'Ближайшая встреча: '+(next?ru(next.date)+' в '+next.time+', '+next.fmt:'не назначена')+'\n'
         +'Правило отмены: отмена без последствий не позднее чем за '+S.settings.cancelH+' ч до встречи\n'
         +'Стоимость встречи: '+c.rate+' ₽. Задолженность: '+(c.debt?c.debt+' ₽':'нет')+'\n'
         +(p0?'Пакет: остаток '+(p0.n-p0.used)+' из '+p0.n+', действует до '+ru(p0.exp)+'\n':'')
         +'\nТон: спокойный, уважительный, без давления и без эмодзи. Пять-семь предложений. Не упоминай состояние клиента, диагнозы и содержание встреч.';
-      aiModal('Письмо клиенту — запрос для ИИ',mk('перенос встречи'),
+      aiModal('Текст запроса',mk('перенос встречи'),
         `<label class="f"><span>Повод письма</span><select id="ai-kind">
           <option>перенос встречи</option><option>напоминание о правиле отмены</option>
           <option>напоминание об оплате</option><option>подтверждение ближайшей встречи</option>
           <option>пауза в работе и возвращение</option></select></label>`);
       const box=document.getElementById('ai-t'),k=document.getElementById('ai-kind');
       if(k)k.addEventListener('change',()=>{box.value=anon(mk(k.value))});},
-    aiSuperv:()=>{
-      const mk=(txt,q)=>'Сформулируйте вопрос супервизору по случаю из практики психолога.\n\n'
-        +'Обезличенное описание случая, как его сформулировал специалист:\n'+(txt||'(описание вводится специалистом)')+'\n\n'
-        +'О чём хочу спросить: '+(q||'(формулировка вводится специалистом)')+'\n\n'
-        +'Нужно: два-три варианта чёткого вопроса супервизору — такого, на который можно ответить по существу. '
-        +'Вопрос должен касаться работы специалиста, а не оценки клиента. Диагнозы, методы лечения и трактовки состояния не предлагаются.';
-      aiModal('Вопрос супервизору — текст запроса',mk('',''),
-        `<label class="f"><span>Обезличенное описание случая — вводится вручную</span><textarea id="ai-case" style="min-height:90px" placeholder="например: работа десять встреч, альянс сохранён, динамики нет, клиент говорит об этом прямо"></textarea></label>
-         <label class="f"><span>О чём хочу спросить</span><input id="ai-q" placeholder="например: менять фокус работы или завершать и рекомендовать другого специалиста"></label>`);
-      const box=document.getElementById('ai-t'),t1=document.getElementById('ai-case'),t2=document.getElementById('ai-q');
-      const upd=()=>{box.value=anon(mk(t1?t1.value:'',t2?t2.value:''))};
-      if(t1)t1.addEventListener('input',upd);if(t2)t2.addEventListener('input',upd);},
     wordReport:()=>{
       const m=el.dataset.m||S.ui.repM||D(0).slice(0,7),r=repMonth(m),t=x=>esc(String(x==null?'':x));
       const list=(head,rows)=>rows.length?'<h2>'+head+'</h2><ul>'+rows.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'';
