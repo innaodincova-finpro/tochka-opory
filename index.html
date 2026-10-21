@@ -398,7 +398,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в20</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в21</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -2100,11 +2100,11 @@ function vDocs(){
     <div class="spread"><div><h2>Документы и согласия</h2>
     </div>
     <button class="btn" data-act="newDoc">Отметить подписание</button></div>
-    <div class="grid g3" style="margin-top:12px">
+    ${S.docs.length||S.disc.length?`    <div class="grid g3" style="margin-top:12px">
       <div class="kpi"><div class="k">Подписано</div><div class="v">${S.docs.filter(d=>d.st==='действует').length}</div><div class="s">действующих документов</div></div>
       <div class="kpi ${need.length?'alert':'ok'}"><div class="k">Без согласия о здоровье</div><div class="v">${need.length}</div><div class="s">клиентов</div></div>
       <div class="kpi"><div class="k">Раскрытий сведений</div><div class="v">${S.disc.length}</div><div class="s">записей в журнале</div></div>
-    </div>
+    </div>`:''}
     ${need.length?`<div class="alertbox" style="margin-top:12px"><b>Нет действующего согласия на обработку данных о здоровье:</b> ${need.map(c=>esc(nm(c))).join(', ')}.</div>`:''}
 
     <details class="sec"><summary>Шаблоны документов</summary>
@@ -2245,52 +2245,47 @@ function repData(){
 }
 function vRep(){
   const r=repData();
+  /* Пока нет проведённых встреч, отчёт не показывает нули и не делает выводов. */
+  if(!r.done.length)return `<div class="card"><h2>Отчёты</h2>
+    <p class="lead" style="margin-top:10px">Отчёты появятся после первых проведённых встреч: доход, оплаты, отмены и неявки, загрузка приёма.</p></div>`;
   const fill=r.openH?Math.round(r.doneH/r.openH*100):0;
   const pct=n=>r.all.length?Math.round(n/r.all.length*100):0;
-  const nsPct=pct(r.noShow.length);
+  const miss=r.cancLate.length+r.noShow.length,missPct=pct(miss);
   const conv=r.firsts.length?Math.round(r.second.length/r.firsts.length*100):0;
-  const ret=r.started.length?Math.round(r.keep.length/r.started.length*100):0;
+  const canc=[['Отменили заранее',r.cancEarly.length],['Отменили поздно (менее '+S.settings.cancelH+' ч)',r.cancLate.length],['Не пришли',r.noShow.length],['Отменили вы',r.cancSpec.length]].filter(x=>x[1]);
+  /* Выводы — только когда данных достаточно, иначе процент ничего не значит. */
+  const tips=[];
+  if(r.all.length>=10&&missPct>=10)tips.push(['Поздние отмены и неявки — '+missPct+'% встреч. Проговорите правило отмены на первой встрече.','help','Правило отмены']);
+  if(r.firsts.length>=3&&conv<60)tips.push(['До второй встречи дошли '+r.second.length+' из '+r.firsts.length+' новых клиентов.','clients','Клиенты']);
   return `<div class="card">
-    <div class="spread"><div><h2>Отчёты</h2></div>
+    <div class="spread"><div><h2>Отчёты</h2><p class="lead">За последние ${r.win} дней.</p></div>
     <button class="btn ghost" data-act="wordReport">Отчёт за месяц в Word</button></div>
-    <p class="lead">За последние ${r.win} дней.</p>
-    <div class="grid g4" style="margin-top:14px">
-      <div class="kpi ${fill<50?'alert':fill>=70?'ok':''}"><div class="k">Заполняемость</div><div class="v">${fill}%</div><div class="s">${String(Math.round(r.doneH*10)/10).replace('.',',')} состоявшихся ч ÷ ${r.openH} открытых ч</div></div>
-      <div class="kpi ${pct(r.cancLate.length)>10?'alert':''}"><div class="k">Поздние отмены</div><div class="v">${pct(r.cancLate.length)}%</div><div class="s">менее ${S.settings.cancelH} ч · ${r.cancLate.length} шт.</div></div>
-      <div class="kpi"><div class="k">Отмены заранее</div><div class="v">${pct(r.cancEarly.length)}%</div><div class="s">более ${S.settings.cancelH} ч · ${r.cancEarly.length} шт.</div></div>
-      <div class="kpi"><div class="k">Отменил специалист</div><div class="v">${pct(r.cancSpec.length)}%</div><div class="s">${r.cancSpec.length} шт.</div></div>
-      <div class="kpi ${nsPct>=10?'alert':'ok'}"><div class="k">Неявки</div><div class="v">${nsPct}%</div><div class="s">${nsPct>=10?"10 % и выше — правило отмены не работает":"ниже 10 % — правило отмены работает"}</div></div>
-      <div class="kpi ${r.lost>0?'alert':''}"><div class="k">Потери от отмен</div><div class="v">${r.lost.toLocaleString('ru-RU')}</div><div class="s">за 90 дней</div></div>
-      <div class="kpi"><div class="k">Конверсия первичной</div><div class="v">${conv}%</div><div class="s">${r.second.length} из ${r.firsts.length} дошли до второй</div></div>
-      <div class="kpi"><div class="k">Удержание</div><div class="v">${ret}%</div><div class="s">${r.keep.length} из ${r.started.length} дошли до 5 встреч</div></div>
-      <div class="kpi"><div class="k">Средняя пауза</div><div class="v">${r.gap}</div><div class="s">дней между встречами; рост — ранний признак ухода</div></div>
-      <div class="kpi"><div class="k">Обязательства по пакетам</div><div class="v">${r.oblig.toLocaleString('ru-RU')}</div><div class="s">₽ оплачено, не отработано</div></div>
-      <div class="kpi"><div class="k">Доход за период</div><div class="v">${r.income.toLocaleString('ru-RU')}</div><div class="s">₽ по состоявшимся встречам</div></div>
-      <div class="kpi"><div class="k">Поступило платежей</div><div class="v">${r.paid.toLocaleString('ru-RU')}</div><div class="s">₽ по журналу оплат за ${r.win} дней</div></div>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="kpi"><div class="k">Заработано</div><div class="v">${r.income.toLocaleString('ru-RU')}</div><div class="s">₽ за проведённые встречи · ${r.done.length}</div></div>
+      <div class="kpi"><div class="k">Поступило оплат</div><div class="v">${r.paid.toLocaleString('ru-RU')}</div><div class="s">₽ по журналу оплат</div></div>
+      <div class="kpi"><div class="k">Загрузка приёма</div><div class="v">${fill}%</div><div class="s">${String(Math.round(r.doneH*10)/10).replace('.',',')} из ${r.openH} ч за 30 дней</div></div>
+      <div class="kpi ${missPct>=10&&r.all.length>=10?'alert':''}"><div class="k">Поздние отмены и неявки</div><div class="v">${missPct}%</div><div class="s">${miss} из ${r.all.length} встреч</div></div>
+      ${r.firsts.length?`<div class="kpi"><div class="k">Дошли до второй встречи</div><div class="v">${r.second.length} из ${r.firsts.length}</div><div class="s">новых клиентов</div></div>`:''}
+      ${r.gap?`<div class="kpi"><div class="k">Пауза между встречами</div><div class="v">${r.gap}</div><div class="s">дней в среднем</div></div>`:''}
     </div>
-
-    <h3>Отмены: из чего складываются</h3>
-    ${[['Заранее, более '+S.settings.cancelH+' ч',r.cancEarly.length,''],['Поздние, менее '+S.settings.cancelH+' ч',r.cancLate.length,'r'],
-       ['Отменил специалист',r.cancSpec.length,'o'],['Неявки',r.noShow.length,'r']].map(([n,v,c])=>`
-      <div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v} · ${pct(v)}%</span></div>
-      <div class="bar"><i class="${c}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}
-
-    <h3>Длительность работы по причине завершения</h3>
-    <div class="tw"><table><thead><tr><th>Причина</th><th class="num">Клиентов</th><th class="num">Средняя длительность, дней</th></tr></thead>
+    ${canc.length?`<h3>Отмены и неявки</h3>${canc.map(([n,v])=>`<div style="margin-bottom:7px"><div class="spread"><span>${n}</span><span class="mono sub">${v}</span></div>
+      <div class="bar"><i class="${/поздно|Не пришли/.test(n)?'r':''}" style="width:${Math.min(100,pct(v)*3)}%"></i></div></div>`).join('')}`:''}
+    ${tips.length?`<h3>На что обратить внимание</h3><div class="list">${tips.map(([t,tab,btn])=>`<div class="item"><div>${t}</div><button class="btn mini ghost" data-act="tab" data-t="${tab}">${btn}</button></div>`).join('')}</div>`:''}
+    ${Object.keys(r.byWhy).length?`<h3>Завершённые работы</h3>
+    <div class="tw"><table><thead><tr><th>Причина</th><th class="num">Клиентов</th><th class="num">В среднем, дней</th></tr></thead>
       <tbody>${Object.keys(r.byWhy).map(k=>`<tr><td>${esc(k)}</td><td class="num">${r.byWhy[k].length}</td>
-        <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')||'<tr><td colspan="3" class="sub">Завершённых работ пока нет</td></tr>'}</tbody></table></div>
-
-    <h3>Что из этого следует</h3>
-    <div class="list">
-      <div class="item"><div>${nsPct>=10?'<b>Неявки на уровне '+nsPct+'%</b> — правило отмены не работает или не проговаривается на первой встрече.':'Неявки ниже 10% — правило отмены работает.'}</div>
-        <button class="btn mini ghost" data-act="tab" data-t="help">Настройки правила</button></div>
-      <div class="item"><div>Конверсия первичной во вторую — <b>${conv}%</b>. </div>
-        <button class="btn mini ghost" data-act="tab" data-t="clients">Клиенты</button></div>
-      <div class="item"><div>Обязательства по пакетам — <b>${rub(r.oblig)}</b>. </div>
-        <button class="btn mini ghost" data-act="tab" data-t="pay">Оплаты</button></div>
-    </div>
+        <td class="num">${Math.round(r.byWhy[k].reduce((s,x)=>s+x,0)/r.byWhy[k].length)}</td></tr>`).join('')}</tbody></table></div>`:''}
   </div>`;
 }
+
+/* ── Пустые разделы ──
+   Пока данных нет, раздел показывает одну строку и одну кнопку, а не плитки с нулями и пустые таблицы. */
+function emptyCard(h,text,act,btn){return `<div class="card"><div class="spread"><h2>${h}</h2>${act?`<button class="btn" data-act="${act}">${btn}</button>`:''}</div>
+  <p class="lead" style="margin-top:10px">${text}</p></div>`}
+{const _c=vClients;vClients=function(){if(!S.clients.length)return emptyCard('Клиенты','Клиентов пока нет. Добавьте первого — имя, телефон и тариф.','newClient','Новая карточка');return _c()}}
+{const _s=vScales;vScales=function(){if(!S.clients.length)return emptyCard('Шкалы и опросники','Опросники заполняются для клиента. Сначала добавьте клиента.','newClient','Новая карточка');return _s()}}
+{const _p=vPay;vPay=function(){if(!S.pays.length&&!S.packs.length&&!S.clients.some(c=>c.debt>0))return emptyCard('Оплаты и пакеты',S.clients.length?'Оплат пока нет. Отметка «оплачена» в карточке встречи сама записывает платёж.':'Оплат пока нет. Сначала добавьте клиента.',S.clients.length?'newPay':'newClient',S.clients.length?'Записать оплату':'Новая карточка');return _p()}}
+{const _v=vSuperv;vSuperv=function(){if(!S.superv.length)return emptyCard('Супервизия','Случаев пока нет. Здесь ведётся обезличенный реестр случаев, вынесенных на супервизию.',S.clients.length?'newSup':'',S.clients.length?'Внести случай':'');return _v()}}
 
 /* ═══════════════ Помощь и настройки ═══════════════ */
 function vHelp(){
