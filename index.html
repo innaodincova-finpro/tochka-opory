@@ -247,6 +247,11 @@ textarea{min-height:70px;resize:vertical}
 .stat .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
 .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--ochre);font-variant-numeric:tabular-nums;line-height:1.1}
 .todo{display:grid;gap:7px}
+.more{position:relative;display:inline-block}.more>summary{list-style:none}.more>summary::-webkit-details-marker{display:none}
+.more .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:grid;gap:4px;min-width:260px}
+.more .menu .btn{justify-content:flex-start;text-align:left;border:0;width:100%}
+@media(max-width:700px){.more .menu{position:fixed;left:16px;right:16px;top:auto;bottom:16px;min-width:0;padding:10px}}
+details.fs{border-top:1px solid var(--line2);padding:8px 0}details.fs>summary{cursor:pointer;font-family:'Spectral',Georgia,serif;font-size:16px;font-weight:600;color:var(--ink)}details.fs[open]>summary{margin-bottom:8px}
 @media(min-width:901px){
   .dayhead{padding-top:14px;padding-bottom:14px;margin-bottom:14px}.dayhead h2{margin:0}.dayhead .sub{margin:2px 0 0}
   .today{grid-template-columns:1fr 360px;gap:18px}
@@ -294,6 +299,8 @@ textarea{min-height:70px;resize:vertical}
 #demobar button{background:var(--ink);color:var(--card);border:0;border-radius:8px;padding:5px 11px;font-size:13px;cursor:pointer}
 [hidden]{display:none!important}
 #errbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:700;background:var(--warn);color:#fff;border-radius:12px;padding:11px 14px;font-size:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow)}
+#updbar{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:650;background:var(--panel);color:#fff;border-radius:12px;padding:9px 14px;font-size:14px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow)}
+#updbar button{background:#fff;color:var(--panel);border:0;border-radius:8px;padding:5px 12px;font-weight:600;cursor:pointer}
 #errbar button{background:#fff;color:var(--warn);border:0;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer}
 #errbar[hidden],#demobar[hidden],#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
 #badscr{position:fixed;inset:0;z-index:510;background:var(--panel);color:#EAF1F7;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
@@ -436,7 +443,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 <header class="app">
   <div class="brand">
     <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#DCE7F0"/><rect x="6" y="6.6" width="12" height="2" rx="1" fill="#2F4A66"/><path fill="#2F4A66" d="M12 10.6l4.6 7.4H7.4z"/></svg>
-    <div><b>Точка опоры</b><span>кабинет специалиста · редакция от 21.10.2026 · в34</span></div>
+    <div><b>Точка опоры</b><span>кабинет специалиста</span></div>
   </div>
   <div class="rolebox" id="rolebox"></div>
   <div class="tabwrap"><nav class="tabs" id="tabs"></nav></div>
@@ -489,7 +496,7 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
     <p class="locknote">Сначала попробуйте загрузить последнюю копию базы. Файл «сохранённое как есть» пригодится, если копии нет: не удаляйте его.</p>
   </div>
 </div>
-<div id="errbar" hidden>Что-то пошло не так. <span id="errsave"></span> <button type="button" onclick="location.reload()">Обновить</button></div>
+<div id="errbar" hidden>Что-то пошло не так. <span id="errsave"></span> <button type="button" onclick="location.reload()">Обновить</button> <button type="button" id="errcopy">Скопировать описание ошибки</button></div>
 <div id="robar" hidden>Кабинет уже открыт в другой вкладке или окне. Здесь только просмотр — правки не сохраняются.
   <button type="button" id="ro-take">Работать здесь</button></div>
 <div class="toast" id="toast" hidden></div>
@@ -499,8 +506,15 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
 (function(){function show(){const b=document.getElementById('errbar');if(!b||!b.hidden)return;
   let ok=true;try{ok=!SAVE_FAIL&&(typeof PEND==='undefined'||PEND===null)}catch(e){}
   const t=document.getElementById('errsave');if(t)t.textContent=ok?'Записи сохранены.':'Последнее изменение могло не сохраниться.';b.hidden=false}
-  window.addEventListener('error',e=>{if(e&&e.message&&/ResizeObserver/.test(e.message))return;show()});
-  window.addEventListener('unhandledrejection',()=>show())})();
+  /* Описание ошибки для разработчика: что сломалось, где и в какой версии. Без данных клиентов. */
+  let last='';
+  window.addEventListener('error',e=>{if(e&&e.message&&/ResizeObserver/.test(e.message))return;last=(e.message||'')+' @'+(e.lineno||'')+':'+(e.colno||'');show()});
+  window.addEventListener('unhandledrejection',e=>{last='promise: '+String(e&&e.reason&&(e.reason.message||e.reason)||'');show()});
+  document.addEventListener('click',ev=>{if(!ev.target||ev.target.id!=='errcopy')return;
+    let tab='';try{tab=S.ui.tab}catch(x){}
+    const t='Кабинет «Точка опоры», '+(typeof APP_VER!=='undefined'?APP_VER:'')+'\nОшибка: '+last+'\nВкладка: '+tab+'\nБраузер: '+navigator.userAgent+'\nВремя: '+new Date().toLocaleString('ru-RU');
+    const done=()=>{ev.target.textContent='Скопировано — отправьте разработчику'};
+    if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>prompt('Скопируйте описание ошибки',t));else prompt('Скопируйте описание ошибки',t)})})();
 </script>
 <script>
 "use strict";
@@ -694,7 +708,7 @@ function seed(){
      plan:[{v:1,d:D(-56),t:'Стабилизация режима сна, дневник активности, работа с требованиями к себе.'},
            {v:2,d:D(-35),t:'Добавлена работа с границами в рабочем контексте. Поведенческая активация продолжается, темп ограничен.'}],
      links:[{k:'группа',id:'g1'}],
-     events:[{d:D(-56),t:'начало работы'},{d:D(-35),t:'план в.2'}]},
+     events:[{d:D(-56),t:'начало работы'},{d:D(-35),t:'новый план работы'}]},
 
     {id:'c2',code:'К-021',name:'Дмитрий Ветров',phone:'+7 905 771-63-22',msg:'звонок',contact:'WhatsApp',email:'d.vetrov@example.ru',tz:'Екатеринбург',tzOff:2,
      fmt:'онлайн',link:'https://talk.kontur.ru/psy-dv-21',status:'в работе',rate:4500,debt:0,since:D(-70),birth:'1984-08-02',minor:false,
@@ -1015,6 +1029,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
+const APP_VER='редакция от 21.10.2026 · в35';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1246,6 +1261,7 @@ if(!S.settings.defFmt)S.settings.defFmt='онлайн';
 if(!S.settings.spec)S.settings.spec={name:'Анна Ремизова',title:'психолог, когнитивно-поведенческий подход'};
 if(!S.settings.openH)S.settings.openH=24;
 syncTitle();
+(S.clients||[]).forEach(c=>(c.events||[]).forEach(e=>{if(/^план в\.\d+$/.test(e.t))e.t='новый план работы'}));
 delete S.settings.mode;delete S.specs;if(S.ui){delete S.ui.role;delete S.ui.spec}
 if(!S.settings.start)S.settings.start='09:00';
 if(!S.settings.end)S.settings.end='21:00';
@@ -1355,7 +1371,8 @@ function startMeet(v,force){
 /* Завершение встречи: одно место для полосы состояния и для перехода к следующей встрече. */
 function finishMeet(v,mins){
   if(!v)return;
-  v.fact=mins;v.status='состоялась';v.by=v.by||SPEC().name;
+  const wasPack=packWant(v.pay,v.status,v.rule);
+  v.fact=mins;v.status='состоялась';v.by=v.by||SPEC().name;syncPack(v,wasPack);
   if(!v.note)v.note={tpl:defTpl()};
   if(S.ui.meet&&S.ui.meet.id===v.id){S.ui.meet=null;MEET_HIDDEN=false}
   save();
@@ -1425,6 +1442,12 @@ const meetBtns=(v,mini)=>`${meetOn(v)||meetOpen(v)?`<button class="btn ${mini?'m
 /* Передача ссылки клиенту: кабинет открывает выбранное приложение с подготовленным текстом. */
 const digits=s=>String(s||'').replace(/\D+/g,'');
 const CONTACTS=[['WhatsApp','wa'],['Telegram','tg'],['электронная почта','mail']];
+/* Город клиента вместо двух полей «пояс» и «смещение»: разницу во времени кабинет считает сам. */
+const tzCities=()=>[['Калининград',2],['Москва',3],['Самара',4],['Екатеринбург',5],['Омск',6],['Новосибирск',7],['Красноярск',7],['Иркутск',8],['Якутск',9],['Владивосток',10],['Магадан',11],['Камчатка',12],['другой часовой пояс',null]];
+const myUtc=()=>-new Date().getTimezoneOffset()/60;
+function tzCity(c){const t=String(c.tz||'').trim();if(/^мск$|москва/i.test(t)||!t)return c.tzOff&&!/^мск$/i.test(t)?'другой часовой пояс':'Москва';
+  const f=tzCities().find(x=>x[0].toLowerCase()===t.toLowerCase());return f?f[0]:'другой часовой пояс'}
+function nextCode(){let n=70;S.clients.forEach(c=>{const m=/(\d+)/.exec(c.code||'');if(m)n=Math.max(n,+m[1])});return 'К-'+String(n+1).padStart(3,'0')}
 const contactOf=c=>(c&&c.contact)||(c&&c.msg==='WhatsApp'?'WhatsApp':c&&c.msg==='электронная почта'?'электронная почта':'Telegram');
 const MAIL_SUBJ='Ссылка на встречу';
 function sendUrl(via,c,link,text){
@@ -2094,7 +2117,7 @@ function vClients(){
   return `<div class="card">
     <div class="spread"><div><h2>Клиенты</h2>
     <p class="lead">${S.clients.length} карточек.</p></div>
-    <button class="btn" data-act="newClient">Новая карточка</button></div>
+    <button class="btn" data-act="newClient">Новый клиент</button></div>
     <div class="row" style="margin-top:12px">${[['все','Все']].concat(CSTAT.map(s=>[s,s[0].toUpperCase()+s.slice(1)])).map(([k,n])=>
       `<button class="chip ${f===k?'b':''}" data-act="filter" data-f="${k}" style="cursor:pointer">${esc(n)}</button>`).join('')}</div>
     <div class="tw" style="margin-top:12px"><table>
@@ -2122,22 +2145,21 @@ function clientCard(id){
     <div class="spread">
       <div><button class="btn mini ghost" data-act="backClients">← Все клиенты</button>
       <h2 style="margin-top:8px">${esc(nm(c))} <span class="chip ${c.status==='в работе'?'g':'b'}">${esc(c.status)}</span></h2>
-      <p class="sub">Код ${esc(c.code)} · ${esc(ph(c))} · ${esc(c.msg)} · ${esc(c.fmt)}${c.tzOff?' · часовой пояс '+esc(c.tz)+' (+'+c.tzOff+' ч)':''}</p></div>
+      <p class="sub">${esc(ph(c))} · ${esc(c.msg)} · ${esc(c.fmt)}${c.tzOff?' · '+esc(c.tz)+', у клиента '+(c.tzOff>0?'+':'')+c.tzOff+' ч к вашему времени':''}</p></div>
       <div class="row"><button class="btn ghost" data-act="editClient" data-id="${c.id}">Изменить</button>
-      <button class="btn ghost" data-act="openMeetC" data-id="${c.id}">Войти во встречу</button>
-      <button class="btn ghost" data-act="sendLinkC" data-id="${c.id}">Отправить ссылку клиенту</button>
-      <button class="btn ghost" data-act="aiLetter" data-id="${c.id}">Подготовить письмо клиенту</button>
-      <button class="btn ghost" data-act="wordClient" data-id="${c.id}">Выгрузить данные клиента</button>
+      <details class="more"><summary class="btn ghost">Ещё</summary><div class="menu">
+        <button class="btn ghost" data-act="sendLinkC" data-id="${c.id}">Отправить ссылку на встречу</button>
+        <button class="btn ghost" data-act="openMeetC" data-id="${c.id}">Войти во встречу</button>
+        <button class="btn ghost" data-act="aiLetter" data-id="${c.id}">Подготовить письмо клиенту</button>
+        <button class="btn ghost" data-act="wordClient" data-id="${c.id}">Выгрузить данные по запросу клиента</button>
+        <button class="btn ghost" data-act="anonClient" data-id="${c.id}">Обезличить клиента</button></div></details>
       <button class="btn" data-act="newSess" data-cid="${c.id}">Записать</button></div>
     </div>
 
-    <h3>Административная часть</h3>
-    <div class="grid g4">
-      <div class="kpi"><div class="k">Встреч состоялось</div><div class="v">${dn.length}</div><div class="s">с ${first?ru(first.date):'—'}</div></div>
-      <div class="kpi"><div class="k">Оплачено всего</div><div class="v">${paid.toLocaleString('ru-RU')}</div><div class="s">₽ по журналу оплат</div></div>
-      <div class="kpi ${c.debt?'alert':''}"><div class="k">Задолженность</div><div class="v">${c.debt.toLocaleString('ru-RU')}</div><div class="s">₽</div></div>
-      <div class="kpi"><div class="k">Средняя пауза</div><div class="v">${gaps||'—'}</div><div class="s">${gaps?'дней между встречами':'мало данных'}</div></div>
-    </div>
+    ${(()=>{if(c.status!=='в работе'||!lv)return '';const gap=days(lv.date,D(0));
+      const fut=vs.some(v=>v.date>=D(0)&&(v.status==='запланирована'||v.status==='подтверждена'));
+      return gap>28&&!fut?`<div class="warnline" style="margin:10px 0">Клиент не приходил ${Math.floor(gap/7)} нед. и не записан дальше. <button class="btn mini" data-act="setPause" data-id="${c.id}">Поставить паузу</button> <button class="btn mini ghost" data-act="newSess" data-cid="${c.id}">Записать</button></div>`:''})()}
+    <p class="lead" style="margin:10px 0">Встреч проведено: <b>${dn.length}</b>${first?' с '+ru(first.date):''} · оплачено всего <b>${rub(paid)}</b>${c.debt?` · <b style="color:var(--warn)">долг ${rub(c.debt)}</b>`:''}${gaps?' · в среднем раз в '+gaps+' '+plN(gaps,'день','дня','дней'):''}</p>
     <div class="grid g2" style="margin-top:12px">
       <div class="item"><div>Тариф встречи</div><span class="mono">${rub(c.rate)}</span></div>
       <div class="item"><div>Постоянное время${c.slot&&c.status!=='пауза'?` <button class="btn mini ghost" data-act="series" data-id="${c.id}" style="margin-left:6px">Расставить на 4 недели</button>`:''}</div><span class="chip">${c.slot?(+c.slot.every===2?'раз в 2 нед. · ':'')+['вс','пн','вт','ср','чт','пт','сб'][c.slot.d]+' '+c.slot.time:'не закреплено'}</span></div>
@@ -2220,31 +2242,18 @@ function scaleBlock(id){
 
 /* ═══════════════ Шкалы ═══════════════ */
 function vScales(){
-  const cid=S.ui.chartC||'c1';
+  /* Сначала клиент, потом опросник: опросник всегда заполняется для конкретного человека. */
+  const act=S.clients.filter(x=>x.status!=='завершён');
+  const cid=(S.ui.chartC&&cl(S.ui.chartC).id)?S.ui.chartC:(act[0]||S.clients[0]).id;
   const c=cl(cid);
   const ms=mScales(cid);
   const kinds=[...new Set(ms.map(m=>m.kind))];
-  const withData=S.clients.filter(x=>mScales(x.id).length);
   return `<div class="card">
-    <div class="spread"><div><h2>Шкалы и опросники</h2>
-    </div></div>
-    <div class="grid g3" style="margin-top:12px">
-    ${Object.keys(SCALES).map(k=>{
-      const s=SCALES[k];
-      return `<div class="kpi" style="padding:13px">
-        <div class="k">${esc(k)}</div><div style="font-weight:600;margin:2px 0 4px">${esc(s.title.split('· ')[1]||s.title)}</div>
-        <div class="sub">${s.items.length} ${s.items.length<5?'пункта':'пунктов'} · ${s.kind==='0-3'?'ответы 0–3':'шкала 0–10'} · сумма 0–${s.max}</div>
-        <div class="sub" style="margin-top:4px">пороги: ${s.thr.join(' / ')}</div>
-
-        <button class="btn mini" style="margin-top:8px" data-act="fillScale" data-kind="${k}">Заполнить</button>
-      </div>`}).join('')}
-    </div>
-    <div class="alertbox">Результат — не диагноз. Ненулевой ответ на пункт 9 PHQ-9 — повод для прямого разговора на встрече.</div>
-  </div>
-
-  <div class="card">
-    <div class="spread"><div><h2>Динамика</h2></div>
-    <select data-setui="chartC" style="max-width:260px">${withData.map(x=>`<option value="${x.id}" ${cid===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></div>
+    <div class="spread"><h2>Шкалы и опросники</h2>
+    <label class="f" style="min-width:240px;margin:0"><span>Клиент</span><select data-setui="chartC">${S.clients.map(x=>`<option value="${x.id}" ${cid===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label></div>
+    <div class="row" style="margin-top:10px;gap:6px"><span class="sub" style="margin-right:4px">Заполнить для клиента:</span>
+    ${Object.keys(SCALES).map(k=>`<button class="btn mini ghost" data-act="fillScale" data-id="${cid}" data-kind="${k}" title="${esc(SCALES[k].title)}">${esc(k)} · ${esc(SCALES[k].title.split('· ')[1]||'')}</button>`).join('')}</div>
+    <p class="sub" style="margin-top:10px">Результат — не диагноз. Ненулевой ответ на пункт 9 PHQ-9 — повод для прямого разговора на встрече.</p>
     ${kinds.length?kinds.map(k=>{
       const pts=ms.filter(m=>m.kind===k),last=pts[pts.length-1];
       const delta=pts.length>1?pts[0].score-last.score:0;
@@ -2278,12 +2287,11 @@ function vDocs(){
     <div class="spread"><div><h2>Документы и согласия</h2>
     </div>
     <button class="btn" data-act="newDoc">Отметить подписание</button></div>
-    ${S.docs.length||S.disc.length?`    <div class="grid g3" style="margin-top:12px">
-      <div class="kpi"><div class="k">Подписано</div><div class="v">${S.docs.filter(d=>d.st==='действует').length}</div><div class="s">действующих документов</div></div>
-      <div class="kpi ${need.length?'alert':'ok'}"><div class="k">Без согласия о здоровье</div><div class="v">${need.length}</div><div class="s">клиентов</div></div>
-      <div class="kpi"><div class="k">Раскрытий сведений</div><div class="v">${S.disc.length}</div><div class="s">записей в журнале</div></div>
-    </div>`:''}
-    ${need.length?`<div class="alertbox" style="margin-top:12px"><b>Нет действующего согласия на обработку данных о здоровье:</b> ${need.map(c=>esc(nm(c))).join(', ')}.</div>`:''}
+    ${(()=>{const r=repMonth(D(0).slice(0,7)),todo=r.cons.map(x=>({c:x.c,t:x.t,tid:x.tid,btn:'Оформить'}))
+        .concat(r.docs.map(d=>({c:cl(d.cid),t:tpl(d.tid).name+' — действует до '+ru(d.till),tid:d.tid,btn:'Оформить заново'})));
+      return todo.length?`<h3>Нужно оформить</h3><div class="list">${todo.map(x=>`<div class="item"><div><button type="button" class="lnk" data-act="client" data-id="${x.c.id}">${esc(nm(x.c))}</button><div class="sub">${esc(x.t)}</div></div>
+        <button class="btn mini" data-act="newDoc" data-cid="${x.c.id}" data-tid="${x.tid}">${x.btn}</button></div>`).join('')}</div>`
+        :'<div class="okbox" style="margin-top:12px">Все нужные согласия оформлены.</div>'})()}
 
     <details class="sec"><summary>Шаблоны документов</summary>
     <div class="tw"><table><thead><tr><th>Документ</th><th>Версия</th><th>Редакция</th><th>Срок действия</th><th class="num">Подписан</th></tr></thead>
@@ -2304,7 +2312,7 @@ function vDocs(){
         <td>${d.st==='действует'?`<button class="btn mini ghost" data-act="revoke" data-id="${d.id}">Отозвать</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="sub">Подписанных документов пока нет. Нажмите «Отметить подписание».</td></tr>'}</tbody></table></div>
 
     </details>
-    <details class="sec"><summary>Журнал раскрытия сведений</summary>
+    <details class="sec"><summary>Кому и когда передавались сведения о клиентах</summary>
     <div class="tw" style="margin-top:8px"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Кому</th><th>Основание</th><th>Объём</th></tr></thead>
       <tbody>${S.disc.slice().sort((a,b)=>a.date<b.date?1:-1).map(j=>`<tr>
         <td class="mono">${ru(j.date)}</td><td>${esc(nm(cl(j.cid)))}</td><td>${esc(j.who)}</td>
@@ -2340,12 +2348,13 @@ function vPay(){
     <div class="spread"><div><h2>Оплаты и пакеты</h2>
     </div>
     <div class="row"><button class="btn ghost" data-act="taxModal">Для налога</button><button class="btn" data-act="newPay">Записать оплату</button></div></div>
-    <div class="grid g4" style="margin-top:12px">
-      <div class="kpi"><div class="k">Поступило за 30 дней</div><div class="v">${sum30.toLocaleString('ru-RU')}</div><div class="s">${m30.length} ${plN(m30.length,'платёж','платежа','платежей')}</div></div>
-      <div class="kpi ${debt?'alert':'ok'}"><div class="k">Задолженность</div><div class="v">${debt.toLocaleString('ru-RU')}</div><div class="s">₽ по клиентам</div></div>
-      <div class="kpi"><div class="k">Обязательства по пакетам</div><div class="v">${oblig.toLocaleString('ru-RU')}</div><div class="s">₽ уже оплачено, но не отработано</div></div>
-      <div class="kpi ${noCheck.length?'alert':'ok'}"><div class="k">Чек не отмечен</div><div class="v">${noCheck.length}</div><div class="s">${plN(noCheck.length,'платёж','платежа','платежей')}</div></div>
-    </div>
+    <p class="lead" style="margin-top:6px">За 30 дней получено <b>${rub(sum30)}</b> · ${m30.length} ${plN(m30.length,'платёж','платежа','платежей')}${oblig?` · оплачено вперёд, встречи ещё не проведены: <b>${rub(oblig)}</b>`:''}</p>
+    ${(()=>{const dl=S.clients.filter(c=>c.debt>0),nc=noCheck.filter(p=>(+p.sum||0)>0);if(!dl.length&&!nc.length)return '';
+      return `<h3>Нужно сделать</h3><div class="list">${dl.map(c=>`<div class="item"><div><button type="button" class="lnk" data-act="client" data-id="${c.id}">${esc(nm(c))}</button> — долг ${rub(c.debt)}
+        <div class="sub">${(()=>{const v=cSess(c.id).find(x=>x.charged>0);return v?'основание: '+esc(v.rule)+', встреча '+ru(v.date):''})()}</div></div>
+        <div class="row"><button class="btn mini" data-act="payDebt" data-id="${c.id}">Погасить</button><button class="btn mini ghost" data-act="forgiveDebt" data-id="${c.id}">Списать</button></div></div>`).join('')}
+        ${nc.map(p=>`<div class="item"><div><button type="button" class="lnk" data-act="client" data-id="${p.cid}">${esc(nm(cl(p.cid)))}</button> — ${rub(p.sum)}, ${ru(p.date)}
+        <div class="sub">чек в «Мой налог» не отмечен</div></div><button class="btn mini" data-act="check" data-id="${p.id}">Отметить</button></div>`).join('')}</div>`})()}
 
     <details class="sec"><summary>Пакеты <span class="sumv ${S.packs.some(p=>p.used<p.n&&days(D(0),p.exp)<=14)?'warn':''}">${S.packs.length?S.packs.length+' · остаток '+rub(oblig)+(S.packs.some(p=>p.used<p.n&&days(D(0),p.exp)<=14)?' · есть истекающие':''):'нет'}</span></summary>
     <div class="list">${S.packs.map(p=>{
@@ -2358,12 +2367,7 @@ function vPay(){
         <div class="row"><span class="mono" style="color:var(--ochre)">${rub(left*p.price)}</span>
         <button class="btn mini ghost" data-act="usePack" data-id="${p.id}">Списать встречу</button></div></div>`}).join('')||'<p class="sub">Пакетов нет.</p>'}</div></details>
 
-    <details class="sec"><summary>Задолженность <span class="sumv ${debt?'warn':''}">${debt?rub(debt):'нет'}</span></summary>
-    <div class="list">${S.clients.filter(c=>c.debt>0).map(c=>`<div class="item">
-      <div><b>${esc(nm(c))}</b><div class="sub">${(()=>{const v=cSess(c.id).find(x=>x.charged>0);return v?'основание: '+esc(v.rule)+', встреча '+ru(v.date):'основание не указано'})()}</div></div>
-      <div class="row"><span class="mono" style="color:var(--warn)">${rub(c.debt)}</span>
-      <button class="btn mini" data-act="payDebt" data-id="${c.id}">Погасить</button>
-      <button class="btn mini ghost" data-act="forgiveDebt" data-id="${c.id}">Списать</button></div></div>`).join('')||'<p class="sub">Задолженности нет.</p>'}</div></details>
+
 
     <details class="sec" open><summary>Журнал платежей <span class="sumv">${S.pays.length} ${plN(S.pays.length,'платёж','платежа','платежей')}</span></summary>
     <div class="tw"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Способ</th><th>Назначение</th><th>Встреча</th><th class="num">Сумма</th><th>Чек</th></tr></thead>
@@ -2384,8 +2388,7 @@ const supOk=x=>{const c=supC(x);return !!(x.consent||(c&&hasDoc(c.id,'t7')))};
 function vSuperv(){
   return `<div class="card">
     <div class="spread"><h2>Супервизия</h2>
-    <div class="row"><button class="btn ghost" data-act="aiSuperv">Сформулировать вопрос супервизору</button>
-    <button class="btn" data-act="newSup">Внести случай</button></div></div>
+    <div class="row"><button class="btn" data-act="newSup">Внести случай</button></div></div>
     <p class="lead" style="margin-top:6px">Здесь записываются случаи, которые вы разбирали с супервизором: что спросили, что посоветовали, что изменили в работе.</p>
     <div class="list" style="margin-top:14px">
     ${S.superv.slice().sort((a,b)=>a.date<b.date?1:-1).map(x=>{const c=supC(x),ok=supOk(x);
@@ -2501,7 +2504,7 @@ function vRep(){
         x.list.map(v=>`<button type="button" class="lnk" data-act="openSess" data-id="${v.id}">${shortD(v.date)}</button> ${missWhy(v)}`).join(', '))).join('')}</div>`)}
     ${sec('Кто пропал',r.gone.length,'Клиенты в работе, которые не приходили больше трёх недель и не записаны на следующую встречу. Им стоит написать.',
       `<div class="list">${r.gone.map(x=>row(x.c.id,esc(nm(x.c)),'последняя встреча '+ru(x.last)+' — '+days(x.last,D(0))+' дн. назад',
-        `<button class="btn mini ghost" data-act="newSess" data-cid="${x.c.id}">Записать</button>`)).join('')}</div>`)}
+        `<div class="row"><button class="btn mini ghost" data-act="newSess" data-cid="${x.c.id}">Записать</button><button class="btn mini ghost" data-act="setPause" data-id="${x.c.id}">Поставить паузу</button></div>`)).join('')}</div>`)}
     ${sec('Что заканчивается',r.packs.length+r.docs.length,'Пакеты, в которых осталась одна встреча или срок истекает в ближайшие 14 дней, и согласия, которые истекают в ближайшие 30 дней.',
       `<div class="list">${r.packs.map(p=>row(p.cid,esc(nm(cl(p.cid))),'пакет: осталось '+(p.n-p.used)+' из '+p.n+', срок до '+ru(p.exp))).join('')}
         ${r.docs.map(d=>row(d.cid,esc(nm(cl(d.cid))),esc(tpl(d.tid).name)+' — действует до '+ru(d.till))).join('')}</div>`)}
@@ -2529,8 +2532,8 @@ function repList(k,m){
    Пока данных нет, раздел показывает одну строку и одну кнопку, а не плитки с нулями и пустые таблицы. */
 function emptyCard(h,text,act,btn){return `<div class="card"><div class="spread"><h2>${h}</h2>${act?`<button class="btn" data-act="${act}">${btn}</button>`:''}</div>
   <p class="lead" style="margin-top:10px">${text}</p></div>`}
-{const _c=vClients;vClients=function(){if(!S.clients.length)return emptyCard('Клиенты','Клиентов пока нет. Добавьте первого — имя, телефон и тариф.','newClient','Новая карточка');return _c()}}
-{const _s=vScales;vScales=function(){if(!S.clients.length)return emptyCard('Шкалы и опросники','Опросники заполняются для клиента. Сначала добавьте клиента.','newClient','Новая карточка');return _s()}}
+{const _c=vClients;vClients=function(){if(!S.clients.length)return emptyCard('Клиенты','Клиентов пока нет. Добавьте первого — имя, телефон и тариф.','newClient','Новый клиент');return _c()}}
+{const _s=vScales;vScales=function(){if(!S.clients.length)return emptyCard('Шкалы и опросники','Опросники заполняются для клиента. Сначала добавьте клиента.','newClient','Новый клиент');return _s()}}
 {const _p=vPay;vPay=function(){if(!S.pays.length&&!S.packs.length&&!S.clients.some(c=>c.debt>0))return emptyCard('Оплаты и пакеты',S.clients.length?'Оплат пока нет. Отметка «оплачена» в карточке встречи сама записывает платёж.':'Оплат пока нет. Сначала добавьте клиента.',S.clients.length?'newPay':'newClient',S.clients.length?'Записать оплату':'Новая карточка');return _p()}}
 {const _v=vSuperv;vSuperv=function(){if(!S.superv.length)return emptyCard('Супервизия','Случаев пока нет. Здесь ведётся обезличенный реестр случаев, вынесенных на супервизию.',S.clients.length?'newSup':'',S.clients.length?'Внести случай':'');return _v()}}
 
@@ -2593,10 +2596,7 @@ function vHelp(){
       <button class="btn ghost" data-act="snaps">Прежние состояния</button>
     </div>
   </details>
-    ${S.clients.length?`<details class="sec"><summary>Запрос клиента о его данных</summary>
-      <div class="row"><button class="btn ghost" data-act="exportClient">Выгрузить данные клиента</button>
-      <button class="btn ghost" data-act="anonClient">Обезличить клиента</button></div></details>`:''}
-    ${S.demo?'<div class="row" style="margin-top:14px"><button class="btn ghost warn" data-act="demoOff">Выйти из примера</button></div>':(!S.clients.length?'<div class="row" style="margin-top:14px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div>':'')}
+    ${S.demo?'':(!S.clients.length?'<div class="row" style="margin-top:14px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div>':'')}
   </div>
   <div class="card">
     <h2>Справка</h2>
@@ -2615,9 +2615,10 @@ function vHelp(){
     <details class="hlp"><summary>Закон и конфиденциальность</summary>
       <p>Записи о клиентах — сведения о здоровье. До начала работы возьмите у клиента письменное согласие на их обработку (раздел «Документы»).</p>
       <p>Записи хранятся только на этом устройстве. Копии храните в России. Видеовстречи проводите в российском сервисе.</p>
-      <p>Клиент вправе запросить сведения о себе: ответ — в течение 10 рабочих дней (Настройки → «Запрос клиента о его данных»).</p>
+      <p>Клиент вправе запросить сведения о себе: ответ — в течение 10 рабочих дней (карточка клиента → «Ещё» → «Выгрузить данные по запросу клиента»).</p>
       <p>Для клиента до 18 лет укажите дату рождения: кабинет напомнит о согласии законного представителя и о дне совершеннолетия.</p>
       <p class="sub">Справочно, не юридическая консультация.</p></details>
+    <p class="sub" style="margin-top:12px">Версия кабинета: ${APP_VER}</p>
   </div>`;
 }
 
@@ -2669,6 +2670,7 @@ function sessModal(id){
       ${!v.gid?`<div class="sub">встреча № ${sessNum(v)} в работе</div>`:''}</div></div>
       ${late?`<div class="row" style="margin-top:8px"><button class="btn mini" data-act="moveSess" data-id="${v.id}">Перенести</button></div>`:''}
     </div>
+    <details class="fs" ${v.status==='запланирована'&&!v.note?'':''}><summary>${ru(v.date)} в ${esc(v.time)} · ${v.dur} мин · ${esc(v.fmt)} · ${esc(v.status)}${v.price?' · '+rub(v.price):''}${v.pay?' · '+esc(v.pay):''} <span class="sub" style="font-family:inherit;font-weight:400;font-size:13px">— изменить</span></summary>
     <div class="fgrid">
       <label class="f"><span>Дата</span><input id="v-date" type="date" value="${v.date}"></label>
       <label class="f"><span>Время</span><input id="v-time" type="time" step="300" value="${esc(v.time)}"></label>
@@ -2681,7 +2683,7 @@ function sessModal(id){
       <label class="f"><span>Стоимость, ₽</span><input id="v-price" type="number" value="${v.price}"></label>
       <label class="f" id="v-p-wrap" ${['парная','семейная'].includes(v.type)?'':'hidden'}><span>Второй участник</span><select id="v-partner"><option value="">— выберите —</option>${S.clients.filter(x=>x.id!==v.cid).map(x=>`<option value="${x.id}" ${v.partner===x.id?'selected':''}>${esc(nm(x))}</option>`).join('')}</select></label>
       <label class="f"><span>Оплата</span><select id="v-pay">${['','оплачена','пакет','долг','не требуется'].map(x=>`<option ${v.pay===x?'selected':''}>${x}</option>`).join('')}</select></label>
-    </div>
+    </div></details>
     ${v.fmt==='онлайн'?`<div class="okbox" style="margin:4px 0 12px">
       <b>Онлайн-встреча.</b>
       <div class="sub" style="margin-top:4px">${v.sent?'Отметка: '+esc(sentLabel(v))+'.':sentStale(v)?'Отметка: '+esc(sentStale(v))+'. Встреча перенесена — отправьте ссылку заново.':'Ссылка клиенту ещё не отправлена.'}${meetOn(v)?' Встреча идёт: начата в '+esc(hhmmL(S.ui.meet.startedAt))+'.':''}</div>
@@ -2822,8 +2824,17 @@ function findScores(text){
   return out;
 }
 let PAY_NOTE='';
+/* Встреча из пакета списывается сама, когда она состоялась; снятие отметки возвращает встречу в пакет. */
+const packWant=(pay,st,rule)=>pay==='пакет'&&(st==='состоялась'||rule==='поздняя отмена, списано с пакета');
+function syncPack(v,was){
+  const want=packWant(v.pay,v.status,v.rule);
+  if(want&&!was&&!v.packId){const l=pack(v.cid).filter(p=>p.used<p.n),p=l.find(p=>!p.exp||p.exp>=v.date)||l[0];
+    if(p){p.used++;v.packId=p.id;PAY_NOTE='Встреча списана из пакета: осталось '+(p.n-p.used)+' из '+p.n}
+    else PAY_NOTE='Действующего пакета с остатком нет — встреча не списана'}
+  else if(!want&&was&&v.packId){const p=S.packs.find(x=>x.id===v.packId);if(p&&p.used>0)p.used--;delete v.packId;PAY_NOTE='Встреча возвращена в пакет'}
+}
 function readSess(v){
-  const wasDate=v.date,wasTime=v.time;
+  const wasDate=v.date,wasTime=v.time,wasPack=packWant(v.pay,v.status,v.rule);
   v.date=val('v-date');v.time=val('v-time');v.dur=+val('v-dur')||v.dur;v.fact=+val('v-fact')||v.fact;
   /* Клиенту уходило письмо с прежними датой и часом: после переноса отметка об отправке
      больше не соответствует действительности и напоминание должно вернуться. */
@@ -2840,6 +2851,7 @@ function readSess(v){
     PAY_NOTE='Платёж '+v.price+' ₽ записан в журнал оплат сегодняшним числом. Дату и способ можно поправить в «Оплатах»'}
   if(wasPay==='оплачена'&&v.pay!=='оплачена'){const i=S.pays.findIndex(p=>p.sid===v.id&&p.auto);
     if(i>=0){S.pays.splice(i,1);PAY_NOTE='Платёж по этой встрече убран из журнала оплат'}}
+  syncPack(v,wasPack);
   if(document.getElementById('n-'+TPLS[(v.note&&v.note.tpl)||defTpl()][0][0])){
     const t=(v.note&&v.note.tpl)||defTpl();
     /* Запись собирается поверх прежней, а не с чистого листа: иначе текст полей,
@@ -2920,25 +2932,28 @@ function clientModal(id){
   const c=id?cl(id):{id:'',code:'',name:'',phone:'',msg:'Telegram',tz:'МСК',tzOff:0,fmt:S.settings.defFmt||'очно',link:'',
     status:'обращение',rate:S.settings.price,debt:0,since:D(0),minor:false,req:'',form:'',goals:[],ctx:'',prev:'',
     risks:[],contra:'',plan:[],links:[],events:[],guardian:{name:'',rel:'',phone:''},toParent:''};
-  modal(id?'Карточка клиента':'Новая карточка',`
-    <h3 style="font-family:'Spectral';font-size:16px;margin:0 0 8px">Административная часть</h3>
+  modal(id?'Карточка клиента':'Новый клиент',`
     <div class="fgrid">
       <label class="f"><span>Имя</span><input id="c-name" value="${esc(c.name)}"></label>
-      <label class="f"><span>Код (для обезличенного режима)</span><input id="c-code" value="${esc(c.code)}" placeholder="К-070"></label>
       <label class="f"><span>Телефон</span><input id="c-phone" value="${esc(c.phone)}"></label>
-      <label class="f"><span>Предпочитаемый канал</span><select id="c-msg">${['Telegram','WhatsApp','звонок','электронная почта','через представителя'].map(x=>`<option ${c.msg===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f"><span>Способ связи для отправки ссылки</span><select id="c-contact">${['WhatsApp','Telegram','электронная почта'].map(x=>`<option ${contactOf(c)===x?'selected':''}>${x}</option>`).join('')}</select></label>
-      <label class="f"><span>Электронная почта</span><input id="c-email" type="email" value="${esc(c.email||'')}" placeholder="для письма со ссылкой"></label>
-      <label class="f"><span>Часовой пояс</span><input id="c-tz" value="${esc(c.tz)}"></label>
-      <label class="f"><span>Смещение к вашему, ч</span><input id="c-tzo" type="number" value="${c.tzOff||0}"></label>
+      <label class="f"><span>Как связываться</span><select id="c-msg">${['Telegram','WhatsApp','электронная почта','звонок','через представителя'].map(x=>`<option ${c.msg===x?'selected':''}>${x}</option>`).join('')}</select></label>
+      <label class="f"><span>Электронная почта</span><input id="c-email" type="email" value="${esc(c.email||'')}"></label>
+      <label class="f"><span>Где живёт клиент</span><select id="c-city">${tzCities().map(([n])=>`<option ${tzCity(c)===n?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label class="f" id="c-tzo-w" ${tzCity(c)==='другой часовой пояс'?'':'hidden'}><span>На сколько часов у клиента больше, чем у вас</span><input id="c-tzo" type="number" value="${c.tzOff||0}"></label>
       <label class="f"><span>Формат работы</span><select id="c-fmt">${['очно','онлайн','смешанный'].map(x=>`<option ${c.fmt===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Статус работы</span><select id="c-status">${CSTAT.map(x=>`<option ${c.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="f"><span>Тариф встречи, ₽</span><input id="c-rate" type="number" value="${c.rate}"></label>
-      <label class="f"><span>Задолженность, ₽</span><input id="c-debt" type="number" value="${c.debt||0}"></label>
       <label class="f"><span>Дата обращения</span><input id="c-since" type="date" value="${c.since||D(0)}"></label>
       <label class="f"><span>Дата рождения</span><input id="c-birth" type="date" value="${esc(c.birth||'')}"></label>
     </div>
-    <h3 style="font-family:'Spectral';font-size:16px;margin:10px 0 6px">Постоянное время</h3>
+    ${c.birth?'':`<label class="chip" style="cursor:pointer;margin-top:4px"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент <span class="sub">— если дата рождения не указана</span></label>`}
+    ${c.minor?`<details class="fs" open><summary>Законный представитель</summary><div class="fgrid">
+      <label class="f"><span>Законный представитель</span><input id="c-gname" value="${esc(c.guardian.name)}"></label>
+      <label class="f"><span>Кем приходится</span><input id="c-grel" value="${esc(c.guardian.rel)}"></label>
+      <label class="f"><span>Телефон представителя</span><input id="c-gphone" value="${esc(c.guardian.phone)}"></label>
+    </div>
+    <label class="f"><span>Что сообщается родителю</span><textarea id="c-toparent">${esc(c.toParent||'')}</textarea></label></details>`:''}
+    <details class="fs" ${c.slot?'':''}><summary>Постоянное время и ссылка на встречу</summary>
     <div class="fgrid">
       <label class="f"><span>День</span><select id="c-sd"><option value="">нет</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}" ${c.slot&&+c.slot.d===d?'selected':''}>${DOW_FULL[d]}</option>`).join('')}</select></label>
       <span id="c-slot" style="display:contents" ${c.slot?'':'hidden'}>
@@ -2947,21 +2962,14 @@ function clientModal(id){
       <label class="f"><span>С какой даты</span><input id="c-sf" type="date" value="${c.slot&&c.slot.from||D(0)}"></label></span>
     </div>
     <label class="f"><span>Своя ссылка для этого клиента — если пусто, используется ваша постоянная комната</span>
-      <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc((id?roomOf(c.id):roomUrl(null))||'https://…')}"></label>
-    <label class="chip" style="cursor:pointer"><input type="checkbox" id="c-minor" style="width:auto;margin-right:7px" ${c.minor?'checked':''}>Несовершеннолетний клиент${c.birth?'':' <span class="sub">— по дате рождения отмечается сам</span>'}</label>
-    ${c.minor?`<div class="fgrid" style="margin-top:10px">
-      <label class="f"><span>Законный представитель</span><input id="c-gname" value="${esc(c.guardian.name)}"></label>
-      <label class="f"><span>Кем приходится</span><input id="c-grel" value="${esc(c.guardian.rel)}"></label>
-      <label class="f"><span>Телефон представителя</span><input id="c-gphone" value="${esc(c.guardian.phone)}"></label>
-    </div>
-    <label class="f"><span>Что сообщается родителю</span><textarea id="c-toparent">${esc(c.toParent||'')}</textarea></label>`:''}
-    <h3 style="font-family:'Spectral';font-size:16px;margin:16px 0 8px">Клиническая часть</h3>
+      <input id="c-link" value="${esc(c.link||'')}" placeholder="${esc((id?roomOf(c.id):roomUrl(null))||'https://…')}"></label></details>
+    <details class="fs" ${id?'':'open'}><summary>Клиническая часть</summary>
     <label class="f"><span>Запрос словами клиента</span><textarea id="c-req">${esc(c.req)}</textarea></label>
     <label class="f"><span>Рабочая формулировка случая</span><textarea id="c-form">${esc(c.form)}</textarea></label>
     <label class="f"><span>Цели и критерии результата — по одной в строке</span><textarea id="c-goals">${esc((c.goals||[]).join('\n'))}</textarea></label>
     <label class="f"><span>Значимый контекст</span><textarea id="c-ctx">${esc(c.ctx)}</textarea></label>
     <label class="f"><span>Предыдущий опыт получения помощи — как факт обращения</span><textarea id="c-prev">${esc(c.prev)}</textarea></label>
-    <label class="f"><span>Противопоказания по методам</span><input id="c-contra" value="${esc(c.contra)}"></label>
+    <label class="f"><span>Противопоказания по методам</span><input id="c-contra" value="${esc(c.contra)}"></label></details>
     
   `,`<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="saveClient" data-id="${id||''}">Сохранить</button>${id?`<button class="sflink" data-act="delClient" data-id="${id}">Удалить клиента</button>`:''}`);
 }
@@ -3150,7 +3158,7 @@ document.addEventListener('click',e=>{
       const v=sess(id),rule=el.dataset.rule;
       v.status=val('x-who')||'отменена клиентом';v.reason=val('x-why');
       v.before=Math.max(0,Math.round(hoursTo(v)));
-      if(rule==='pack'){const p=pack(v.cid)[0];if(p&&p.used<p.n)p.used++;v.charged=v.price;v.pay='пакет';v.rule='поздняя отмена, списано с пакета'}
+      if(rule==='pack'){const p=pack(v.cid).find(x=>x.used<x.n);if(p){p.used++;v.packId=p.id}v.charged=v.price;v.pay='пакет';v.rule='поздняя отмена, списано с пакета'}
       else if(rule==='bill'){const c=cl(v.cid);c.debt=(c.debt||0)+v.price;v.charged=v.price;v.pay='долг';v.rule='поздняя отмена, выставлено к оплате'}
       else if(rule==='forgive'){v.charged=0;v.pay='';v.rule='поздняя отмена, прощено специалистом'}
       else{v.charged=0;v.pay='';v.rule='отмена заранее, без удержания'}
@@ -3233,6 +3241,7 @@ document.addEventListener('click',e=>{
         +r.pays.map(p=>'<tr><td>'+ru(p.date)+'</td><td>'+t(nm(cl(p.cid)))+'</td><td>'+t(p.method)+'</td><td>'+rub(p.sum)+'</td></tr>').join('')+'</table>';
       toWord('otchet-'+m,h)},
     repList:()=>repList(el.dataset.k,el.dataset.m),
+    setPause:()=>{if(RO){toast('Здесь только просмотр');return}const c=cl(id);pushUndo('пауза в работе');c.status='пауза';S.changedAt=new Date().toISOString();save();render();toast(nm(c)+': статус «пауза». Вернуть — кнопкой «Отменить» или в карточке')},
     repNow:()=>{S.ui.repM=D(0).slice(0,7);go('rep')},
     wordClient:()=>dataReqModal(id),
     voiceParse:()=>{
@@ -3302,7 +3311,7 @@ document.addEventListener('click',e=>{
         `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn" data-act="savePlan" data-id="${c.id}">Добавить</button>`)},
     savePlan:()=>{const c=cl(id);const t=val('pl-t');if(!t.trim()){toast('Текст пуст');return}
       c.plan=c.plan||[];c.plan.push({v:c.plan.length+1,d:D(0),t});
-      c.events=c.events||[];c.events.push({d:D(0),t:'план в.'+c.plan.length});
+      c.events=c.events||[];c.events.push({d:D(0),t:'новый план работы'});
       save();closeModal();render();toast('Версия плана добавлена')},
     createSess:()=>{
       const cid=val('s-c');
@@ -3321,11 +3330,12 @@ document.addEventListener('click',e=>{
       const nmv=val('c-name').trim();if(!nmv){toast('Имя обязательно');return}
       let c=id?cl(id):null;
       if(!c||!c.id){c={id:uid(),code:'',link:'',risks:[],plan:[],goals:[],links:[],events:[],guardian:{name:'',rel:'',phone:''}};S.clients.push(c)}
-      c.name=nmv;c.code=val('c-code')||('К-'+String(S.clients.length+70).padStart(3,'0'));
-      c.phone=val('c-phone');c.msg=val('c-msg');c.tz=val('c-tz');c.tzOff=+val('c-tzo')||0;
-      c.contact=val('c-contact')||contactOf(c);c.email=val('c-email');
+      c.name=nmv;if(!c.code)c.code=nextCode();
+      c.phone=val('c-phone');c.msg=val('c-msg');
+      {const city=val('c-city'),z=tzCities().find(x=>x[0]===city);c.tz=city;c.tzOff=z&&z[1]!=null?z[1]-myUtc():(+val('c-tzo')||0)}
+      c.contact=['WhatsApp','Telegram','электронная почта'].includes(c.msg)?c.msg:(c.contact||'WhatsApp');c.email=val('c-email');
       c.fmt=val('c-fmt');c.link=val('c-link');c.status=val('c-status');c.rate=+val('c-rate')||0;
-      c.debt=+val('c-debt')||0;c.since=val('c-since');c.birth=val('c-birth');
+      c.debt=+c.debt||0;c.since=val('c-since');c.birth=val('c-birth');
       c.minor=c.birth?ageOf(c.birth)<18:chk('c-minor');c.guardian=c.guardian||{name:'',rel:'',phone:''};
       const sd=val('c-sd'),oldSlot=JSON.stringify(c.slot||null);
       if(sd===''){c.slot=null}else{if(!okTime(val('c-st'))){toast('Укажите постоянное время часами и минутами');return}
@@ -3456,7 +3466,7 @@ document.addEventListener('click',e=>{
       closeModal();toast('Таблица за '+monthName(m)+' сохранена. Открывается в Excel')},
     reqSent:()=>{const c=cl(id);if(!c.dataReq)return;c.dataReq.sent=D(0);save();render();toast('Отмечено: данные отправлены клиенту')},
     anonClient:()=>modal('Обезличивание клиента',`
-      <label class="f"><span>Клиент</span><select id="an-c">${S.clients.map(c=>`<option value="${c.id}">${esc(nm(c))}</option>`).join('')}</select></label>
+      <label class="f"><span>Клиент</span><select id="an-c">${S.clients.map(c=>`<option value="${c.id}" ${c.id===id?'selected':''}>${esc(nm(c))}</option>`).join('')}</select></label>
       <div class="alertbox">Действие необратимо. Будут удалены имя, телефон, адрес электронной почты, дата рождения, сведения о законном представителе, запрос, формулировка, контекст, план и все записи о встречах.
       Останутся: код, даты и статусы встреч, суммы оплат — чтобы отчёты за прошлые периоды не изменились задним числом.</div>`,
       `<button class="btn ghost" data-act="closeModal">Отмена</button><button class="btn warn" data-act="doAnon">Обезличить</button>`),
@@ -3532,6 +3542,7 @@ document.addEventListener('change',e=>{
       toast('Подход изменён: '+appr().name+'. Прежние записи сохранены — шаблон каждой остаётся тем, в котором её вели')}
     else if(['defFmt','meetBase','myRoom','room','openH','retest','cancelH','start','end'].includes(t.dataset.set))setTimeout(render,0);
     return}
+  if(t.id==='c-city'){const w=document.getElementById('c-tzo-w');if(w)w.hidden=t.value!=='другой часовой пояс';return}
   if(t.id==='tx-m'){taxModal(t.value);return}
   if(t.id==='rep-m'){S.ui.repM=t.value;render();return}
   if(t.id==='ics-n'){if(RO){toast('Здесь только просмотр — настройка не сохранена');icsModal();return}S.settings.icsName=t.value;save();icsModal();return}
@@ -3642,7 +3653,7 @@ function lock(why){
   }
 }
 function unlock(){LOCKED=false;PINSET=null;PINFORCED=false;clearInterval(TRYTICK);
-  document.getElementById('lockscr').hidden=true;shellOff(false);idleReset()}
+  document.getElementById('lockscr').hidden=true;shellOff(false);idleReset();setTimeout(()=>{if(typeof startHints==='function')startHints()},800)}
 /* Окно с кодом восстановления: код показывается один раз, закрыть окно можно только отметив, что код записан. */
 let MODAL_HOLD=false;
 function showRecovery(rc,first){
@@ -3996,6 +4007,31 @@ document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='
 render();saveMark();syncRail();
 </script>
 <script>
+/* Обновление: раз в полчаса и при возврате в окно кабинет сверяет свою версию с сайтом. */
+(function(){let shown=false;
+  function check(){if(shown||document.hidden||!navigator.onLine)return;
+    fetch('index.html',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{if(!t||t.indexOf(APP_VER)>=0||!/редакция от/.test(t))return;shown=true;
+      const b=document.createElement('div');b.id='updbar';
+      b.innerHTML='Вышло обновление кабинета. <button type="button">Обновить</button>';
+      b.querySelector('button').onclick=()=>{try{persistNow()}catch(e){}setTimeout(()=>location.reload(),300)};
+      document.body.appendChild(b)}).catch(()=>{})}
+  setInterval(check,30*60*1000);document.addEventListener('visibilitychange',check);setTimeout(check,20000)})();
+/* Подсказки при открытии: установка на iPhone и копия записей на телефоне. Не чаще раза в день. */
+function startHints(){
+  try{if(LOCKED||RO||BAD||ENC_WAIT||!S.clients.length||S.demo)return;if(!document.getElementById('modal').hidden)return}catch(e){return}
+  const day=D(0),get=k=>{try{return localStorage.getItem(k)}catch(e){return null}},put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone;
+  if(ios&&get('tochka-opory-hint-ios')!==day){put('tochka-opory-hint-ios',day);
+    modal('Установите кабинет на экран «Домой»',`<p class="lead">На iPhone браузер Safari может сам стереть записи сайта, если его не открывать 7 дней. Кабинет, установленный на экран «Домой», так не стирается.</p>
+      <ol class="lead" style="padding-left:20px"><li>Нажмите внизу кнопку «Поделиться» — квадрат со стрелкой вверх.</li><li>Выберите «На экран „Домой“».</li><li>Нажмите «Добавить». Дальше открывайте кабинет значком на экране.</li></ol>`,
+      '<button class="btn" data-act="closeModal">Понятно</button>');return}
+  const bd=S.settings.lastBackup,old=!bd||days(bd,day)>=7;
+  if(old&&!canAuto()&&get('tochka-opory-hint-bk')!==day){put('tochka-opory-hint-bk',day);
+    modal('Сохраните копию записей',`<p class="lead">${bd?'Последняя копия — '+ru(bd)+'.':'Копия ещё ни разу не сохранялась.'} Если телефон потеряется или сломается, записи без копии пропадут.</p>
+      <p class="sub">Сохраните файл копии в «Файлы» или на Яндекс Диск. Напоминание приходит раз в неделю, пока копия старше 7 дней.</p>`,
+      '<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="export">Сохранить копию</button>')}
+}
+setTimeout(startHints,1500);
 /* Работа без интернета: файлы кабинета сохраняются в браузере после первого открытия. */
 if('serviceWorker' in navigator&&window.isSecureContext)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
 </script>
