@@ -6,7 +6,8 @@
 <title>Точка опоры — кабинет специалиста</title>
 <meta name="theme-color" content="#28425C">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png?v=19">
+<link rel="icon" href="favicon.png?v=20">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=20">
 <style>
 @font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/spectral-cyrillic-400-normal.woff2) format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
 @font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 400; src:url(fonts/spectral-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
@@ -1047,7 +1048,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 21.10.2026 · в41';
+const APP_VER='редакция от 23.10.2026 · в42';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -1122,6 +1123,7 @@ async function writeMeta(meta){
   await idbPut('vault',{encV:2,fmt:FMT,pinLen:meta.pinLen,pin:meta.pin,rec:meta.rec,pub:Object.assign(pubOf(),{pinLen:meta.pinLen}),data,at:new Date().toISOString()});
   ENC.meta=meta;PUB=pubOf();
   try{localStorage.setItem(KEY,markerStr())}catch(e){}
+  if(!YA_ADOPT)yaSet({metaAt:new Date().toISOString()});
 }
 /* Содержимое файла копии. С кодом — закрыто тем же ключом, что и записи в браузере. */
 async function buildCopy(){
@@ -1181,7 +1183,15 @@ function autoLine(){
 /* Для будущего перехода на сервер: у каждой записи — время последнего изменения (u),
    удалённые записи остаются в списке S.del. Сервер по ним поймёт, что новее, а что удалено. */
 const REC_KINDS=['clients','sessions','pays','docs','scales','packs','groups','superv','wait','disc'];
-let LASTREC=null,LASTS=null,KEEP_BASE=false;
+let LASTREC=null,LASTS=null,KEEP_BASE=false,LASTSET=null;
+/* Время изменения настроек — по каждой настройке отдельно (S.setU). По нему при обмене через Диск
+   понятно, какое устройство поменяло настройку позже. */
+const SET_SKIP=['ui','del','setU','changedAt','fmt'];
+function setFlat(d){const f={};Object.keys(d||{}).forEach(k=>{if(SET_SKIP.includes(k)||REC_KINDS.includes(k))return;
+  if(k==='settings')Object.keys(d.settings||{}).forEach(x=>{f['settings.'+x]=JSON.stringify(d.settings[x])});else f[k]=JSON.stringify(d[k])});return f}
+function recMap(d){const cur={};REC_KINDS.forEach(k=>(Array.isArray(d[k])?d[k]:[]).forEach(r=>{if(r&&typeof r==='object'&&r.id)cur[k+'|'+r.id]=JSON.stringify(Object.assign({},r,{u:0}))}));return cur}
+/* После приёма записей с другого устройства: запомнить состояние, не меняя отметок времени. */
+function rebase(){LASTREC=recMap(S);LASTSET=setFlat(S);LASTS=S;KEEP_BASE=false}
 function stamp(){
   const now=new Date().toISOString(),cur={},cont=LASTREC&&(S===LASTS||KEEP_BASE);
   REC_KINDS.forEach(k=>(Array.isArray(S[k])?S[k]:[]).forEach(r=>{
@@ -1191,7 +1201,9 @@ function stamp(){
   if(cont){S.del=Array.isArray(S.del)?S.del:[];
     Object.keys(LASTREC).forEach(key=>{if(!(key in cur)){const i=key.indexOf('|');S.del.push({k:key.slice(0,i),id:key.slice(i+1),at:now})}});
     S.del=S.del.filter(d=>!((d.k+'|'+d.id) in cur)).slice(-2000)}
-  LASTREC=cur;LASTS=S;KEEP_BASE=false;
+  const fl=setFlat(S);
+  if(cont&&LASTSET){Object.keys(fl).forEach(k=>{if(LASTSET[k]!==fl[k]){if(!S.setU||typeof S.setU!=='object')S.setU={};S.setU[k]=now}})}
+  LASTSET=fl;LASTREC=cur;LASTS=S;KEEP_BASE=false;
 }
 function persist(){
   if(BOOT){BOOT_SAVE=true;return}
@@ -1201,9 +1213,9 @@ function persist(){
   try{stamp()}catch(e){}
   if(S.settings){delete S.settings.pinLen;if(ENC_ON)delete S.settings.pinHash}
   const t=JSON.stringify(S);
-  if(!ENC_ON){localStorage.setItem(KEY,t);snapTake();autoSoon();return}
+  if(!ENC_ON){localStorage.setItem(KEY,t);snapTake();autoSoon();yaSoon();return}
   if(!ENC)return;
-  PEND=t;writer();snapTake();autoSoon();
+  PEND=t;writer();snapTake();autoSoon();yaSoon();
 }
 /* Черновики пишутся не на каждое нажатие клавиши, а через короткую паузу. */
 let SOON=null;
@@ -1977,6 +1989,7 @@ function vToday(){
       <div class="item"><div><b>1. Добавьте клиента</b><div class="sub">имя, телефон, тариф</div></div><button class="btn mini" data-act="newClient">Добавить</button></div>
       <div class="item"><div><b>2. Запишите встречу</b></div><button class="btn mini ghost" data-act="newSess">Записать</button></div>
       <div class="item"><div><b>3. Задайте код входа</b><div class="sub">записи будут закрыты кодом</div></div><button class="btn mini ghost" data-act="goTab" data-k="help">Настройки</button></div>
+      <div class="item"><div><b>Кабинет уже есть на другом устройстве?</b><div class="sub">записи придут с Яндекс Диска</div></div><button class="btn mini ghost" data-act="yaConnect">Подключить Диск</button></div>
     </div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div></div>`:'';
   if(start)return start;
@@ -2604,6 +2617,7 @@ function vHelp(){
       <button class="btn ghost" data-act="snaps">Прежние состояния</button>
     </div>
   </details>
+    ${yaSection()}
     ${S.demo?'':(!S.clients.length?'<div class="row" style="margin-top:14px"><button class="btn ghost" data-act="demoOn">Посмотреть на примере</button></div>':'')}
   </div>
   <div class="card">
@@ -2618,8 +2632,9 @@ function vHelp(){
     <details class="hlp"><summary>Помощник на основе ИИ</summary>
       <p>Кабинет готовит текст запроса: домашнее задание, письмо клиенту, вопрос супервизору. Текст вы копируете в выбранный сервис сами.</p>
       <p>Имена, телефоны и почта убираются автоматически. Другие приметы клиента уберите сами — за отправленный текст отвечаете вы.</p></details>
-    <details class="hlp"><summary>Перенос на другое устройство</summary>
-      <p>На старом устройстве нажмите «Скачать копию». На новом откройте кабинет и нажмите «Загрузить копию». Вносите записи на одном устройстве — иначе копии разойдутся.</p></details>
+    <details class="hlp"><summary>Телефон и компьютер</summary>
+      <p>Подключите Яндекс Диск на каждом устройстве: «Настройки» → «Телефон и компьютер». Записи станут одинаковыми и будут обновляться сами. На Диске они лежат закрытыми кодом входа.</p>
+      <p>Без Диска записи переносятся копией: на одном устройстве «Скачать копию базы», на другом «Загрузить копию».</p></details>
     <details class="hlp"><summary>Закон и конфиденциальность</summary>
       <p>Записи о клиентах — сведения о здоровье. До начала работы возьмите у клиента письменное согласие на их обработку (раздел «Документы»).</p>
       <p>Записи хранятся только на этом устройстве. Копии храните в России. Видеовстречи проводите в российском сервисе.</p>
@@ -3008,6 +3023,7 @@ document.addEventListener('click',e=>{
   const A={
     tab:()=>go(el.dataset.t),
     closeModal:closeModal,
+    yaConnect:()=>yaConnect(),yaNow:()=>{yaStatus('Идёт обмен…');yaKick(0)},yaOff:()=>yaOff(),yaPaste:()=>yaPaste(),yaCode:()=>yaCode(),yaAsk:()=>yaAsk(),
     theme:()=>{const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
       document.documentElement.setAttribute('data-theme',cur);try{localStorage.setItem(KEY+'-theme',cur)}catch(e){}},
     anon:()=>{S.ui.anon=!S.ui.anon;closeModal();save();render();
@@ -3655,7 +3671,7 @@ function lock(why){
       const mb=document.getElementById('meetbar');if(mb)mb.innerHTML=''});
   }
 }
-function unlock(){LOCKED=false;PINSET=null;PINFORCED=false;clearInterval(TRYTICK);
+function unlock(){LOCKED=false;PINSET=null;PINFORCED=false;clearInterval(TRYTICK);setTimeout(()=>yaKick(),1200);
   document.getElementById('lockscr').hidden=true;shellOff(false);idleReset();setTimeout(()=>{if(typeof startHints==='function')startHints()},800)}
 /* Окно с кодом восстановления: код показывается один раз, закрыть окно можно только отметив, что код записан. */
 let MODAL_HOLD=false;
@@ -3833,6 +3849,186 @@ window.addEventListener('beforeunload',e=>{
   if(SOON&&!ENC_ON)persistNow();
   if(WRITING||PEND!==null||(SOON&&ENC_ON)){if(SOON)persistNow();e.preventDefault();e.returnValue=''}
 });
+/* ── Обмен записями между устройствами через Яндекс Диск психолога ──
+   Файл лежит в папке приложения на Диске самого специалиста (Приложения/…) и закрыт тем же ключом,
+   что и записи в браузере: без кода входа или кода восстановления его не прочитать.
+   Записи с двух устройств сводятся по времени изменения каждой записи (u) и списку удалённых (S.del).
+   Настройки — по времени изменения каждой настройки (S.setU). */
+var YA_ID='d4e30095be494c95bf6f8148b70ade53';                         /* ClientID приложения в Яндекс ID */
+var YA_FILE='app:/tochka-opory.json';
+var YA_API='https://cloud-api.yandex.net/v1/disk';
+var YA_ADOPT=false,YA_BUSY=false,YA_TIMER=null,YA_NEED=null,YA_MSG='',YA_ERR=false,YA_TICK=null;
+function yaGet(){try{return JSON.parse(localStorage.getItem(KEY+'-ya'))||{}}catch(e){return {}}}
+function yaSet(o){try{const st=Object.assign(yaGet(),o);Object.keys(st).forEach(k=>{if(st[k]==null)delete st[k]});localStorage.setItem(KEY+'-ya',JSON.stringify(st))}catch(e){}}
+function yaOn(){const st=yaGet();return !!(st.t&&(!st.exp||st.exp>Date.now()))}
+function yaBack(){return location.origin+location.pathname}
+function yaHash(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'.'+t.length}
+function yaSig(d){const a=[];REC_KINDS.forEach(k=>(Array.isArray(d[k])?d[k]:[]).forEach(r=>{if(r&&r.id)a.push(k+'|'+r.id+'|'+(r.u||''))}));a.sort();
+  const f=setFlat(d);return yaHash(a.join(',')+'#'+(d.del||[]).length+'#'+Object.keys(f).sort().map(k=>k+'='+f[k]).join('&'))}
+/* Сведение двух состояний кабинета. L — это устройство, R — файл с Диска. */
+function yaMerge(L,R){
+  const out={},lu=(L.setU&&typeof L.setU==='object')?L.setU:{},ru_=(R.setU&&typeof R.setU==='object')?R.setU:{};
+  REC_KINDS.forEach(k=>{const m=new Map();
+    (Array.isArray(L[k])?L[k]:[]).forEach(r=>{if(r&&r.id)m.set(r.id,r)});
+    (Array.isArray(R[k])?R[k]:[]).forEach(r=>{if(!r||!r.id)return;const x=m.get(r.id);if(!x||String(r.u||'')>String(x.u||''))m.set(r.id,r)});
+    out[k]=[...m.values()]});
+  const dm=new Map();
+  [].concat(Array.isArray(L.del)?L.del:[],Array.isArray(R.del)?R.del:[]).forEach(d=>{if(!d||!d.k)return;const key=d.k+'|'+d.id,x=dm.get(key);if(!x||String(d.at)>String(x.at))dm.set(key,d)});
+  REC_KINDS.forEach(k=>{out[k]=out[k].filter(r=>{const key=k+'|'+r.id,d=dm.get(key);
+    if(d&&String(r.u||'')<=String(d.at))return false;if(d)dm.delete(key);return true})});
+  out.del=[...dm.values()].sort((a,b)=>String(a.at)<String(b.at)?-1:1).slice(-2000);
+  const pick=(key,lv,rv,hasL,hasR)=>!hasR?lv:!hasL?rv:(String(lu[key]||'')>String(ru_[key]||'')?lv:rv);
+  new Set([...Object.keys(L),...Object.keys(R)]).forEach(k=>{
+    if(REC_KINDS.includes(k)||SET_SKIP.includes(k))return;
+    if(k==='settings'){const ls=L.settings||{},rs=R.settings||{},o={};
+      new Set([...Object.keys(ls),...Object.keys(rs)]).forEach(x=>{o[x]=pick('settings.'+x,ls[x],rs[x],x in ls,x in rs)});out.settings=o;return}
+    out[k]=pick(k,L[k],R[k],k in L,k in R)});
+  const su=Object.assign({},ru_);Object.keys(lu).forEach(k=>{if(String(lu[k])>String(su[k]||''))su[k]=lu[k]});out.setU=su;
+  out.changedAt=[L.changedAt,R.changedAt].filter(Boolean).sort().pop()||'';
+  out.fmt=FMT;out.ui=L.ui;
+  return out}
+/* Обращения к Диску. Ответ 401 — разрешение истекло или отозвано. */
+async function yaFetch(path,opt){const st=yaGet();
+  const r=await fetch(YA_API+path,Object.assign({},opt||{},{headers:Object.assign({Authorization:'OAuth '+st.t,Accept:'application/json'},(opt&&opt.headers)||{})}));
+  if(r.status===401){yaSet({t:null,exp:null});throw new Error('auth')}
+  return r}
+const yaQ=()=>'?path='+encodeURIComponent(YA_FILE);
+async function yaMeta(){const r=await yaFetch('/resources'+yaQ()+'&fields='+encodeURIComponent('md5,modified'));
+  if(r.status===404)return null;if(!r.ok)throw new Error('net');return r.json()}
+async function yaDown(){const r=await yaFetch('/resources/download'+yaQ());if(r.status===404)return null;if(!r.ok)throw new Error('net');
+  const h=(await r.json()).href;const f=await fetch(h);if(!f.ok)throw new Error('net');return JSON.parse(await f.text())}
+async function yaUp(text){const r=await yaFetch('/resources/upload'+yaQ()+'&overwrite=true');if(!r.ok)throw new Error('net');
+  const h=(await r.json()).href;const f=await fetch(h,{method:'PUT',body:text});if(!f.ok&&f.status!==201&&f.status!==202)throw new Error('net')}
+async function yaOpen(file,dek){return openData({iv:unb64(file.data.iv),ct:unb64(file.data.ct)},dek)}
+function yaStatus(t,err){YA_MSG=t;YA_ERR=!!err;const el=document.getElementById('ya-st');if(el){el.textContent=t;el.classList.toggle('warn',!!err)}}
+function yaReady(){return yaOn()&&!BAD&&!RO&&!BOOT&&!(S&&S.demo)}
+function yaSoon(){if(!yaOn())return;clearTimeout(YA_TIMER);YA_TIMER=setTimeout(()=>yaSync(),4000)}
+function yaKick(ms){if(!yaOn())return;clearTimeout(YA_TIMER);YA_TIMER=setTimeout(()=>yaSync(),ms||300)}
+function yaBlocked(){const m=document.getElementById('modal');return LOCKED||DIRTY||(m&&!m.hidden)}
+/* Один круг обмена: забрать изменения с Диска, свести, отправить своё. */
+async function yaSync(){
+  if(YA_BUSY||!yaReady())return;
+  if(ENC_WAIT||LOCKED){return}
+  YA_BUSY=true;
+  try{
+    const st=yaGet();
+    const meta=await yaMeta();
+    if(!ENC_ON||!ENC){
+      if(meta){const f=await yaDown();if(f&&f.encV===2){YA_NEED=f;yaAsk();}}
+      else yaStatus('Задайте код входа: записи отправляются на Диск только закрытыми.',true);
+      return}
+    let remoteSig=st.sig||null,rev=st.rev||null;
+    if(meta&&meta.md5!==st.rev){
+      if(yaBlocked()){yaKick(15000);return}
+      const f=await yaDown();
+      if(f&&f.encV===2&&f.data){
+        let R=null;try{R=await yaOpen(f,ENC.dek)}catch(e){R=null}
+        if(!R){YA_NEED=f;yaAsk();return}
+        if((+R.fmt||1)>FMT){yaStatus('На Диске записи от более новой редакции кабинета. Обновите кабинет на этом устройстве.',true);return}
+        if(f.metaAt&&(!st.metaAt||f.metaAt>st.metaAt)){YA_ADOPT=true;try{await writeMeta({pinLen:f.pinLen,pin:unpackW(f.pin),rec:unpackW(f.rec)})}finally{YA_ADOPT=false}
+          yaSet({metaAt:f.metaAt,upMeta:f.metaAt});toast('Код входа изменён на другом устройстве. Теперь вход по новому коду.')}
+        const before=yaSig(S);persistNow();await flushed();
+        const M=yaMerge(S,R);
+        if(yaSig(M)!==before){S=M;normS();rebase();UNDO.length=0;REDO.length=0;try{syncRail()}catch(e){}
+          PEND=JSON.stringify(S);writer();await flushed();render();renderHead();toast('Получены изменения с другого устройства')}
+        remoteSig=yaSig(R);rev=meta.md5;yaSet({sig:remoteSig,rev})}}
+    const st2=yaGet();
+    if(!meta||yaSig(S)!==remoteSig||(st2.metaAt&&st2.metaAt!==st2.upMeta)){
+      persistNow();await flushed();
+      const c=await buildCopy();c.metaAt=yaGet().metaAt||c.made;
+      await yaUp(JSON.stringify(c));
+      const m2=await yaMeta().catch(()=>null);
+      yaSet({sig:yaSig(S),rev:m2&&m2.md5||null,upMeta:c.metaAt})}
+    yaSet({at:new Date().toISOString()});
+    yaStatus('Обмен прошёл в '+hhmmL(new Date().toISOString())+'. Записи на этом устройстве и на Диске одинаковые.');
+  }catch(e){
+    if(e&&e.message==='auth')yaStatus('Разрешение Яндекс Диска истекло. Нажмите «Подключить Яндекс Диск» ещё раз.',true);
+    else yaStatus('Нет связи с Яндекс Диском. Кабинет повторит обмен сам, записи на этом устройстве сохранены.',true);
+  }finally{YA_BUSY=false}
+}
+/* На Диске записи, закрытые другим ключом: нужен код с того устройства. */
+function yaAsk(){
+  if(!YA_NEED)return;
+  if(yaBlocked()){yaStatus('На Диске есть записи с другого устройства. Откройте «Настройки» → «Телефон и компьютер», чтобы их принять.',true);return}
+  const f=YA_NEED;
+  modal('Записи на Яндекс Диске',`
+    <p class="lead">На Диске есть записи кабинета${f.made?', сохранённые '+ru(isoL(new Date(f.made)))+' в '+hhmmL(f.made):''}. Введите код входа, который задан на другом устройстве.</p>
+    <label class="f"><span>Код входа или код восстановления</span><input id="ya-code" type="text" inputmode="numeric" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <p class="sub">После этого записи на этом устройстве и на Диске сведутся вместе. Код входа здесь станет таким же, как на другом устройстве.</p>`,
+    '<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="yaCode">Принять записи</button>');
+  setTimeout(()=>{const i=document.getElementById('ya-code');if(i)i.focus()},50)}
+async function yaCode(){
+  const f=YA_NEED,code=val('ya-code').trim();if(!f)return;
+  if(!code){toast('Введите код');return}
+  let dek=null;
+  if(/^\d{4,6}$/.test(code)){try{dek=await unwrapDek(unpackW(f.pin),code)}catch(e){dek=null}}
+  if(!dek){try{dek=await unwrapDek(unpackW(f.rec),recNorm(code))}catch(e){dek=null}}
+  if(!dek){toast('Код не подошёл к записям на Диске');return}
+  let R=null;try{R=await yaOpen(f,dek)}catch(e){alert('Код верный, но файл на Диске повреждён. Записи на этом устройстве не изменены.');return}
+  if(!R||!Array.isArray(R.clients)||!Array.isArray(R.sessions)){alert('Файл на Диске повреждён. Записи на этом устройстве не изменены.');return}
+  if((+R.fmt||1)>FMT){alert('На Диске записи от более новой редакции кабинета. Обновите кабинет и повторите.');return}
+  persistNow();await flushed();
+  const hasLocal=!BAD&&!S.demo&&REC_KINDS.some(k=>Array.isArray(S[k])&&S[k].length);
+  const base=seed();
+  let M=hasLocal?yaMerge(S,R):R;
+  Object.keys(base).forEach(k=>{if(M[k]===undefined)M[k]=Array.isArray(base[k])?[]:base[k]});
+  M.ui=Object.assign({},base.ui,(S&&S.ui)||{},{apprAsked:true,drafts:{},meet:null});
+  M.settings=Object.assign({},base.settings,M.settings||{});delete M.settings.pinHash;delete M.settings.pinLen;
+  const meta={pinLen:f.pinLen,pin:unpackW(f.pin),rec:unpackW(f.rec)};
+  const wasOpen=!ENC_ON;
+  YA_ADOPT=true;
+  try{
+    ENC={dek,meta};S=M;normS();
+    await writeMeta(meta);
+    ENC_ON=true;ENC_WAIT=false;LEGACY=false;PUB=pubOf();
+  }catch(e){YA_ADOPT=false;alert('Записать принятые записи не удалось. Записи на этом устройстве не изменены.');location.reload();return}
+  YA_ADOPT=false;
+  rebase();UNDO.length=0;REDO.length=0;try{syncRail()}catch(e){}
+  const mA=f.metaAt||f.made||new Date().toISOString();YA_NEED=null;yaSet({metaAt:mA,upMeta:mA,sig:yaSig(R),rev:null});
+  closeModal();render();renderHead();
+  toast(wasOpen?'Записи с Диска приняты. Вход в кабинет теперь по коду, как на другом устройстве':'Записи с Диска приняты и сведены с записями этого устройства');
+  try{idleReset()}catch(e){}
+  yaKick(500)}
+/* Подключение: переход на страницу Яндекса и возврат с разрешением в адресе. */
+function yaConnect(){
+  if(!YA_ID){toast('Подключение к Яндекс Диску ещё не настроено');return}
+  const state=Math.random().toString(36).slice(2,10);yaSet({state});
+  persistNow();
+  location.href='https://oauth.yandex.ru/authorize?response_type=token&client_id='+encodeURIComponent(YA_ID)+'&redirect_uri='+encodeURIComponent(yaBack())+'&state='+state}
+function yaManualUrl(){return 'https://oauth.yandex.ru/authorize?response_type=token&client_id='+encodeURIComponent(YA_ID)+'&redirect_uri='+encodeURIComponent('https://oauth.yandex.ru/verification_code')}
+function yaPaste(){const t=val('ya-tok').trim();if(t.length<20){toast('Вставьте код со страницы Яндекса целиком');return}
+  yaSet({t,exp:Date.now()+300*864e5,sig:null,rev:null});render();toast('Яндекс Диск подключён');yaKick(300)}
+function yaOff(){if(!confirm('Отключить Яндекс Диск на этом устройстве? Записи здесь и на Диске останутся, но обмен прекратится.'))return;
+  yaSet({t:null,exp:null,sig:null,rev:null,at:null});YA_NEED=null;yaStatus('');render();toast('Яндекс Диск отключён на этом устройстве')}
+(function yaReturn(){
+  const h=location.hash||'';if(!/access_token=|error=/.test(h))return;
+  const p=new URLSearchParams(h.slice(1));
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  const st=yaGet();
+  if(p.get('error')){setTimeout(()=>toast('Яндекс Диск не подключён: доступ не разрешён'),900);return}
+  if(st.state&&p.get('state')!==st.state)return;
+  const exp=+p.get('expires_in')||0;
+  yaSet({t:p.get('access_token'),exp:exp?Date.now()+exp*1000:null,state:null,sig:null,rev:null});
+  setTimeout(()=>toast('Яндекс Диск подключён'),900);
+})();
+setInterval(()=>{if(document.visibilityState==='visible')yaKick(100)},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')yaKick(800)});
+setTimeout(()=>{if(!LOCKED)yaKick(500)},2500);
+/* Раздел в Настройках. */
+function yaSum(){if(!yaOn())return 'не подключено';if(YA_NEED)return 'нужен код';return YA_ERR?'нет связи':'подключено'}
+function yaSection(){
+  const on=yaOn(),st=yaGet();
+  return `<details class="sec" id="ya-sec"><summary>Телефон и компьютер <span class="sumv ${on&&!YA_ERR&&!YA_NEED?'':'warn'}">${yaSum()}</span></summary>
+    ${on?`<p class="lead" id="ya-st">${esc(YA_MSG||(st.at?'Последний обмен в '+hhmmL(st.at)+'.':'Обмен начнётся через несколько секунд.'))}</p>
+      <div class="row" style="margin-top:8px">${YA_NEED?'<button class="btn mini" data-act="yaAsk">Принять записи с Диска</button>':'<button class="btn mini" data-act="yaNow">Обменяться сейчас</button>'}
+        <button class="btn mini ghost" data-act="yaOff">Отключить</button></div>`
+    :`<p class="lead">Записи будут одинаковыми на телефоне и на компьютере. Они хранятся на вашем Яндекс Диске, закрытые кодом входа.</p>
+      <p class="sub">Подключите Диск на каждом устройстве, где ведёте кабинет.</p>
+      <div class="row" style="margin-top:8px"><button class="btn mini" data-act="yaConnect">Подключить Яндекс Диск</button></div>
+      ${YA_ID?`<details class="hlp" style="margin-top:10px"><summary>Если после входа в Яндекс кабинет не открылся</summary>
+        <p>Откройте <a href="${yaManualUrl()}" target="_blank" rel="noopener">страницу Яндекса</a>, разрешите доступ и скопируйте показанный код. Вставьте его сюда.</p>
+        <div class="row"><input id="ya-tok" type="text" autocomplete="off" spellcheck="false" placeholder="код со страницы Яндекса" style="flex:1;min-width:0"><button class="btn mini" data-act="yaPaste">Готово</button></div></details>`:''}`}
+  </details>`}
 /* Проверка хранилища при запуске: закрытая база в IndexedDB главнее того, что лежит в localStorage.
    Так прежняя редакция кабинета, записавшая поверх метки пример, не лишает доступа к настоящим записям. */
 /* Браузер может стереть данные сайта при нехватке места. Просим не трогать записи кабинета. */
