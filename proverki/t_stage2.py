@@ -6,7 +6,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(args=['--no-proxy-server']); ctx=b.new_context(viewport={'width':1300,'height':850})
     pg=ctx.new_page(); errs=[]; pg.on('pageerror',lambda e:errs.append(str(e))); ans={'v':False}
     pg.on('dialog',lambda d:d.accept() if ans['v'] else d.dismiss())
-    pg.goto(U); pg.wait_for_timeout(900); pg.get_by_role('button',name='Выбрать').first.click(); pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';b.hidden=true;document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(300); pg.wait_for_timeout(300)
+    pg.clock.install(time="2026-10-21T09:00:00"); pg.goto(U); pg.wait_for_timeout(900); pg.get_by_role('button',name='Выбрать').first.click(); pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='demoOn';b.hidden=true;document.body.appendChild(b);b.click();b.remove()})()"); pg.wait_for_timeout(300); pg.wait_for_timeout(300)
     # 23: без ссылки на комнату кабинет просит её, зарубежная площадка не подставляется
     pg.evaluate("(()=>{const o=document.getElementById('tmpmeet');if(o)o.remove();const v=S.sessions.filter(v=>v.fmt==='онлайн'&&meetOpen(v)&&!needMark(v)).sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1)[0];const b=document.createElement('button');b.dataset.act='openMeet';b.dataset.id=v.id;b.id='tmpmeet';b.textContent='x';document.body.appendChild(b)})()"); pg.click('#tmpmeet'); pg.wait_for_timeout(300)
     ok('без ссылки открывается окно ввода ссылки',pg.locator('#room-l').count()==1)
