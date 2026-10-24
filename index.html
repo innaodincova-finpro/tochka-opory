@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<!--
+  Точка опоры — кабинет психолога. Автор методики и содержания — Одинцова И.В. © 2026. Все права защищены. Копирование, распространение и коммерческое использование без письменного согласия автора не допускаются.
+-->
 <meta charset="utf-8">
+<meta name="author" content="Одинцова И.В.">
+<meta name="copyright" content="© 2026 Одинцова И.В. Все права защищены.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Точка опоры — кабинет специалиста</title>
 <meta name="theme-color" content="#28425C">
@@ -1048,7 +1053,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 23.10.2026 · в43';
+const APP_VER='редакция от 24.10.2026 · в44';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -2642,6 +2647,7 @@ function vHelp(){
       <p>Для клиента до 18 лет укажите дату рождения: кабинет напомнит о согласии законного представителя и о дне совершеннолетия.</p>
       <p class="sub">Справочно, не юридическая консультация.</p></details>
     <p class="sub" style="margin-top:12px">Версия кабинета: ${APP_VER}</p>
+    <p class="sub" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line,#DCE4EC);line-height:1.5">Точка опоры — кабинет психолога. Автор методики и содержания — Одинцова И.В. © 2026. Все права защищены. Копирование, распространение и коммерческое использование без письменного согласия автора не допускаются.</p>
   </div>`;
 }
 
