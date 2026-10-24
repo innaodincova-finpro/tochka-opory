@@ -327,6 +327,9 @@ details.fs{border-top:1px solid var(--line2);padding:8px 0}details.fs>summary{cu
 #updbar button{background:#fff;color:var(--panel);border:0;border-radius:8px;padding:5px 12px;font-weight:600;cursor:pointer}
 #errbar button{background:#fff;color:var(--warn);border:0;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer}
 #errbar[hidden],#demobar[hidden],#lockscr[hidden],#badscr[hidden],#robar[hidden],.lockdots[hidden],.lockpad[hidden],.lockrec[hidden]{display:none}
+#accscr{position:fixed;inset:0;z-index:520;background:var(--panel);color:#EAF1F7;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto}
+#accscr[hidden]{display:none}
+#accscr .acccopy{font-size:11.5px;line-height:1.5;color:#8FA5BA;margin-top:22px;border-top:1px solid rgba(255,255,255,.15);padding-top:12px}
 #badscr{position:fixed;inset:0;z-index:510;background:var(--panel);color:#EAF1F7;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .badbtns{display:grid;gap:10px;margin:18px 0 6px}
 .badbtns button,.lockrec button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#EAF1F7;border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;text-align:left}
@@ -503,6 +506,22 @@ html[data-theme="dark"] .sheet .sh{color:var(--ink)}
       <button type="button" class="locklink" id="lock-forgot" hidden>Забыли код?</button>
       <button type="button" class="locklink" id="lock-cancel" hidden>Отмена</button>
     </div>
+  </div>
+</div>
+<div id="accscr" hidden>
+  <div class="lockbox">
+    <div class="lockbrand"><b>Точка опоры</b><span>кабинет специалиста</span></div>
+    <h2 id="acc-title" style="margin-top:30px">Введите код доступа</h2>
+    <p class="locknote" id="acc-note" style="font-size:14px;color:#EAF1F7">Код выдаёт автор кабинета. На этом устройстве его нужно ввести один раз.</p>
+    <div class="lockrec" id="acc-form">
+      <input id="acc-in" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" aria-label="Код доступа">
+      <button type="button" id="acc-go">Войти</button>
+    </div>
+    <div class="badbtns" id="acc-save" hidden>
+      <button type="button" id="acc-dl">Скачать свои записи файлом</button>
+    </div>
+    <p class="locknote" id="acc-msg"></p>
+    <p class="acccopy">Точка опоры — кабинет психолога. Автор методики и содержания — Одинцова И.В. © 2026. Все права защищены.</p>
   </div>
 </div>
 <div id="badscr" hidden>
@@ -1053,7 +1072,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 24.10.2026 · в44';
+const APP_VER='редакция от 24.10.2026 · в45';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -3778,7 +3797,7 @@ document.getElementById('lock-cancel').addEventListener('click',lockCancel);
 document.getElementById('lock-rec-go').addEventListener('click',recGo);
 document.getElementById('lock-rec-in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();recGo()}});
 document.addEventListener('keydown',e=>{
-  if(document.getElementById('lockscr').hidden)return;
+  if(document.getElementById('lockscr').hidden||!document.getElementById('accscr').hidden)return;
   if(e.key==='Escape'){e.preventDefault();lockCancel();return}
   if(RECMODE)return;
   if(/^[0-9]$/.test(e.key)){e.preventDefault();pinPress(e.key)}
@@ -3907,7 +3926,7 @@ async function yaUp(text){const r=await yaFetch('/resources/upload'+yaQ()+'&over
   const h=(await r.json()).href;const f=await fetch(h,{method:'PUT',body:text});if(!f.ok&&f.status!==201&&f.status!==202)throw new Error('net')}
 async function yaOpen(file,dek){return openData({iv:unb64(file.data.iv),ct:unb64(file.data.ct)},dek)}
 function yaStatus(t,err){YA_MSG=t;YA_ERR=!!err;const el=document.getElementById('ya-st');if(el){el.textContent=t;el.classList.toggle('warn',!!err)}}
-function yaReady(){return yaOn()&&!BAD&&!RO&&!BOOT&&!(S&&S.demo)}
+function yaReady(){return yaOn()&&!BAD&&!RO&&!BOOT&&!(S&&S.demo)&&!ACC_SHUT}
 function yaSoon(){if(!yaOn())return;clearTimeout(YA_TIMER);YA_TIMER=setTimeout(()=>yaSync(),4000)}
 function yaKick(ms){if(!yaOn())return;clearTimeout(YA_TIMER);YA_TIMER=setTimeout(()=>yaSync(),ms||300)}
 function yaBlocked(){const m=document.getElementById('modal');return LOCKED||DIRTY||(m&&!m.hidden)}
@@ -4035,6 +4054,68 @@ function yaSection(){
         <p>Откройте <a href="${yaManualUrl()}" target="_blank" rel="noopener">страницу Яндекса</a>, разрешите доступ и скопируйте показанный код. Вставьте его сюда.</p>
         <div class="row"><input id="ya-tok" type="text" autocomplete="off" spellcheck="false" placeholder="код со страницы Яндекса" style="flex:1;min-width:0"><button class="btn mini" data-act="yaPaste">Готово</button></div></details>`:''}`}
   </details>`}
+/* ── Доступ по коду автора ──
+   Каждый психолог получает от автора личный код. Код проверяется через интернет и работает
+   не больше чем на трёх устройствах. На проверку уходят только код и случайная метка устройства —
+   сведений о клиентах там нет. Без связи кабинет работает 14 дней с последней удачной проверки.
+   Если доступ закрыт, записи не стираются: их можно скачать файлом. */
+var ACC_URL='https://qughzpirpovjwxjttcyv.supabase.co/functions/v1/opora-access';
+var ACC_GRACE=14*864e5,ACC_SHUT=false,ACC_BUSY=false;
+function accSkip(){return /^(127\.0\.0\.1|localhost)$/.test(location.hostname)&&!/[?&]gate=1/.test(location.search)}
+function accGet(){try{return JSON.parse(localStorage.getItem(KEY+'-acc'))||{}}catch(e){return {}}}
+function accPut(o){try{localStorage.setItem(KEY+'-acc',JSON.stringify(Object.assign(accGet(),o)))}catch(e){}}
+function accDev(){let d=null;try{d=localStorage.getItem(KEY+'-dev')}catch(e){}
+  if(!d){d=Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>x.toString(16).padStart(2,'0')).join('');try{localStorage.setItem(KEY+'-dev',d)}catch(e){}}return d}
+function accKind(){const u=navigator.userAgent||'';const k=/iPhone|Android.+Mobile/.test(u)?'телефон':/iPad|Android/.test(u)?'планшет':'компьютер';
+  const st=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  const b=/YaBrowser/.test(u)?'Яндекс Браузер':/Edg\//.test(u)?'Edge':/Chrome|CriOS/.test(u)?'Chrome':/Safari/.test(u)?'Safari':/Firefox/.test(u)?'Firefox':'браузер';
+  return k+', '+(st?'значок на экране':b)}
+const ACC_TXT={bad:'Такого кода нет. Проверьте код или обратитесь к автору кабинета.',
+  off:'Доступ по этому коду закрыт. Обратитесь к автору кабинета.',
+  limit:'Этот код уже используется на других устройствах. Обратитесь к автору кабинета.',
+  net:'Нет связи с интернетом. Проверьте подключение и нажмите «Войти» ещё раз.',
+  old:'Кабинет давно не проверял доступ. Подключитесь к интернету и нажмите «Войти».'};
+function accShow(title,note,blocked){
+  ACC_SHUT=true;const sc=document.getElementById('accscr');sc.hidden=false;
+  document.getElementById('acc-title').textContent=title;
+  document.getElementById('acc-note').textContent=note;
+  let has=false;try{has=!!localStorage.getItem(KEY)}catch(e){}
+  document.getElementById('acc-save').hidden=!(blocked&&has);
+  const a=accGet(),i=document.getElementById('acc-in');if(a.code&&!i.value)i.value=a.code;
+  setTimeout(()=>{try{i.focus()}catch(e){}},60)}
+function accHide(){ACC_SHUT=false;document.getElementById('accscr').hidden=true;document.getElementById('acc-msg').textContent='';yaKick(1500)}
+async function accAsk(code){
+  const r=await fetch(ACC_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'check',code,device:accDev(),kind:accKind()})});
+  const j=await r.json();return j}
+async function accEnter(){
+  if(ACC_BUSY)return;const code=document.getElementById('acc-in').value.trim(),m=document.getElementById('acc-msg');
+  if(String(code).replace(/[^A-Za-z0-9]/g,'').length!==8){m.textContent='Код состоит из 8 знаков, например ABCD-2345.';return}
+  ACC_BUSY=true;m.textContent='Проверяю код…';
+  try{const j=await accAsk(code);
+    if(j&&j.ok){accPut({code:j.code,ok:new Date().toISOString(),state:'ok'});accHide();return}
+    const why=(j&&j.reason)||'bad';accPut({state:why==='bad'?'':why});m.textContent=ACC_TXT[why]||ACC_TXT.bad}
+  catch(e){m.textContent=ACC_TXT.net}
+  finally{ACC_BUSY=false}}
+async function accRecheck(){
+  const a=accGet();if(!a.code)return;
+  try{const j=await accAsk(a.code);
+    if(j&&j.ok){accPut({ok:new Date().toISOString(),state:'ok'});if(ACC_SHUT)accHide();return}
+    const why=(j&&j.reason)||'bad';accPut({state:why});
+    accShow('Доступ закрыт',ACC_TXT[why]||ACC_TXT.bad,true)}
+  catch(e){if(!a.ok||Date.now()-Date.parse(a.ok)>ACC_GRACE)accShow('Нужна проверка доступа',ACC_TXT.old,true)}}
+function accStart(){
+  if(accSkip())return;
+  const a=accGet();
+  if(!a.code){accShow('Введите код доступа','Код выдаёт автор кабинета. На этом устройстве его нужно ввести один раз.',false);return}
+  if(a.state&&a.state!=='ok'){accShow('Доступ закрыт',ACC_TXT[a.state]||ACC_TXT.bad,true)}
+  else if(!a.ok||Date.now()-Date.parse(a.ok)>ACC_GRACE){accShow('Нужна проверка доступа',ACC_TXT.old,true)}
+  accRecheck()}
+document.getElementById('acc-go').addEventListener('click',accEnter);
+document.getElementById('acc-in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();accEnter()}});
+document.getElementById('acc-dl').addEventListener('click',()=>{badDownload();document.getElementById('acc-msg').textContent='Файл сохранён. Его можно открыть кнопкой «Загрузить копию», когда доступ откроют.'});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!accSkip()){const a=accGet();if(a.code&&(!a.ok||Date.now()-Date.parse(a.ok)>36e5))accRecheck()}});
+accStart();
 /* Проверка хранилища при запуске: закрытая база в IndexedDB главнее того, что лежит в localStorage.
    Так прежняя редакция кабинета, записавшая поверх метки пример, не лишает доступа к настоящим записям. */
 /* Браузер может стереть данные сайта при нехватке места. Просим не трогать записи кабинета. */
