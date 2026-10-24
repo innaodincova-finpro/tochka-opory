@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<!--
+  Точка опоры — кабинет психолога. Автор методики и содержания — Одинцова И.В. © 2026. Все права защищены.
+  Копирование, распространение и коммерческое использование без письменного согласия автора не допускаются.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="author" content="Одинцова И.В.">
+<title>Точка опоры — управление доступом</title>
+<link rel="icon" href="favicon.png?v=20">
+<style>
+@font-face{font-family:'Spectral';font-weight:600;src:url(fonts/spectral-cyrillic-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Golos Text';font-weight:400;src:url(fonts/golos-text-cyrillic-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Golos Text';font-weight:600;src:url(fonts/golos-text-cyrillic-600-normal.woff2) format('woff2')}
+:root{--ink:#22303F;--ink2:#4A5D71;--ink3:#7C8DA0;--line:#D9E2EA;--bg:#F2F5F8;--card:#fff;--panel:#28425C;--ochre:#A8702F;--ok:#2E7D5B;--warn:#B4553F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Golos Text',system-ui,sans-serif}
+header{background:var(--panel);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+header b{font:600 20px 'Spectral',serif}header span{opacity:.7;font-size:13px}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{font:600 22px 'Spectral',serif;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-width:0;flex:1}
+button{font:inherit;cursor:pointer;border-radius:10px;padding:9px 14px;border:1px solid var(--panel);background:var(--panel);color:#fff}
+button.ghost{background:#fff;color:var(--panel)}
+button.mini{padding:5px 10px;font-size:13px}
+button.warn{border-color:var(--warn);color:var(--warn);background:#fff}
+.sub{color:var(--ink3);font-size:13px}
+.code{font:600 26px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;color:var(--panel)}
+.new{background:#F6F1E8;border:1px solid #E8D7BC;border-radius:12px;padding:14px;margin-top:12px}
+.item{border-top:1px solid var(--line);padding:12px 0;display:grid;grid-template-columns:1fr auto;gap:8px 14px}
+.item:first-child{border-top:0}
+.nm{font-weight:600}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.tag{display:inline-block;font-size:12px;border-radius:20px;padding:1px 9px;margin-left:6px}
+.tag.on{background:#E3F2EA;color:var(--ok)}.tag.off{background:#F7E4DF;color:var(--warn)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-content:flex-start}
+.dev{font-size:13px;color:var(--ink2)}
+.msg{color:var(--warn);font-size:14px;min-height:20px}
+textarea{width:100%;font:14px/1.45 'Golos Text',system-ui,sans-serif;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:150px;margin-top:8px}
+.copy{font-size:11.5px;color:var(--ink3);text-align:center;padding:10px}
+@media(max-width:640px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<header><b>Точка опоры</b><span>управление доступом психологов</span></header>
+<main>
+  <div class="card" id="login">
+    <h2>Вход для автора</h2>
+    <p class="sub">Введите пароль страницы управления. Он хранится только у вас.</p>
+    <div class="row"><input id="pw" type="password" autocomplete="current-password" placeholder="XXXX-XXXX-XXXX-XXXX"><button id="go">Войти</button></div>
+    <p class="msg" id="lmsg"></p>
+  </div>
+  <div id="app" hidden>
+    <div class="card">
+      <h2>Выдать код</h2>
+      <p class="sub">Впишите имя психолога. Имя видите только вы: оно хранится закрытым вашим паролем.</p>
+      <div class="row"><input id="nm" placeholder="Имя и фамилия психолога"><button id="issue">Выдать код</button></div>
+      <div class="new" id="new" hidden>
+        <div class="sub">Код для <b id="new-nm"></b>:</div>
+        <div class="code" id="new-code"></div>
+        <div class="sub" style="margin-top:8px">Готовое сообщение для психолога:</div>
+        <textarea id="new-msg" readonly></textarea>
+        <div class="row" style="margin-top:8px"><button class="ghost" id="copy">Скопировать сообщение</button></div>
+      </div>
+      <p class="msg" id="imsg"></p>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Психологи</h2><button class="ghost mini" id="reload">Обновить список</button></div>
+      <p class="sub" id="sum"></p>
+      <div id="list"></div>
+    </div>
+    <div class="card">
+      <h2>Неудачные попытки входа</h2>
+      <p class="sub">Кто пытался войти с неверным, отключённым или чужим кодом. Последние 50.</p>
+      <div id="att"></div>
+    </div>
+  </div>
+  <p class="copy">Точка опоры — кабинет психолога. Автор методики и содержания — Одинцова И.В. © 2026. Все права защищены.</p>
+</main>
+<script>
+const URL_FN='https://qughzpirpovjwxjttcyv.supabase.co/functions/v1/opora-access';
+const SITE='https://innaodincova-finpro.github.io/tochka-opory/';
+let PW='',DATA=null;
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u)));
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function key(salt){const k=await crypto.subtle.importKey('raw',te.encode('opora-label|'+PW),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function seal(t){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(salt),te.encode(t));return 'v1.'+b64(salt)+'.'+b64(iv)+'.'+b64(ct)}
+async function open_(s){try{const [v,a,b,c]=String(s).split('.');if(v!=='v1')return s||'—';
+  return td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(b)},await key(unb64(a)),unb64(c)))}catch(e){return '(имя не читается)'}}
+async function call(o){const r=await fetch(URL_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({pass:PW},o))});
+  const j=await r.json().catch(()=>({}));if(r.status===403)throw new Error('pass');if(!j.ok)throw new Error(j.reason||'err');return j}
+const dt=s=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})};
+const ago=s=>{if(!s)return 'ещё не входил(а)';const m=(Date.now()-Date.parse(s))/6e4;return m<60?'сегодня':m<1440?'сегодня, '+dt(s).split(' ')[1]:Math.floor(m/1440)+' дн. назад'};
+async function load(){
+  const j=await call({action:'list'});DATA=j;
+  const names={};for(const c of j.codes)names[c.code]=await open_(c.label_enc);
+  const on=j.codes.filter(c=>!c.disabled).length;
+  $('sum').textContent='Выдано кодов: '+j.codes.length+'. Работают: '+on+'. Отключены: '+(j.codes.length-on)+'.';
+  $('list').innerHTML=j.codes.length?j.codes.map(c=>{
+    const ds=j.devices.filter(d=>d.code===c.code).sort((a,b)=>a.last_at<b.last_at?1:-1);
+    const last=ds[0]&&ds[0].last_at;
+    return `<div class="item"><div>
+      <div><span class="nm">${esc(names[c.code])}</span><span class="tag ${c.disabled?'off':'on'}">${c.disabled?'отключён':'работает'}</span></div>
+      <div class="sub">Код <span class="mono">${esc(c.code)}</span> · выдан ${dt(c.created_at).split(' ')[0]} · последний вход: ${ago(last)}</div>
+      <div class="dev">Устройства: ${ds.length} из ${c.max_devices}${ds.length?' — '+ds.map(d=>esc(d.kind||'устройство')+' ('+ago(d.last_at)+')').join('; '):''}</div>
+    </div><div class="acts">
+      ${c.disabled?`<button class="mini" data-a="enable" data-c="${c.code}">Включить</button>`:`<button class="mini warn" data-a="disable" data-c="${c.code}">Отключить</button>`}
+      <button class="mini ghost" data-a="reset" data-c="${c.code}">Сбросить устройства</button>
+      <button class="mini ghost" data-a="msg" data-c="${c.code}">Сообщение</button>
+      <button class="mini ghost" data-a="delete" data-c="${c.code}">Удалить</button>
+    </div></div>`}).join(''):'<p class="sub">Кодов пока нет. Выдайте первый код выше.</p>';
+  $('list').dataset.names=JSON.stringify(names);
+  $('att').innerHTML=j.attempts.length?j.attempts.map(a=>`<div class="item"><div><span class="mono">${esc(a.code)}</span> — ${esc(a.result)}<div class="sub">${dt(a.at)} · ${esc(a.kind||'')}${names[a.code]?' · '+esc(names[a.code]):''}</div></div></div>`).join(''):'<p class="sub">Неудачных попыток нет.</p>';
+}
+function msgFor(name,code){return `Здравствуйте${name?', '+name.split(' ')[0]:''}!
+
+Высылаю доступ к кабинету психолога «Точка опоры» для пробной работы.
+Ссылка: ${SITE}
+Ваш личный код: ${code}
+
+Откройте ссылку и введите код. Код работает на ваших устройствах — телефоне и компьютере. Пожалуйста, не передавайте его другим людям.
+Инструкция — в приложенной презентации и видео. Начните с кнопки «Посмотреть на примере».
+
+Буду благодарна за замечания: что неудобно, чего не хватает, что лишнее.`}
+function showNew(name,code){$('new').hidden=false;$('new-nm').textContent=name||'—';$('new-code').textContent=code;$('new-msg').value=msgFor(name,code);$('new').scrollIntoView({behavior:'smooth',block:'center'})}
+$('go').onclick=async()=>{PW=$('pw').value.trim().toUpperCase();$('lmsg').textContent='Проверяю…';
+  try{await load();$('login').hidden=true;$('app').hidden=false;try{sessionStorage.setItem('opora-pw',PW)}catch(e){}}
+  catch(e){$('lmsg').textContent=e.message==='pass'?'Пароль не подошёл.':'Нет связи. Проверьте интернет и попробуйте ещё раз.'}};
+$('pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click()});
+$('issue').onclick=async()=>{const n=$('nm').value.trim();if(!n){$('imsg').textContent='Впишите имя психолога.';return}
+  $('imsg').textContent='';try{const j=await call({action:'issue',label:await seal(n)});$('nm').value='';showNew(n,j.code);await load()}
+  catch(e){$('imsg').textContent='Код выдать не удалось. Попробуйте ещё раз.'}};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('new-msg').value);$('copy').textContent='Скопировано'}catch(e){$('new-msg').select();document.execCommand('copy');$('copy').textContent='Скопировано'}setTimeout(()=>$('copy').textContent='Скопировать сообщение',2000)};
+$('reload').onclick=()=>load().catch(()=>{});
+$('list').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a,c=b.dataset.c,names=JSON.parse($('list').dataset.names||'{}');
+  if(a==='msg'){showNew(names[c],c);return}
+  const ask={disable:'Отключить доступ для «'+names[c]+'»? Кабинет у этого психолога закроется при следующей проверке (обычно при открытии). Его записи не пропадут.',
+    reset:'Сбросить устройства для «'+names[c]+'»? Психологу нужно будет снова ввести код на своих устройствах.',
+    delete:'Удалить код «'+c+'» насовсем? Психолог больше не сможет войти, вернуть код нельзя. Если доступ нужно только приостановить — нажмите «Отключить».'}[a];
+  if(ask&&!confirm(ask))return;
+  try{await call({action:a,code:c});await load()}catch(err){alert('Не получилось. Проверьте интернет и попробуйте ещё раз.')}};
+try{const p=sessionStorage.getItem('opora-pw');if(p){$('pw').value=p;$('go').click()}}catch(e){}
+</script>
+</body>
+</html>
