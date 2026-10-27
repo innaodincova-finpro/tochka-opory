@@ -64,6 +64,22 @@ with sync_playwright() as p:
         q.fill('#acc-in','ABCD-2345');q.click('#acc-go');q.wait_for_timeout(700)
         last=q.text_content('#acc-msg');hid=q.evaluate("document.getElementById('accscr').hidden");c2.close()
     ok('четвёртое устройство с тем же кодом не пускается','других устройствах' in last and not hid)
+    # личная ссылка
+    c3=b.new_context();c3.route('https://qughzpirpovjwxjttcyv.supabase.co/**',fn);q=c3.new_page();q.on('pageerror',lambda e:errs.append(str(e)))
+    ST['codes']['LINK-2345']={'disabled':False,'label':'','devs':[]}
+    q.goto('http://127.0.0.1:8765/v11/index.html?gate=1&k=LINK-2345');q.wait_for_timeout(1500)
+    ok('личная ссылка открывает кабинет без ввода кода',q.evaluate("document.getElementById('accscr').hidden") and 'k=' not in q.url)
+    q.reload();q.wait_for_timeout(1200);ok('после перезапуска по обычной ссылке тоже открыто',q.evaluate("document.getElementById('accscr').hidden"));c3.close()
+    # iPhone в Safari
+    c4=b.new_context(user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',viewport={'width':390,'height':844})
+    c4.route('https://qughzpirpovjwxjttcyv.supabase.co/**',fn);q=c4.new_page();q.on('pageerror',lambda e:errs.append(str(e)))
+    ST['codes']['IPHO-2345']={'disabled':False,'label':'','devs':[]}
+    q.goto('http://127.0.0.1:8765/v11/index.html?gate=1&k=IPHO-2345');q.wait_for_timeout(1200)
+    ok('iPhone в Safari: сначала подсказка про экран «Домой» с кодом','экран' in q.text_content('#acc-note') and 'IPHO-2345' in q.text_content('#acc-note') and len(ST['codes']['IPHO-2345']['devs'])==0)
+    q.screenshot(path='../ios_hint.png')
+    q.click('#acc-safari');q.wait_for_timeout(1200)
+    ok('«Продолжить в Safari» открывает форму кода',not q.evaluate("document.getElementById('acc-form').hidden"))
+    c4.close()
     ok('ошибок в коде кабинета нет',not errs)
     # страница управления
     a=ctx.new_page();aerr=[];a.on('pageerror',lambda e:aerr.append(str(e)));a.on('dialog',lambda d:d.accept())
@@ -73,7 +89,7 @@ with sync_playwright() as p:
     a.fill('#pw','pass-word-test-0000');a.click('#go');a.wait_for_timeout(1200)
     ok('управление: свой пароль пускает, виден список',not a.evaluate("document.getElementById('app').hidden") and 'ABCD-2345' in a.text_content('#list'))
     a.fill('#nm','Мария Иванова');a.click('#issue');a.wait_for_timeout(2500)
-    ok('выдан код и готово сообщение',a.text_content('#new-code')=='WXYZ-6789' and 'WXYZ-6789' in a.input_value('#new-msg') and 'innaodincova-finpro.github.io/tochka-opory' in a.input_value('#new-msg'))
+    ok('выдан код и готово сообщение',a.text_content('#new-code')=='WXYZ-6789' and '?k=WXYZ-6789' in a.input_value('#new-msg') and 'innaodincova-finpro.github.io/tochka-opory' in a.input_value('#new-msg'))
     ok('имя на сервер уходит закрытым','Мария' not in ST['codes']['WXYZ-6789']['label'] and ST['codes']['WXYZ-6789']['label'].startswith('v1.'))
     ok('в списке имя читается','Мария Иванова' in a.text_content('#list'))
     a.click('button[data-a=disable][data-c="WXYZ-6789"]');a.wait_for_timeout(1500)

@@ -65,6 +65,7 @@ textarea{width:100%;font:14px/1.45 'Golos Text',system-ui,sans-serif;border:1px 
       <div class="new" id="new" hidden>
         <div class="sub">Код для <b id="new-nm"></b>:</div>
         <div class="code" id="new-code"></div>
+        <div class="sub" style="margin-top:8px">Личная ссылка: <span class="mono" id="new-link"></span></div>
         <div class="sub" style="margin-top:8px">Готовое сообщение для психолога:</div>
         <textarea id="new-msg" readonly></textarea>
         <div class="row" style="margin-top:8px"><button class="ghost" id="copy">Скопировать сообщение</button></div>
@@ -127,14 +128,16 @@ async function load(){
 function msgFor(name,code){return `Здравствуйте${name?', '+name.split(' ')[0]:''}!
 
 Высылаю доступ к кабинету психолога «Точка опоры» для пробной работы.
-Ссылка: ${SITE}
-Ваш личный код: ${code}
+Ваша личная ссылка: ${SITE}?k=${code}
 
-Откройте ссылку и введите код. Код работает на ваших устройствах — телефоне и компьютере. Пожалуйста, не передавайте его другим людям.
+Откройте ссылку — кабинет откроется сам, код доступа уже в ней. Если кабинет всё же попросит код, введите: ${code}
+Ссылка и код работают только на ваших устройствах — телефоне и компьютере. Пожалуйста, не передавайте их другим людям.
+
+На iPhone откройте ссылку в Safari: кабинет подскажет, как поставить его значок на экран «Домой».
 Инструкция — в приложенной презентации и видео. Начните с кнопки «Посмотреть на примере».
 
 Буду благодарна за замечания: что неудобно, чего не хватает, что лишнее.`}
-function showNew(name,code){$('new').hidden=false;$('new-nm').textContent=name||'—';$('new-code').textContent=code;$('new-msg').value=msgFor(name,code);$('new').scrollIntoView({behavior:'smooth',block:'center'})}
+function showNew(name,code){$('new').hidden=false;$('new-nm').textContent=name||'—';$('new-code').textContent=code;$('new-link').textContent=SITE+'?k='+code;$('new-msg').value=msgFor(name,code);$('new').scrollIntoView({behavior:'smooth',block:'center'})}
 $('go').onclick=async()=>{PW=$('pw').value.trim().toUpperCase();$('lmsg').textContent='Проверяю…';
   try{await load();$('login').hidden=true;$('app').hidden=false;try{sessionStorage.setItem('opora-pw',PW)}catch(e){}}
   catch(e){$('lmsg').textContent=e.message==='pass'?'Пароль не подошёл.':'Нет связи. Проверьте интернет и попробуйте ещё раз.'}};

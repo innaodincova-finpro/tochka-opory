@@ -1072,7 +1072,7 @@ function seed(){
    пока записи не читаются (BAD) и в окне только для просмотра (RO) — запись запрещена:
    иначе пустая заготовка затёрла бы настоящие записи. */
 const FMT=2;
-const APP_VER='редакция от 27.10.2026 · в46';
+const APP_VER='редакция от 27.10.2026 · в47';
 const IDB_NAME='tochka-opory',IDB_STORE='v';
 const KDF_PIN=600000,KDF_REC=200000;
 let BAD_IO=false,ENC_KEEP=null,ENC=null,ENC_ON=false,ENC_WAIT=false,BOOT=true,BOOT_SAVE=false,BAD=null,RO=false,PUB=null,LEGACY=false;
@@ -3048,7 +3048,7 @@ document.addEventListener('click',e=>{
   const A={
     tab:()=>go(el.dataset.t),
     closeModal:closeModal,
-    yaConnect:()=>yaConnect(),yaNow:()=>{yaStatus('Идёт обмен…');yaKick(0)},yaOff:()=>yaOff(),yaPaste:()=>yaPaste(),yaCode:()=>yaCode(),yaAsk:()=>yaAsk(),
+    yaConnect:()=>yaConnect(),yaNow:()=>{yaStatus('Идёт обмен…');yaKick(0)},yaOff:()=>yaOff(),yaPaste:()=>yaPaste(),yaCode:()=>yaCode(),yaAsk:()=>yaAsk(),yaPin:()=>{closeModal();A.setPin()},
     theme:()=>{const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
       document.documentElement.setAttribute('data-theme',cur);try{localStorage.setItem(KEY+'-theme',cur)}catch(e){}},
     anon:()=>{S.ui.anon=!S.ui.anon;closeModal();save();render();
@@ -3882,7 +3882,7 @@ window.addEventListener('beforeunload',e=>{
 var YA_ID='d4e30095be494c95bf6f8148b70ade53';                         /* ClientID приложения в Яндекс ID */
 var YA_FILE='app:/tochka-opory.json';
 var YA_API='https://cloud-api.yandex.net/v1/disk';
-var YA_ADOPT=false,YA_BUSY=false,YA_TIMER=null,YA_NEED=null,YA_MSG='',YA_ERR=false,YA_TICK=null;
+var YA_PINASK=false,YA_ADOPT=false,YA_BUSY=false,YA_TIMER=null,YA_NEED=null,YA_MSG='',YA_ERR=false,YA_TICK=null;
 function yaGet(){try{return JSON.parse(localStorage.getItem(KEY+'-ya'))||{}}catch(e){return {}}}
 function yaSet(o){try{const st=Object.assign(yaGet(),o);Object.keys(st).forEach(k=>{if(st[k]==null)delete st[k]});localStorage.setItem(KEY+'-ya',JSON.stringify(st))}catch(e){}}
 function yaOn(){const st=yaGet();return !!(st.t&&(!st.exp||st.exp>Date.now()))}
@@ -3940,7 +3940,11 @@ async function yaSync(){
     const meta=await yaMeta();
     if(!ENC_ON||!ENC){
       if(meta){const f=await yaDown();if(f&&f.encV===2){YA_NEED=f;yaAsk();}}
-      else yaStatus('Задайте код входа: записи отправляются на Диск только закрытыми.',true);
+      else{yaStatus('Последний шаг: придумайте код входа. Записи уходят на Диск только закрытыми.',true);
+        if(!YA_PINASK&&!yaBlocked()){YA_PINASK=true;
+          modal('Последний шаг',`<p class="lead">Яндекс Диск подключён. Придумайте код входа из 6 цифр — им будут закрыты записи на этом устройстве и на Диске.</p>
+            <p class="sub">Этот же код вы введёте на втором устройстве, чтобы получить свои записи.</p>`,
+            '<button class="btn ghost" data-act="closeModal">Позже</button><button class="btn" data-act="yaPin">Придумать код</button>')}}
       return}
     let remoteSig=st.sig||null,rev=st.rev||null;
     if(meta&&meta.md5!==st.rev){
@@ -4104,8 +4108,29 @@ async function accRecheck(){
     const why=(j&&j.reason)||'bad';accPut({state:why});
     accShow('Доступ закрыт',ACC_TXT[why]||ACC_TXT.bad,true)}
   catch(e){if(!a.ok||Date.now()-Date.parse(a.ok)>ACC_GRACE)accShow('Нужна проверка доступа',ACC_TXT.old,true)}}
+function accLinkCode(){const m=/[?&]k=([A-Za-z0-9-]{8,12})/.exec(location.search);return m?m[1]:''}
+function accIOSBrowser(){const u=navigator.userAgent||'';const ios=/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);
+  const st=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;return ios&&!st}
+/* iPhone: кабинет в Safari и кабинет со значка — два разных места. Поэтому сначала — значок. */
+function accIOSHint(code){
+  ACC_SHUT=true;const sc=document.getElementById('accscr');sc.hidden=false;
+  document.getElementById('acc-title').textContent='Установите кабинет на iPhone';
+  document.getElementById('acc-note').innerHTML='Так кабинет будет открываться одним нажатием и работать без браузера.'+
+    '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.6"><li>Внизу Safari нажмите «Поделиться» — квадрат со стрелкой вверх.</li><li>Выберите «На экран „Домой“» и нажмите «Добавить».</li><li>Откройте кабинет значком на экране «Домой».</li></ol>'+
+    (code?'<p style="margin:12px 0 0">При первом открытии значка кабинет попросит код доступа. Ваш код: <b class="mono" style="font-size:18px;letter-spacing:.06em;white-space:nowrap">'+esc(code.toUpperCase())+'</b></p>':'');
+  document.getElementById('acc-form').hidden=true;document.getElementById('acc-save').hidden=true;
+  let b=document.getElementById('acc-safari');
+  if(!b){b=document.createElement('button');b.type='button';b.id='acc-safari';b.className='locklink';b.textContent='Продолжить в Safari';
+    b.addEventListener('click',()=>{try{sessionStorage.setItem(KEY+'-iosok','1')}catch(e){}document.getElementById('acc-form').hidden=false;b.remove();accStart()});
+    document.getElementById('acc-msg').after(b)}}
 function accStart(){
   if(accSkip())return;
+  const lc=accLinkCode();
+  if(lc&&accIOSBrowser()&&!accGet().code){let ok=false;try{ok=sessionStorage.getItem(KEY+'-iosok')==='1'}catch(e){}
+    if(!ok){accIOSHint(lc);return}}
+  if(lc){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}
+    const a0=accGet();if(!a0.code||a0.state!=='ok'||a0.code.replace(/[^A-Z0-9]/gi,'').toUpperCase()!==lc.replace(/[^A-Z0-9]/gi,'').toUpperCase()){
+      accShow('Проверяю код доступа','Код взят из вашей личной ссылки.',false);document.getElementById('acc-in').value=lc.toUpperCase();accEnter();return}}
   const a=accGet();
   if(!a.code){accShow('Введите код доступа','Код выдаёт автор кабинета. На этом устройстве его нужно ввести один раз.',false);return}
   if(a.state&&a.state!=='ok'){accShow('Доступ закрыт',ACC_TXT[a.state]||ACC_TXT.bad,true)}
