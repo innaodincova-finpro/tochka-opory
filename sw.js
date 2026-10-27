@@ -2,7 +2,7 @@
    Пока интернет есть, всегда берётся свежая версия с сайта, сохранённая — только когда сети нет.
    Записи клиентов здесь не хранятся: они лежат в хранилище браузера, как и раньше. */
 const CACHE='tochka-opory-files';
-const FILES=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png?v=20','icon-512.png?v=20','icon-maskable.png?v=20','apple-touch-icon.png?v=20',
+const FILES=['./','index.html','manifest.webmanifest','opora-favicon.png?v=21','opora-192.png?v=21','opora-512.png?v=21','opora-maskable.png?v=21','opora-apple-touch.png?v=21',
   'fonts/spectral-cyrillic-400-normal.woff2','fonts/spectral-latin-400-normal.woff2',
   'fonts/spectral-cyrillic-600-normal.woff2','fonts/spectral-latin-600-normal.woff2',
   'fonts/spectral-cyrillic-700-normal.woff2','fonts/spectral-latin-700-normal.woff2',
